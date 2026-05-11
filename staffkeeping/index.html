@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StaffKeeping – Projektübersicht</title>
+<style>
+  :root {
+    --navy: #1C2B4A;
+    --navy-light: #2a3f6b;
+    --accent: #C9A96E;
+    --silver: #8A9BB0;
+    --bg: #f4f6f8;
+    --white: #ffffff;
+    --border: #DDE6EF;
+    --green: #2D9B6F;
+    --text: #2a3f6b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--navy);
+    padding: 28px 40px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    border-bottom: 3px solid var(--accent);
+  }
+
+  .logo-icon {
+    font-size: 36px;
+    line-height: 1;
+  }
+
+  .logo-text {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--white);
+    letter-spacing: -0.3px;
+  }
+
+  .logo-sub {
+    font-size: 12px;
+    color: var(--silver);
+    margin-top: 2px;
+  }
+
+  .badge {
+    margin-left: auto;
+    background: rgba(201,169,110,0.15);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+  }
+
+  main {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+
+  .app-card {
+    background: var(--navy);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    border: 1px solid rgba(201,169,110,0.3);
+  }
+
+  .app-card-icon {
+    font-size: 32px;
+    flex-shrink: 0;
+  }
+
+  .app-card-body { flex: 1; }
+
+  .app-card-title {
+    font-size: 13px;
+    color: var(--silver);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+
+  .app-card-url {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 4px;
+  }
+
+  .app-card-desc {
+    font-size: 12px;
+    color: var(--silver);
+  }
+
+  .app-card-link {
+    background: var(--accent);
+    color: var(--navy);
+    font-weight: 700;
+    font-size: 13px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .app-card-link:hover { opacity: 0.9; }
+
+  .section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--silver);
+    font-weight: 600;
+    margin-bottom: 12px;
+    padding-left: 4px;
+  }
+
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+
+  .card-head {
+    background: var(--navy);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    transition: background 0.15s;
+  }
+
+  .card-head:hover { background: var(--navy-light); }
+
+  .card-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  .card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--white);
+    flex: 1;
+  }
+
+  .card-filename {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    opacity: 0.8;
+  }
+
+  .card-arrow {
+    color: var(--accent);
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .card-body {
+    padding: 14px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .sub-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 14px;
+    font-size: 12px;
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .sub-link:hover {
+    border-color: var(--navy);
+    background: #e8edf4;
+  }
+
+  .sub-link-icon { font-size: 14px; }
+
+  .card-desc {
+    font-size: 12px;
+    color: var(--silver);
+    width: 100%;
+    padding-top: 4px;
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+  }
+
+  footer {
+    margin-top: 48px;
+    padding: 20px 0;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--silver);
+  }
+
+  @media (max-width: 600px) {
+    header { padding: 20px 16px; flex-wrap: wrap; }
+    .badge { margin-left: 0; }
+    main { padding: 24px 16px; }
+    .app-card { flex-direction: column; align-items: flex-start; }
+    .app-card-link { width: 100%; text-align: center; }
+    footer { flex-direction: column; gap: 6px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-icon">☂</div>
+  <div>
+    <div class="logo-text">StaffKeeping</div>
+    <div class="logo-sub">Hospitality Network · DACH · B2B · Auftraggeber: Annette Krey Solutions</div>
+  </div>
+  <div class="badge">Projektübersicht</div>
+</header>
+
+<main>
+
+  <!-- APP LINK -->
+  <div class="app-card">
+    <div class="app-card-icon">🚀</div>
+    <div class="app-card-body">
+      <div class="app-card-title">Bubble.io App — Testversion</div>
+      <div class="app-card-url">mockup-31775.bubbleapps.io/version-test/</div>
+      <div class="app-card-desc">Aktive Entwicklungsumgebung · Login: chris.login@icloud.com</div>
+    </div>
+    <a href="https://mockup-31775.bubbleapps.io/version-test/" target="_blank" class="app-card-link">App öffnen →</a>
+  </div>
+
+  <!-- ENTWICKLUNG -->
+  <div class="section-title">Entwicklung</div>
+
+  <div class="card">
+    <a href="staffkeeping_briefing.html" class="card-head">
+      <span class="card-icon">📋</span>
+      <span class="card-title">Projekt-Briefing für Claude</span>
+      <span class="card-filename">staffkeeping_briefing.html</span>
+      <span class="card-arrow">›</span>
+    </a>
+    <div class="card-body">
+      <a href="arbeitsdokumente/googlemaps_anleitung.html" class="sub-link">
+        <span class="sub-link-icon">🗺️</span> Google Maps Anleitung
+      </a>
+      <a href="arbeitsdokumente/postmark_anleitung.html" class="sub-link">
+        <span class="sub-link-icon">📧</span> Postmark Anleitung
+      </a>
+      <div class="card-desc">Projektstatus, offene Todos, Implementierungs-Details, Bubble-Spezifika · Für den Einsatz in neuen Claude-Konversationen</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <a href="staffkeeping_portal.html" class="card-head">
+      <span class="card-icon">📁</span>
+      <span class="card-title">Dokumentations-Portal</span>
+      <span class="card-filename">staffkeeping_portal.html</span>
+      <span class="card-arrow">›</span>
+    </a>
+    <div class="card-body">
+      <div class="card-desc">Alle Arbeitsdokumente in einer Ansicht: Datenbank, Funktionsspezifikation, Roadmap, Tools &amp; Kosten, Prototyp, Mockup</div>
+    </div>
+  </div>
+
+  <!-- HANDBUCH -->
+  <div class="section-title" style="margin-top:28px;">Benutzerhandbuch</div>
+
+  <div class="card">
+    <a href="handbuch/staffkeeping_handbuch.html" class="card-head">
+      <span class="card-icon">📖</span>
+      <span class="card-title">Benutzerhandbuch</span>
+      <span class="card-filename">handbuch/staffkeeping_handbuch.html</span>
+      <span class="card-arrow">›</span>
+    </a>
+    <div class="card-body">
+      <a href="handbuch/staffkeeping_screenshots_spezifikation.html" class="sub-link">
+        <span class="sub-link-icon">📸</span> Screenshot-Spezifikation für Patrick
+      </a>
+      <div class="card-desc">Schritt-für-Schritt-Anleitung für Betriebe · Screenshots in handbuch/handbuch_bilder/</div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <span>StaffKeeping | Auftraggeber: Annette Krey Solutions</span>
+  <span>Arbeitsdokumente erstellt durch Christophe Müller</span>
+</footer>
+
+</body>
+</html>
