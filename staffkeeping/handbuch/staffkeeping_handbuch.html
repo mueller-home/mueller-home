@@ -517,6 +517,11 @@
     <div class="nav-section-title">Konto</div>
     <a class="nav-item" onclick="show('abonnement')"><span class="nav-icon">💳</span> Abonnement</a>
     <a class="nav-item" onclick="show('faq')"><span class="nav-icon">❓</span> Häufige Fragen</a>
+
+    <div class="nav-section-title" style="margin-top:16px;border-top:1px solid rgba(255,255,255,0.1);padding-top:16px;">🔒 Administration</div>
+    <a class="nav-item" onclick="showAdmin('admin-betriebe')"><span class="nav-icon">👥</span> Betriebe verwalten</a>
+    <a class="nav-item" onclick="showAdmin('admin-inserate')"><span class="nav-icon">🛡️</span> Inserate moderieren</a>
+    <a class="nav-item" onclick="showAdmin('admin-dashboard')"><span class="nav-icon">📊</span> Impact-Dashboard</a>
   </nav>
 
   <!-- CONTENT -->
@@ -1150,6 +1155,49 @@
         </div>
       </div>
 
+
+      <!-- ADMIN SECTIONS -->
+      <div class="section" id="sec-admin-betriebe">
+        <div class="page-header">
+          <div class="page-header-tag">🔒 Administration</div>
+          <h1 class="page-header-title">Betriebe verwalten</h1>
+          <p class="page-header-desc">Neue Registrierungen prüfen, Betriebe freischalten oder sperren.</p>
+        </div>
+        <div class="step"><div class="step-num">1</div><div class="step-content"><strong>Admin-Bereich öffnen</strong><p>In der Sidebar unter «Administration» auf «Betriebe verwalten» klicken. Nur für Accounts mit Admin-Berechtigung zugänglich.</p></div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-content"><strong>Neue Registrierungen prüfen</strong><p>Betriebe mit Status «Ausstehend» erscheinen in der Liste. Angaben wie Firmenname, USt-ID/UID und Branche prüfen.</p></div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-content"><strong>Betrieb freischalten</strong><p>Freischalten-Symbol klicken → Status wechselt auf «Freigeschaltet». Der Betrieb kann die Plattform nutzen.</p></div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-content"><strong>Betrieb sperren</strong><p>Bei Verstössen: Sperren-Symbol klicken → Status «Gesperrt». Betrieb kann sich nicht mehr einloggen.</p></div></div>
+        <div class="step"><div class="step-num">5</div><div class="step-content"><strong>Admin-Kommentar</strong><p>Im Bearbeitungs-Popup kann ein interner Kommentar hinterlegt werden (nur für Admins sichtbar).</p></div></div>
+        <div class="screenshot"><div class="screenshot-icon">🖥️</div><div class="screenshot-filename">handbuch_bilder/sk_120_admin_betriebe.png</div><img src="handbuch_bilder/sk_120_admin_betriebe.png" alt="Admin Betriebe" style="width:100%;border-radius:6px;margin-top:10px;border:1px solid #DDE6EF;"><div class="screenshot-desc">Seite admin-businesses · Liste aller Betriebe mit Status-Badges · Aktionssymbole sichtbar</div></div>
+      </div>
+
+      <div class="section" id="sec-admin-inserate">
+        <div class="page-header">
+          <div class="page-header-tag">🔒 Administration</div>
+          <h1 class="page-header-title">Inserate moderieren</h1>
+          <p class="page-header-desc">Alle Inserate auf der Plattform prüfen, bearbeiten oder sperren.</p>
+        </div>
+        <div class="step"><div class="step-num">1</div><div class="step-content"><strong>Moderationsbereich öffnen</strong><p>Sidebar → «Inserate moderieren». Übersicht aller aktiven Inserate aller Betriebe.</p></div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-content"><strong>Filtern</strong><p>Nach Land, Kategorie und Status filtern um gezielt Inserate zu prüfen.</p></div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-content"><strong>Inserat bearbeiten</strong><p>Stift-Symbol → Angaben können korrigiert werden (Titel, Beschreibung, Zeitraum, Status).</p></div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-content"><strong>Inserat sperren</strong><p>Schloss-Symbol → Status «Gesperrt». Inserat verschwindet aus dem Marktplatz.</p></div></div>
+        <div class="step"><div class="step-num">5</div><div class="step-content"><strong>Inserat löschen</strong><p>Papierkorb-Symbol → Inserat wird unwiderruflich gelöscht. Nur bei klaren Verstössen verwenden.</p></div></div>
+        <div class="screenshot"><div class="screenshot-icon">🖥️</div><div class="screenshot-filename">handbuch_bilder/sk_130_admin_inserate.png</div><img src="handbuch_bilder/sk_130_admin_inserate.png" alt="Admin Inserate" style="width:100%;border-radius:6px;margin-top:10px;border:1px solid #DDE6EF;"><div class="screenshot-desc">Seite admin-dashboard · Bereich «Inserate moderieren» · Filterliste mit Aktionssymbolen</div></div>
+      </div>
+
+      <div class="section" id="sec-admin-dashboard">
+        <div class="page-header">
+          <div class="page-header-tag">🔒 Administration</div>
+          <h1 class="page-header-title">Impact-Dashboard</h1>
+          <p class="page-header-desc">Plattformstatistiken, Einnahmen und Spendenanteile auf einen Blick.</p>
+        </div>
+        <div class="step"><div class="step-num">1</div><div class="step-content"><strong>Dashboard öffnen</strong><p>Sidebar → «Impact-Dashboard». Die Übersicht zeigt alle relevanten Kennzahlen der Plattform.</p></div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-content"><strong>KPI-Karten</strong><p>Aktive Betriebe, aktive Inserate und Nachrichten gesamt werden in Echtzeit geladen.</p></div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-content"><strong>Einnahmen & Spendenanteil</strong><p>Ab Phase 4 (Stripe-Integration) werden hier Gesamteinnahmen und der 50%-Spendenanteil angezeigt.</p></div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-content"><strong>Zeitverlauf-Chart</strong><p>Monatliche Einnahmen und Spendenanteile — ebenfalls ab Phase 4 aktiv.</p></div></div>
+        <div class="screenshot"><div class="screenshot-icon">🖥️</div><div class="screenshot-filename">handbuch_bilder/sk_140_admin_dashboard.png</div><img src="handbuch_bilder/sk_140_admin_dashboard.png" alt="Impact Dashboard" style="width:100%;border-radius:6px;margin-top:10px;border:1px solid #DDE6EF;"><div class="screenshot-desc">Seite admin-dashboard · KPI-Karten · Einnahmen-Zeitverlauf Chart</div></div>
+      </div>
+
     </div><!-- /content -->
 
     <footer>
@@ -1158,6 +1206,19 @@
     </footer>
   </main>
 
+
+    <!-- PASSWORD MODAL -->
+    <div id="admin-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:500;align-items:center;justify-content:center;">
+      <div style="background:#fff;border-radius:14px;padding:32px;max-width:360px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+        <div style="font-size:32px;margin-bottom:12px;">🔒</div>
+        <h3 style="font-size:18px;color:#1C2B4A;margin-bottom:8px;">Admin-Bereich</h3>
+        <p style="font-size:13px;color:#6B7A8F;margin-bottom:20px;">Bitte Passwort eingeben um fortzufahren.</p>
+        <input id="admin-pw-input" type="password" placeholder="Passwort" onkeypress="if(event.key==='Enter')checkAdminPassword()" style="width:100%;padding:10px 14px;border:1px solid #DDE6EF;border-radius:8px;font-size:14px;margin-bottom:12px;outline:none;box-sizing:border-box;">
+        <div id="admin-pw-error" style="display:none;color:#ff6b6b;font-size:12px;margin-bottom:10px;">Falsches Passwort. Bitte erneut versuchen.</div>
+        <button onclick="checkAdminPassword()" style="width:100%;background:#1C2B4A;color:white;border:none;padding:11px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;margin-bottom:8px;">Bestätigen</button>
+        <button onclick="closeAdminModal()" style="width:100%;background:transparent;color:#6B7A8F;border:1px solid #DDE6EF;padding:10px;border-radius:8px;font-size:13px;cursor:pointer;">Abbrechen</button>
+      </div>
+    </div>
 </div><!-- /layout -->
 
 <script>
@@ -1169,6 +1230,45 @@ function show(id) {
   document.querySelector('.content').scrollTop = 0;
   window.scrollTo(0, 0);
 }
+
+// Admin password protection
+var ADMIN_PASSWORD = 'adminSK';
+var adminAuthenticated = false;
+var pendingAdminSection = null;
+
+function showAdmin(key) {
+  if (adminAuthenticated) {
+    show(key);
+  } else {
+    pendingAdminSection = key;
+    document.getElementById('admin-modal').style.display = 'flex';
+    document.getElementById('admin-pw-input').value = '';
+    document.getElementById('admin-pw-error').style.display = 'none';
+    setTimeout(function(){ document.getElementById('admin-pw-input').focus(); }, 100);
+  }
+}
+
+function checkAdminPassword() {
+  var entered = document.getElementById('admin-pw-input').value;
+  if (entered === ADMIN_PASSWORD) {
+    adminAuthenticated = true;
+    document.getElementById('admin-modal').style.display = 'none';
+    if (pendingAdminSection) {
+      show(pendingAdminSection);
+      pendingAdminSection = null;
+    }
+  } else {
+    document.getElementById('admin-pw-error').style.display = 'block';
+    document.getElementById('admin-pw-input').value = '';
+    document.getElementById('admin-pw-input').focus();
+  }
+}
+
+function closeAdminModal() {
+  document.getElementById('admin-modal').style.display = 'none';
+  pendingAdminSection = null;
+}
+
 </script>
 
 
