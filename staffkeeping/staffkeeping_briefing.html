@@ -37,41 +37,18 @@ Du bist Claude, mein Entwicklungs-Assistent f&uuml;r das Projekt StaffKeeping. L
 <strong>Bubble-Hinweis:</strong> «Visible on page load» befindet sich im Tab <strong>Interaction</strong>, nicht bei Visual.
 </div>
 
-<h2>&#9654; Als n&auml;chstes zu erledigen</h2>
+<h2>&#9654; Aktueller Fokus</h2>
 <div class="box next">
-<strong>&#9888;&#65039; GENAU HIER WEITERFAHREN &mdash; Offene Todos (Stand 11.05.2026)</strong><br>
+<strong>&#9888;&#65039; HIER WEITERFAHREN</strong><br>
 <br>
-<strong>Seite index (Marktplatz):</strong><br>
-&ndash; <strong>TODO 13:</strong> PLZ/Ort-Filter: vorerst ausblenden bis Google Maps API integriert ist (Phase 2). Manuelle Textsuche macht keinen Sinn wegen Mehrsprachigkeit (DE/FR/IT) und unterschiedlicher Schreibweisen. Umkreissuche via Google Maps ist die richtige L&ouml;sung.<br>
+<strong>Aktuell in Arbeit:</strong><br>
+&ndash; <strong>TODO 6</strong> &mdash; Seite profile: Sichtbarkeits-Logik nach betrieb_status:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; Ausstehend: Button &laquo;Registrierung absenden&raquo;, Disclaimer-Checkbox und Nutzungsbedingungen-Link ausblenden &middot; Waiting-Banner einblenden<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&bull; Freigeschaltet: gleiche Elemente ausblenden &middot; kein Banner<br>
 <br>
-<strong>Seite my-listings (Meine Inserate):</strong><br>
-<br>
-<strong>Seite profile (Mein Profil):</strong><br>
-&ndash; <strong>TODO 6:</strong> Sichtbarkeits-Logik auf der Registrationsseite (profile) nach Status:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;• betrieb_status = <em>Ausstehend</em>: Button &laquo;Registrierung absenden&raquo;, Disclaimer-Checkbox und Nutzungsbedingungen-Link ausblenden · Waiting-Banner anzeigen mit Text: &laquo;Vielen Dank f&uuml;r Ihre Registrierung! Wir pr&uuml;fen Ihre Angaben und informieren Sie per E-Mail, sobald Ihr Zugang freigeschaltet ist.&raquo;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;• betrieb_status = <em>Freigeschaltet</em>: gleiche Elemente ausblenden · kein Banner n&ouml;tig<br>
-&ndash; <strong>TODO 11:</strong> Auf der Registrationsseite (profile) Pflichtfeld-Validierung einbauen: Button &laquo;Registrierung absenden&raquo; nur aktiv wenn alle Muss-Felder ausgef&uuml;llt sind (Firmenname, E-Mail, Passwort, Branche, Land, PLZ, Ort, USt-ID/UID, Disclaimer-Checkbox).<br>
-<br>
-<strong>Seite listing-detail:</strong><br>
-&ndash; Website des Betriebs anzeigen &#10003;<br>
-<br>
-<strong>Seite admin-dashboard:</strong><br>
-&ndash; <strong>TODO 10:</strong> Alle Werte auf admin-dashboard sind noch fix/statisch &mdash; m&uuml;ssen durch dynamische Daten ersetzt werden (Anzahl aktive Inserate, Mitglieder, Umsatz, Spendenanteil etc.)<br>
-<br>
-<strong>Bekannte offene Fehler (nicht blockierend):</strong><br>
-&ndash; «Dropdown dropdown-partner-select - is not a possible option» auf my-listings. L&ouml;sung: Dropdown l&ouml;schen und neu erstellen.<br>
-&ndash; Grauer Balken unter Senden-Button auf messages-Seite: noch nicht untersucht.<br>
-<br>
-<strong>Offene Fragen (Entscheid Annette):</strong><br>
-&ndash; Ansprechpartner-Daten (Name, E-Mail, Telefon): wann und wo sichtbar? Vorschlag: nach erstem Nachrichtenaustausch in der Nachrichten-Ansicht.<br>
-<br>
-<strong>Bewertungssystem (noch ausstehend):</strong><br>
-&ndash; Bewertungsanzeige auf Betriebsprofil bauen<br>
-&ndash; Sternebewertung auf Inseratskarte (index) anzeigen<br>
-<br>
-<strong>Phase 2+ (Entscheid Annette):</strong><br>
-&ndash; Schichtart, Dringlichkeits-Badge, Gespeicherte Suchalarme<br>
-&ndash; Mustervertrag, Benutzerhandbuch
+<strong>&#128203; Vollst&auml;ndige Todo-Liste &rarr; Portal:</strong> <code>staffkeeping_portal.html</code> &rarr; Bereich &laquo;Todo &amp; Abgleich&raquo;<br>
+Dort sind alle offenen Punkte, erledigte Aufgaben und der Abgleich (Seiten, Data Types, Option Sets) vollst&auml;ndig gef&uuml;hrt.<br>
+<strong>Das Briefing f&uuml;hrt keine Todo-Liste</strong> &mdash; nur den aktuellen Arbeitsfokus. Bei Abschluss eines Todos: Portal-Dokument nachf&uuml;hren.
 </div>
 
 <h2>1. Projektkontext</h2>
@@ -185,6 +162,7 @@ B2B-Marktplatz f&uuml;r die Hospitality-Branche (Hotel/Gastro/Camping) im DACH-R
 &ndash; In Unterelementen: «Parent group's X» statt «Current cell's X»<br>
 &ndash; Rotes «Add» in Datenquellen-Popup: verschwindet beim Schliessen, kein Fehler<br>
 &ndash; Bubble-Suche kann nicht direkt durch Beziehungen navigieren. Workaround: GET-Parameter + Do a search for [Type] where unique id = URL-Parameter:first item<br>
+&ndash; <strong>Portal-Update-Regel (WICHTIG):</strong> Das Portal <code>staffkeeping_portal.html</code> speichert jeden Dokumentinhalt an <strong>zwei</strong> Stellen als Base64: (1) im <code>CONTENTS</code>-Objekt (f&uuml;r iframe-Anzeige) und (2) im <code>labels</code>-Objekt (f&uuml;r Titel-Anzeige). Beim Aktualisieren eines Dokuments im Portal m&uuml;ssen immer <strong>beide</strong> Stellen ersetzt werden. Zeile 92 = CONTENTS.datenbank, Zeile 101 = labels.datenbank. Python-Skript: Ersatz per <code>lines[91].find('"datenbank": "')</code> f&uuml;r CONTENTS und <code>lines[100].find('"datenbank":"')</code> f&uuml;r labels.<br>
 &ndash; <strong>Conditionals-Regel:</strong> Immer «Visible on page load = OFF» (default ausgeblendet) + Conditional «This element is visible» wenn Bedingung erf&uuml;llt. Nie umgekehrt — funktioniert nicht sauber in Bubble.<br>
 &ndash; Truncate bei Text: Height auf Fixed setzen &rarr; Cut off content erscheint automatisch
 </div>
