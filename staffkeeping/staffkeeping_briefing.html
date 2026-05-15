@@ -42,11 +42,15 @@ Du bist Claude, mein Entwicklungs-Assistent f&uuml;r das Projekt StaffKeeping. L
 <strong>&#9888;&#65039; HIER WEITERFAHREN</strong><br>
 <br>
 <strong>Aktuell in Arbeit:</strong><br>
-&ndash; Bewertungssystem — Bewertungsanzeige auf Betriebsprofil + Sternebewertung auf Inseratskarte (index)<br>
+&ndash; <strong>Geocoding f&uuml;r Inserat-Erstellung</strong> einbauen (listing-create Workflow: nach «Create a new Listing» → Geocode Address → Make changes to Listing: lat + lng)<br>
+&ndash; Danach: <strong>Umkreissuche</strong> auf Marktplatz implementieren (index-Seite, Filter nach Koordinaten)<br>
+<br>
+<strong>&#9888; Wichtige Regel:</strong> Dokumente (Briefing, Portal, Handbuch) werden <strong>nur auf explizite Aufforderung</strong> aktualisiert — nie automatisch.<br>
 <br>
 <strong>&#128203; Vollst&auml;ndige Todo-Liste &rarr; Portal:</strong> <code>staffkeeping_portal.html</code> &rarr; Bereich &laquo;Todo &amp; Abgleich&raquo;<br>
-Dort sind alle offenen Punkte, erledigte Aufgaben und der Abgleich (Seiten, Data Types, Option Sets) vollst&auml;ndig gef&uuml;hrt.<br>
-<strong>Das Briefing f&uuml;hrt keine Todo-Liste</strong> &mdash; nur den aktuellen Arbeitsfokus. Bei Abschluss eines Todos: Portal-Dokument nachf&uuml;hren.
+Dort sind alle offenen Punkte und der Abgleich (Seiten, Data Types, Option Sets) gef&uuml;hrt.<br>
+<strong>Das Briefing f&uuml;hrt keine Todo-Liste</strong> &mdash; nur den aktuellen Arbeitsfokus. Bei Abschluss eines Todos: Punkt aus dem Portal-Dokument <strong>entfernen</strong> (nicht durchstreichen).<br>
+Das Briefing und das Portal m&uuml;ssen nach jeder Session aktualisiert werden.
 </div>
 
 <h2>1. Projektkontext</h2>
@@ -162,19 +166,19 @@ B2B-Marktplatz f&uuml;r die Hospitality-Branche (Hotel/Gastro/Camping) im DACH-R
 &ndash; Bubble-Suche kann nicht direkt durch Beziehungen navigieren. Workaround: GET-Parameter + Do a search for [Type] where unique id = URL-Parameter:first item<br>
 &ndash; <strong>Portal-Update-Regel (WICHTIG):</strong> Das Portal <code>staffkeeping_portal.html</code> speichert jeden Dokumentinhalt an <strong>zwei</strong> Stellen als Base64: (1) im <code>CONTENTS</code>-Objekt (f&uuml;r iframe-Anzeige) und (2) im <code>labels</code>-Objekt (f&uuml;r Titel-Anzeige). Beim Aktualisieren eines Dokuments im Portal m&uuml;ssen immer <strong>beide</strong> Stellen ersetzt werden. Zeile 92 = CONTENTS.datenbank, Zeile 101 = labels.datenbank. Python-Skript: Ersatz per <code>lines[91].find('"datenbank": "')</code> f&uuml;r CONTENTS und <code>lines[100].find('"datenbank":"')</code> f&uuml;r labels.<br>
 &ndash; <strong>Conditionals-Regel:</strong> Immer «Visible on page load = OFF» (default ausgeblendet) + Conditional «This element is visible» wenn Bedingung erf&uuml;llt. Nie umgekehrt — funktioniert nicht sauber in Bubble.<br>
-&ndash; Truncate bei Text: Height auf Fixed setzen &rarr; Cut off content erscheint automatisch
+&ndash; Truncate bei Text: Height auf Fixed setzen &rarr; Cut off content erscheint automatisch<br>
+&ndash; <strong>Geocoding (WICHTIG):</strong> Wir verwenden <strong>OpenStreetMap Nominatim</strong> (nicht Google Geocoding API) — kostenlos, kein Key n&ouml;tig, funktioniert f&uuml;r DACH. API Connector: Collection «New Collection», Call «Geocode Address», Use as: <strong>Action</strong>. URL: <code>https://nominatim.openstreetmap.org/search</code>. Parameter: <code>q=[address]</code> (NOT Private!), <code>format=json</code>, <code>limit=1</code>. Response-Felder: <code>lat</code> (number), <code>lon</code> (number) — Achtung: heisst <code>lon</code>, nicht <code>lng</code>! Workflow-Muster: API-Action → Make changes to User/Listing: <code>lat = Result of Step X:each item's lat:first item</code>, <code>lng = Result of Step X:each item's lon:first item</code>. Adress-Parameter: <code>Input PLZ's value + " " + Input Ort's value + " " + Dropdown Land's value's Display</code>.<br>
+&ndash; <strong>Google Maps API (Patrick):</strong> Geocoding API muss noch aktiviert werden — f&uuml;r MVP nicht blockierend (OpenStreetMap l&auml;uft). Google Places API + Maps JavaScript API bereits aktiviert. Anleitung: <code>googlemaps_geocoding_anleitung.html</code>.
 </div>
 
 <h2>8. Offene Punkte</h2>
 <ul>
 <li><strong>Disclaimer-Text</strong>: Pr&uuml;fung durch Annette Krey ausstehend</li>
-<li><strong>Google Maps API</strong>: Warten auf Annette/Patrick</li>
+<li><strong>Google Geocoding API</strong>: Aktivierung durch Patrick ausstehend (nicht blockierend — OpenStreetMap l&auml;uft). Anleitung: googlemaps_geocoding_anleitung.html</li>
 <li><strong>E-Mail-Benachrichtigungen</strong> (Postmark): Warten auf Annette/Patrick</li>
 <li><strong>Admin-Benachrichtigung</strong> bei Neuregistrierung: Entscheid ausstehend</li>
-<li><strong>Design / CI</strong>: Entscheide mit Annette ausstehend</li>
+<li><strong>Ansprechpartner-Sichtbarkeit</strong>: Entscheid Annette</li>
 <li><strong>Stripe Integration</strong> (Phase 4)</li>
-<li><strong>Ansprechpartner-Sichtbarkeit</strong>: Wann/wo sichtbar f&uuml;r Gesch&auml;ftspartner? Vorschlag: in Nachrichten-Ansicht nach erstem Kontakt. Entscheid Annette.</li>
-<li><strong>Website-Anzeige listing-detail</strong>: noch umzusetzen (Feld <code>Page's Listing's business's website</code>)</li>
 </ul>
 
 <h2>9. Feature-Ideen (Phase 2+)</h2>

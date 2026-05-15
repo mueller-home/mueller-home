@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>StaffKeeping &ndash; Google Maps Geocoding API aktivieren</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f7fa;color:#1a2744;padding:32px;max-width:720px;margin:0 auto;font-size:14px;line-height:1.7;}
+h1{font-size:22px;font-weight:800;color:#1a2744;margin-bottom:6px;}
+.subtitle{color:#7a8fa8;font-size:13px;margin-bottom:32px;}
+.intro{background:white;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;margin-bottom:28px;color:#4a5568;}
+.step{background:white;border:1px solid #e2e8f0;border-radius:12px;padding:20px 24px;margin-bottom:16px;}
+.step-label{font-weight:700;font-size:15px;color:#1a2744;margin-bottom:10px;display:flex;align-items:center;gap:10px;}
+.step-num{background:#1a2744;color:white;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+p{color:#4a5568;margin-bottom:8px;}
+p:last-child{margin-bottom:0;}
+ul{color:#4a5568;margin:8px 0 8px 20px;}
+ul li{margin-bottom:4px;}
+code{background:#f1f5f9;color:#1a2744;padding:2px 7px;border-radius:4px;font-size:12px;font-family:'Courier New',monospace;}
+.warn{background:#fff8e6;border:1px solid #f6c643;border-radius:8px;padding:12px 16px;color:#92400e;margin-top:10px;font-size:13px;}
+.hint{background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:12px 16px;color:#0c4a6e;margin-top:10px;font-size:13px;}
+.success{background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:12px 16px;color:#166534;margin-top:10px;font-size:13px;}
+.api-list{margin:10px 0;display:flex;flex-direction:column;gap:8px;}
+.api-item{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 14px;display:flex;align-items:flex-start;gap:10px;}
+.api-item-icon{font-size:18px;flex-shrink:0;margin-top:1px;}
+.api-item-body strong{color:#1a2744;display:block;font-size:13px;}
+.api-item-body span{color:#7a8fa8;font-size:12px;}
+.footer{text-align:center;color:#9ca3af;font-size:11px;margin-top:32px;}
+strong{color:#1a2744;}
+</style>
+</head>
+<body>
+
+<h1>&#128506; Google Maps Geocoding API aktivieren</h1>
+<p class="subtitle">Erg&auml;nzung zur bestehenden Google Maps Anleitung &middot; Dauer: ca. 10 Minuten</p>
+
+<div class="intro">
+Diese Anleitung ist eine Erg&auml;nzung zur bestehenden Google Maps Anleitung. Die <strong>Geocoding API</strong> wird zus&auml;tzlich ben&ouml;tigt damit StaffKeeping Adressen (PLZ + Ort) automatisch in GPS-Koordinaten umwandeln kann &mdash; Grundlage f&uuml;r die Umkreissuche auf dem Marktplatz. Bitte dieselbe Google Cloud Console und dasselbe Projekt wie bei der bisherigen Einrichtung verwenden.
+</div>
+
+<div class="step">
+  <div class="step-label"><div class="step-num">1</div>Google Cloud Console &ouml;ffnen</div>
+  <p>Geht auf <strong>console.cloud.google.com</strong> und meldet euch mit demselben Google-Konto an wie bei der bisherigen Einrichtung.</p>
+  <p>Sicherstellen dass das richtige Projekt ausgew&auml;hlt ist &mdash; oben links den Projektnamen pr&uuml;fen (<strong>StaffKeeping</strong> oder der bei der Ersteinrichtung gew&auml;hlte Name).</p>
+</div>
+
+<div class="step">
+  <div class="step-label"><div class="step-num">2</div>Zus&auml;tzliche APIs aktivieren</div>
+  <p>Im linken Men&uuml; auf <strong>«APIs &amp; Dienste»</strong> &rarr; <strong>«Bibliothek»</strong> klicken.</p>
+  <p>Folgende APIs nacheinander suchen und jeweils auf <strong>«Aktivieren»</strong> klicken:</p>
+  <div class="api-list">
+    <div class="api-item">
+      <div class="api-item-icon">📍</div>
+      <div class="api-item-body"><strong>Geocoding API</strong><span>Pflicht &mdash; wandelt Adressen in GPS-Koordinaten um (Standortsuche)</span></div>
+    </div>
+    <div class="api-item">
+      <div class="api-item-icon">🔍</div>
+      <div class="api-item-body"><strong>Places API</strong><span>Falls noch nicht aktiviert &mdash; f&uuml;r zuk&uuml;nftige Autocomplete-Funktion</span></div>
+    </div>
+    <div class="api-item">
+      <div class="api-item-icon">🗺️</div>
+      <div class="api-item-body"><strong>Maps JavaScript API</strong><span>Falls noch nicht aktiviert &mdash; f&uuml;r die Karte auf dem Marktplatz</span></div>
+    </div>
+  </div>
+  <div class="hint">&#128161; APIs die bereits aktiviert sind zeigen «Verwalten» statt «Aktivieren» &mdash; diese k&ouml;nnen so belassen werden.</div>
+</div>
+
+<div class="step">
+  <div class="step-label"><div class="step-num">3</div>API-Key-Einschr&auml;nkungen pr&uuml;fen</div>
+  <p>Im linken Men&uuml; auf <strong>«APIs &amp; Dienste»</strong> &rarr; <strong>«Anmeldedaten»</strong> klicken.</p>
+  <p>Den bestehenden API-Key anklicken und unter <strong>«API-Einschr&auml;nkungen»</strong> pr&uuml;fen:</p>
+  <ul>
+    <li>Falls <strong>«Schl&uuml;ssel nicht einschr&auml;nken»</strong> gew&auml;hlt ist &rarr; nichts &auml;ndern, der Key funktioniert f&uuml;r alle APIs.</li>
+    <li>Falls bestimmte APIs explizit aufgelistet sind &rarr; sicherstellen dass <strong>Geocoding API</strong> in der Liste enthalten ist. Falls nicht: hinzuf&uuml;gen und speichern.</li>
+  </ul>
+  <div class="warn">&#9888; Wenn der Key eingeschr&auml;nkt ist und die Geocoding API fehlt, funktioniert die Standortsuche nicht. Nach dem &Auml;ndern bitte speichern.</div>
+</div>
+
+<div class="step">
+  <div class="step-label"><div class="step-num">4</div>Kosten im &Uuml;berblick</div>
+  <p>Zur Information &mdash; bei StaffKeeping im MVP-Betrieb entstehen voraussichtlich <strong>keine zus&auml;tzlichen Kosten</strong>:</p>
+  <ul>
+    <li><strong>Geocoding API:</strong> $5 pro 1&rsquo;000 Anfragen &rarr; bei 200 Registrierungen ca. $1</li>
+    <li><strong>Places API:</strong> erst relevant wenn Autocomplete eingebaut ist</li>
+    <li><strong>Maps JavaScript API:</strong> $7 pro 1&rsquo;000 Kartenaufrufe</li>
+  </ul>
+  <div class="success">&#10003; Das monatliche Google-Gratisguthaben von $200 deckt den gesamten MVP-Betrieb problemlos ab.</div>
+</div>
+
+<div class="step">
+  <div class="step-label"><div class="step-num">5</div>Fertig &mdash; Chris informieren</div>
+  <p>Sobald die Geocoding API aktiviert ist und die Key-Einschr&auml;nkungen gepr&uuml;ft sind, bitte Chris kurz informieren.</p>
+  <p>Chris tr&auml;gt den bestehenden Key dann in die Bubble-App ein &mdash; ihr m&uuml;sst keinen neuen Key erstellen.</p>
+  <div class="hint">&#128274; Den Key bitte sicher &uuml;bermitteln &mdash; nicht per E-Mail im Klartext.</div>
+</div>
+
+<div class="footer">
+  StaffKeeping | Auftraggeber: Annette Krey Solutions &middot; Arbeitsdokumente erstellt durch Christophe M&uuml;ller
+</div>
+
+</body>
+</html>
