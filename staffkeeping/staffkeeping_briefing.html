@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>StaffKeeping &ndash; Projekt-Briefing f&uuml;r Claude</title>
+<title>StaffKeeping &ndash; Projekt-Briefing für Claude</title>
 <style>
 body{font-family:'Courier New',monospace;background:#0d1526;color:#dce4ef;padding:32px;max-width:900px;margin:0 auto;font-size:13px;line-height:1.7;}
 h1{color:#C9A96E;font-size:22px;border-bottom:1px solid rgba(201,169,110,0.3);padding-bottom:10px;margin-bottom:20px;}
@@ -26,13 +26,13 @@ td:first-child{color:white;font-weight:700;}
 </head>
 <body>
 
-<h1>&#9730; StaffKeeping &ndash; Projekt-Briefing f&uuml;r Claude</h1>
-<p style="color:#7a8fa8;font-size:11px;">Aktualisiert: 11.05.2026 &middot; F&uuml;r den Einsatz in neuen Claude-Konversationen</p>
+<h1>&#9730; StaffKeeping &ndash; Projekt-Briefing für Claude</h1>
+<p style="color:#7a8fa8;font-size:11px;">Aktualisiert: 24.05.2026 &middot; Für den Einsatz in neuen Claude-Konversationen</p>
 
 <div class="box ok">
-Du bist Claude, mein Entwicklungs-Assistent f&uuml;r das Projekt StaffKeeping. Lies dieses Dokument sorgf&auml;ltig bevor du antwortest. Ich bin Bubble-Anf&auml;nger &ndash; bitte erkl&auml;re Schritte konkret und einfach. Frage nach bevor du etwas erf&uuml;ndest.
+Du bist Claude, mein Entwicklungs-Assistent für das Projekt StaffKeeping. Lies dieses Dokument sorgfältig bevor du antwortest. Ich bin Bubble-Anfänger &ndash; bitte erkläre Schritte konkret und einfach. Frage nach bevor du etwas erfindest.
 <br><br>
-<strong>Wichtig:</strong> Sobald ein Task vollst&auml;ndig abgeschlossen ist, muss dieses Briefing sofort nachgef&uuml;hrt werden. Falls &Auml;nderungen an der Datenbankstruktur vorgenommen wurden, m&uuml;ssen zus&auml;tzlich <code>staffkeeping_datenbank.html</code> und <code>staffkeeping_funktionsspezifikation.html</code> synchronisiert werden.
+<strong>Wichtig:</strong> Sobald ein Task vollständig abgeschlossen ist, muss dieses Briefing sofort nachgeführt werden. Falls Änderungen an der Datenbankstruktur vorgenommen wurden, müssen zusätzlich <code>staffkeeping_datenbank.html</code> und <code>staffkeeping_funktionsspezifikation.html</code> synchronisiert werden.
 <br><br>
 <strong>Bubble-Hinweis:</strong> «Visible on page load» befindet sich im Tab <strong>Interaction</strong>, nicht bei Visual.
 </div>
@@ -41,26 +41,26 @@ Du bist Claude, mein Entwicklungs-Assistent f&uuml;r das Projekt StaffKeeping. L
 <div class="box next">
 <strong>&#9888;&#65039; HIER WEITERFAHREN</strong><br>
 <br>
-<strong>Aktuell in Arbeit:</strong><br>
-&ndash; <strong>Geocoding f&uuml;r Inserat-Erstellung</strong> einbauen (listing-create Workflow: nach «Create a new Listing» → Geocode Address → Make changes to Listing: lat + lng)<br>
-&ndash; Danach: <strong>Umkreissuche</strong> auf Marktplatz implementieren (index-Seite, Filter nach Koordinaten)<br>
+<strong>Nächster Schritt:</strong><br>
+&ndash; <strong>Dropdown «is not a possible option»</strong> — Fehler auf listing-detail und my-listings (dropdown-partner-select Typ-Konflikt)<br>
+&ndash; <strong>Grosser Geocoding-Test</strong> — Alle drei Workflows durchspielen<br>
 <br>
 <strong>&#9888; Wichtige Regel:</strong> Dokumente (Briefing, Portal, Handbuch) werden <strong>nur auf explizite Aufforderung</strong> aktualisiert — nie automatisch.<br>
 <br>
-<strong>&#128203; Vollst&auml;ndige Todo-Liste &rarr; Portal:</strong> <code>staffkeeping_portal.html</code> &rarr; Bereich &laquo;Todo &amp; Abgleich&raquo;<br>
-Dort sind alle offenen Punkte und der Abgleich (Seiten, Data Types, Option Sets) gef&uuml;hrt.<br>
-<strong>Das Briefing f&uuml;hrt keine Todo-Liste</strong> &mdash; nur den aktuellen Arbeitsfokus. Bei Abschluss eines Todos: Punkt aus dem Portal-Dokument <strong>entfernen</strong> (nicht durchstreichen).<br>
-Das Briefing und das Portal m&uuml;ssen nach jeder Session aktualisiert werden.
+<strong>&#128203; Vollständige Todo-Liste &rarr; Portal:</strong> <code>staffkeeping_portal.html</code> &rarr; Bereich «Todo &amp; Abgleich»<br>
+Dort sind alle offenen Punkte und der Abgleich (Seiten, Data Types, Option Sets) geführt.<br>
+<strong>Das Briefing führt keine Todo-Liste</strong> &mdash; nur den aktuellen Arbeitsfokus. Bei Abschluss eines Todos: Punkt aus dem Portal-Dokument <strong>entfernen</strong> (nicht durchstreichen).<br>
+Das Briefing und das Portal müssen nach jeder Session aktualisiert werden.
 </div>
 
 <h2>1. Projektkontext</h2>
 <div class="box">
 <strong>Was ist StaffKeeping?</strong><br>
-B2B-Marktplatz f&uuml;r die Hospitality-Branche (Hotel/Gastro/Camping) im DACH-Raum. Betriebe k&ouml;nnen tempor&auml;ren Personal&uuml;berhang anbieten oder Personalbedarf ausschreiben &ndash; ohne Gewinnabsicht. Plattform-Kategorie in Bubble: <code>Marketplace</code>.
+B2B-Marktplatz für die Hospitality-Branche (Hotel/Gastro/Camping) im DACH-Raum. Betriebe können temporären Personalüberhang anbieten oder Personalbedarf ausschreiben &ndash; ohne Gewinnabsicht. Plattform-Kategorie in Bubble: <code>Marketplace</code>.
 <br><br>
 <strong>Auftraggeber:</strong> Annette Krey Solutions<br>
-<strong>Entwickler:</strong> Christophe M&uuml;ller (Chris)<br>
-<strong>Plattform:</strong> Bubble.io (Free Plan w&auml;hrend Entwicklung)<br>
+<strong>Entwickler:</strong> Christophe Müller (Chris)<br>
+<strong>Plattform:</strong> Bubble.io (Free Plan während Entwicklung)<br>
 <strong>App-URL:</strong> <code>mockup-31775.bubbleapps.io/version-test/</code>
 </div>
 
@@ -68,8 +68,8 @@ B2B-Marktplatz f&uuml;r die Hospitality-Branche (Hotel/Gastro/Camping) im DACH-R
 <table>
 <thead><tr><th>Type</th><th>Felder</th><th>Status</th></tr></thead>
 <tbody>
-<tr><td>User</td><td>company_name, vat_id, industry&rarr;Betrieb_Branche (OS), country&rarr;Land (OS), postal_code, city, betrieb_status (OS Betrieb_Status), is_admin, description, logo, contact_name/phone/email, disclaimer_accepted (yes/no), admin_comment, notification_email, unread_count (Number), <strong>website (Text) &mdash; angelegt &#10003;</strong></td><td class="green">&#10003;</td></tr>
-<tr><td>Listing</td><td>business&rarr;User, title, type&rarr;Inserat_Typ (OS), category&rarr;Inserat_Kategorie (OS), industry&rarr;Betrieb_Branche (OS), description, start_date, end_date, country&rarr;Land (OS), postal_code, city, conditions, status&rarr;Inserat_Status (OS), accommodation (yes/no, default: no), lang_de (yes/no, default: yes), lang_fr/it/en/es (yes/no, default: no), partner_business&rarr;User</td><td class="green">&#10003;</td></tr>
+<tr><td>User</td><td>company_name, vat_id, industry&rarr;Betrieb_Branche (OS), country&rarr;Land (OS), postal_code, city, betrieb_status (OS Betrieb_Status), is_admin, description, logo, contact_name/phone/email, disclaimer_accepted (yes/no), admin_comment, notification_email, unread_count (Number), website (Text), <strong>lat (Number) &#10003;</strong>, <strong>lng (Number) &#10003;</strong>, <strong>map_address (Text) &#10003;</strong></td><td class="green">&#10003;</td></tr>
+<tr><td>Listing</td><td>business&rarr;User, title, type&rarr;Inserat_Typ (OS), category&rarr;Inserat_Kategorie (OS), industry&rarr;Betrieb_Branche (OS), description, start_date, end_date, country&rarr;Land (OS), postal_code, city, conditions, status&rarr;Inserat_Status (OS), accommodation (yes/no, default: no), lang_de (yes/no, default: yes), lang_fr/it/en/es (yes/no, default: no), partner_business&rarr;User, <strong>lat (Number) &#10003;</strong>, <strong>lng (Number) &#10003;</strong></td><td class="green">&#10003;</td></tr>
 <tr><td>Subscription</td><td>user&rarr;User, plan, is_active, onboarding_fee_paid, next_billing_date, stripe_customer_id, stripe_subscription_id</td><td class="green">&#10003;</td></tr>
 <tr><td>Invoice</td><td>user&rarr;User, amount, description, stripe_invoice_id, pdf_file</td><td class="green">&#10003;</td></tr>
 <tr><td>SavedListing</td><td>user&rarr;User, listing&rarr;Listing</td><td class="green">&#10003;</td></tr>
@@ -87,9 +87,9 @@ B2B-Marktplatz f&uuml;r die Hospitality-Branche (Hotel/Gastro/Camping) im DACH-R
 <tr><td>Betrieb_Branche</td><td>Hotel &middot; Gastro &middot; Camping</td><td>&ndash;</td></tr>
 <tr><td>Betrieb_Status</td><td>Ausstehend &middot; Freigeschaltet &middot; Gesperrt</td><td>&ndash;</td></tr>
 <tr><td>Inserat_Typ</td><td>Biete &middot; Suche</td><td>&ndash;</td></tr>
-<tr><td>Inserat_Kategorie</td><td>K&uuml;che &middot; Service &middot; Housekeeping &middot; Technik &middot; Animation</td><td>&ndash;</td></tr>
+<tr><td>Inserat_Kategorie</td><td>Küche &middot; Service &middot; Housekeeping &middot; Technik &middot; Animation</td><td>&ndash;</td></tr>
 <tr><td>Inserat_Status</td><td>Aktiv &middot; Inaktiv &middot; Gesperrt &middot; Vergeben &middot; Abgeschlossen</td><td>&ndash;</td></tr>
-<tr><td>Land</td><td>Schweiz (CH) &middot; Deutschland (DE) &middot; &Ouml;sterreich (AT)</td><td>&ndash;</td></tr>
+<tr><td>Land</td><td>Schweiz (CH) &middot; Deutschland (DE) &middot; Österreich (AT)</td><td>code (Text): CH/DE/AT</td></tr>
 <tr><td>Ja_Nein</td><td>Ja &middot; Nein</td><td>wert (yes/no): Ja=yes, Nein=no</td></tr>
 </tbody>
 </table>
@@ -98,13 +98,13 @@ B2B-Marktplatz f&uuml;r die Hospitality-Branche (Hotel/Gastro/Camping) im DACH-R
 <table>
 <thead><tr><th>Seite</th><th>Status</th><th>Anmerkung</th></tr></thead>
 <tbody>
-<tr><td>index</td><td class="green">&#10003;</td><td>Marktplatz + Merkliste-Sidebar. Alle Filter mit Ignore empty=ON. Hero dynamisch. Bookmark-Workflow &#10003;. Kontakt-Workflow &#10003;. Unterkunft-Badge &#10003;</td></tr>
-<tr><td>profile</td><td class="gold">&#9888;</td><td>Registrierung &#10003;. Betriebsdaten speichern &#10003;. Website-Feld &#10003;. TODO 6 ausstehend. Ansprechpartner-Sichtbarkeit: Entscheid Annette.</td></tr>
-<tr><td>listing-detail</td><td class="gold">&#9888;</td><td>Alle Felder dynamisch &#10003;. Kontakt-Button &#10003;. Nachrichten-Button (gefiltert) &#10003;. Website-Anzeige: ausstehend.</td></tr>
+<tr><td>index</td><td class="green">&#10003;</td><td>Marktplatz + Merkliste-Sidebar. Alle Filter mit Ignore empty=ON. Hero dynamisch. Bookmark-Workflow &#10003;. Kontakt-Workflow &#10003;. Unterkunft-Badge &#10003;. Umkreissuche (PLZ + Radius) &#10003;. Eigene Inserate ausgeblendet (business &ne; Current User) &#10003;. Map zentriert auf Current User's map_address &#10003;. Karte: Custom State page_loaded → rendert erst nach vollständiger Seitenladung &#10003;.</td></tr>
+<tr><td>profile</td><td class="green">&#10003;</td><td>Zwei separate Speichern-Buttons: <code>profile-reg-save-btn</code> (Betriebsdaten + Geocoding, nur sichtbar wenn betrieb_status not empty) und <code>profile-complete-save-btn</code> (Logo/Beschreibung/Kontakt). Website-Feld editierbar &#10003;. E-Mail-Validierung: Conditional «This Input isn't valid» → Background #FFE0E0 &#10003;. Mandatory-Sterne &#10003;. map_address Update via Geocoding &#10003;.</td></tr>
+<tr><td>listing-detail</td><td class="gold">&#9888;</td><td>Alle Felder dynamisch &#10003;. Kontakt-Button &#10003;. Nachrichten-Button (gefiltert) &#10003;. Website-Anzeige &#10003;. Vergeben-Button (nur für Eigentümer, nur wenn Status &ne; Vergeben) &#10003;. Website-Anzeige auf Profilseite: ausstehend.</td></tr>
 <tr><td>admin-businesses</td><td class="green">&#10003;</td><td>Betriebe verwalten. Redirect wenn is_admin &ne; yes.</td></tr>
-<tr><td>admin-dashboard</td><td class="gold">&#9888;</td><td>Impact-Dashboard. TODO 10: Alle Werte noch statisch, m&uuml;ssen dynamisiert werden.</td></tr>
-<tr><td>messages</td><td class="gold">&#9888;</td><td>Split-View vollst&auml;ndig. Inseratstitel &#10003;. Mark as read &#10003;. Ungelesen-Badge &#10003;. Gefilterte Ansicht via GET-Parameter listing_id &#10003;. Grauer Balken unter Senden-Button: offen.</td></tr>
-<tr><td>my-listings</td><td class="gold">&#9888;</td><td>Tabs &#10003;. Vergeben-Workflow &#10003;. Nachrichten-Icon (gefiltert) &#10003;. TODO 4+5 ausstehend.</td></tr>
+<tr><td>admin-dashboard</td><td class="gold">&#9888;</td><td>Impact-Dashboard. Alle Werte noch statisch, müssen dynamisiert werden.</td></tr>
+<tr><td>messages</td><td class="gold">&#9888;</td><td>Split-View vollständig. Inseratstitel &#10003;. Mark as read &#10003;. Ungelesen-Badge &#10003;. Gefilterte Ansicht via GET-Parameter listing_id &#10003;. Inseratstitel in Konversationsliste &#10003;. Grauer Balken unter Senden-Button: offen.</td></tr>
+<tr><td>my-listings</td><td class="gold">&#9888;</td><td>Tabs &#10003;. Vergeben-Workflow &#10003; (Dropdown zeigt nur Betriebe mit Kommunikation, DB-Speicherung korrekt). Inserat-Details-Button in allen Tabs &#10003;. Kommunikations-Anzeige (Count) pro Inserat &#10003;. Sprachen-Labels &#10003;. Privacy Rule «Als Partner» &#10003;. Nachrichten-Icon &#10003;.</td></tr>
 <tr><td>reset_pw</td><td class="green">&#10003;</td><td>Auf Deutsch.</td></tr>
 <tr><td>404</td><td class="green">&#10003;</td><td>Vorhanden.</td></tr>
 </tbody>
@@ -122,7 +122,7 @@ B2B-Marktplatz f&uuml;r die Hospitality-Branche (Hotel/Gastro/Camping) im DACH-R
 <thead><tr><th>Type</th><th>Regel</th><th>Status</th></tr></thead>
 <tbody>
 <tr><td>User</td><td>Admin sieht alle &middot; User sieht eigene Daten</td><td class="green">&#10003;</td></tr>
-<tr><td>Listing</td><td>Admin sieht alle &middot; Eigenes Land &middot; Everyone else gesperrt. Edit-Zugriff auf accommodation + lang_*-Felder f&uuml;r eigene Inserate</td><td class="green">&#10003;</td></tr>
+<tr><td>Listing</td><td>Admin sieht alle &middot; Eigenes Inserat (Auto-bind) &middot; Eigenes Land &middot; Als Partner (partner_business = Current User, alle Felder View) &middot; Everyone else gesperrt</td><td class="green">&#10003;</td></tr>
 <tr><td>Conversation</td><td>Eigene Conversations (initiator oder recipient = Current User)</td><td class="green">&#10003;</td></tr>
 <tr><td>Message</td><td>Nachrichten eigener Conversations</td><td class="green">&#10003;</td></tr>
 <tr><td>BusinessImage</td><td>Admin sieht alle &middot; Eigenes Bild</td><td class="green">&#10003;</td></tr>
@@ -132,6 +132,35 @@ B2B-Marktplatz f&uuml;r die Hospitality-Branche (Hotel/Gastro/Camping) im DACH-R
 
 <h2>7. Wichtige Implementierungs-Details</h2>
 <div class="box">
+<strong>Google Geocoding API (WICHTIG — ersetzt Nominatim):</strong><br>
+API Connector: Collection «New Collection», Call «Google Geocode Address», Use as: <strong>Action</strong>.<br>
+URL: <code>https://maps.googleapis.com/maps/api/geocode/json</code><br>
+Parameter: <code>address=[address]</code> (NOT Private!), <code>components=[components]</code> (NOT Private!), <code>key=API_KEY</code> (Private!)<br>
+Adress-Parameter im Workflow: <code>Input PLZ's value + " " + Input Ort's value</code><br>
+Components-Parameter: <code>"country:" + Dropdown Land's value's code</code> (z.B. "country:CH")<br>
+Response-Felder (via results-Liste): <code>Result of Step X's results:each item's geometry location lat:first item</code>, <code>...geometry location lng:first item</code>, <code>...formatted_address:first item</code><br>
+Status-Check: <code>Result of Step X's status = "OK"</code> (statt :count > 0)<br>
+<strong>Initialisierung:</strong> Mit Testwerten [8001 Zürich] + [country:CH] initialisieren, danach Werte zurücksetzen auf [address] + [components]. Nicht nochmals Re-initialize klicken!<br>
+<br>
+<strong>Geocoding-Workflows (alle 3 umgestellt auf Google):</strong><br>
+1. <code>profile-reg-submit-btn</code> (Registrierung): Geocode → Show error (status≠OK) → Sign up (status=OK) → Make changes User lat/lng/map_address (status=OK) → Go to profile (status=OK)<br>
+2. <code>profile-complete-save-btn</code> (Profil speichern): Geocode → Show error (status≠OK) → Make changes User (alle Felder, immer) → Make changes User lat/lng/map_address (status=OK) → Make changes Listings industry (immer)<br>
+3. <code>my-listings-create-submit-btn</code> (Inserat erstellen): Geocode → Show error (status≠OK) → Create Listing (status=OK) → Make changes Listing lat/lng (status=OK) → Hide popup (status=OK) → Reset inputs (status=OK)<br>
+4. <code>my-listings-edit-submit-btn</code> (Inserat bearbeiten): Geocode → Show error (status≠OK) → Make changes Listing (status=OK, lat/lng) → Hide popup (status=OK) → Display list (status=OK)<br>
+Fehler-Anzeige: Rotes Text-Element («Standort nicht gefunden») — initial unsichtbar, wird gezeigt wenn status≠OK. Wird ausgeblendet wenn PLZ oder Ort-Input geändert wird (separate Workflows pro Input).<br>
+PLZ/Ort Felder im Create-Popup werden mit Current User's postal_code/city vorausgefüllt.<br>
+<br>
+<strong>Umkreissuche (index-Seite):</strong><br>
+Filter-Elemente: <code>input-filter-plz</code> (Input, Placeholder «z.B. 8001 Zürich»), <code>dropdown-filter-radius</code> (Static: 10/25/50/100 km)<br>
+Custom States auf Group marketplace-filters: <code>search_lat</code>, <code>search_lng</code>, <code>search_radius_km</code>, <code>search_lat_min</code>, <code>search_lat_max</code>, <code>search_lng_min</code>, <code>search_lng_max</code> (alle Number)<br>
+Workflow filter-search-btn: Geocode (address=PLZ+City, components=country:Current User's country's code) → Set states (lat, lng, radius_km, lat_min/max=lat±radius/111, lng_min/max=lng±radius/111)<br>
+RG constraints (Ignore empty=ON): <code>lat ≥ search_lat_min</code>, <code>lat ≤ search_lat_max</code>, <code>lng ≥ search_lng_min</code>, <code>lng ≤ search_lng_max</code><br>
+Eigene Inserate ausgeblendet: Constraint <code>business is not Current User</code> (permanent)<br>
+<br>
+<strong>Karte (index-Seite, Map A):</strong><br>
+Markers: Single · Marker Address: <code>Current User's map_address</code> → zentriert auf Betriebsstandort<br>
+map_address = Google's formatted_address (z.B. «8001 Zürich, Switzerland»)<br>
+<br>
 <strong>Kontakt aufnehmen-Workflow (disclaimer-confirm-btn, index):</strong><br>
 &ndash; Step 1: Create Conversation &middot; Step 2: Create Message &middot; Step 3: Reset &middot; Step 4: Hide &middot; Step 5: Navigate to messages &#10003;
 <br><br>
@@ -139,52 +168,47 @@ B2B-Marktplatz f&uuml;r die Hospitality-Branche (Hotel/Gastro/Camping) im DACH-R
 &ndash; Type of content: leer (kein Page-Typ)<br>
 &ndash; Gefilterte Ansicht via GET-Parameter <code>listing_id</code>: RG filtert via <code>listing = Do a search for Listings (unique id = Get data from page URL "listing_id"):first item</code>, «Ignore empty constraints» ON<br>
 &ndash; Custom State <code>selected_conversation</code> (Typ: Conversation) auf Group messages-chat-panel<br>
-&ndash; Text messages-conv-title: Parent group's Conversation's listing's title; Height Fixed 16px; Width Fill; Farbe #7a8fa8<br>
-&ndash; Kein Suchfeld (entfernt)<br>
 &ndash; NOCH OFFEN: Grauer Balken unter Senden-Button
-<br><br>
-<strong>Navigation zur gefilterten Nachrichten-Ansicht:</strong><br>
-&ndash; my-listings: Button my-listings-row-messges-btn &rarr; Parameter <code>listing_id = Parent group's Listing's unique id</code><br>
-&ndash; listing-detail: Button messages-listing &rarr; Parameter <code>listing_id = Current page's Listing's unique id</code>
-<br><br>
-<strong>Profil-Seite:</strong><br>
-&ndash; Registrierungs-Workflow (Button profile-reg-submit-btn): Sign the user up mit allen Betriebsdaten inkl. website<br>
-&ndash; Speichern-Workflow (Button profile-complete-save-btn): Make changes to Current User mit logo, description, contact_name/email/phone, company_name, vat_id, industry, country, postal_code, city, website<br>
-&ndash; Input-Namen: <code>Input profile-reg-company-input</code>, <code>Input profile-reg-vat-input</code>, <code>Dropdown profile-reg-industry-select</code>, <code>Dropdown profile-reg-country-select</code>, <code>Input profile-reg-plz-input</code>, <code>Input profile-reg-city-input</code>, <code>Input profile-reg-website-input</code>
 <br><br>
 <strong>my-listings / popup-vergeben:</strong><br>
 &ndash; Dropdown dropdown-partner-select: Type=User, Choices=Search for Users (betrieb_status=Freigeschaltet, unique id &lt;&gt; Current User's unique id), Option caption=company_name<br>
 &ndash; partner_business = Dropdown dropdown-partner-select's value<br>
-&ndash; NOCH OFFEN: TODO 4+5
+&ndash; NOCH OFFEN: Auswahl fehlerhaft + DB-Speicherung prüfen<br>
+&ndash; FEHLER: dropdown-partner-select «is not a possible option» (Bubble-Issue)
 <br><br>
 <strong>Bubble-Spezifika:</strong><br>
 &ndash; «Visible on page load» ist im Tab Interaction, nicht Visual<br>
 &ndash; Custom States auf Parent-Group, nicht auf Buttons<br>
-&ndash; Cell's container layout muss Column sein f&uuml;r Fill-Breite<br>
+&ndash; Custom States via Workflow «Set state» anlegen (Rechtsklick zeigt Add state nicht immer)<br>
+&ndash; Cell's container layout muss Column sein für Fill-Breite<br>
 &ndash; In Unterelementen: «Parent group's X» statt «Current cell's X»<br>
 &ndash; Rotes «Add» in Datenquellen-Popup: verschwindet beim Schliessen, kein Fehler<br>
-&ndash; Bubble-Suche kann nicht direkt durch Beziehungen navigieren. Workaround: GET-Parameter + Do a search for [Type] where unique id = URL-Parameter:first item<br>
-&ndash; <strong>Portal-Update-Regel (WICHTIG):</strong> Das Portal <code>staffkeeping_portal.html</code> speichert jeden Dokumentinhalt an <strong>zwei</strong> Stellen als Base64: (1) im <code>CONTENTS</code>-Objekt (f&uuml;r iframe-Anzeige) und (2) im <code>labels</code>-Objekt (f&uuml;r Titel-Anzeige). Beim Aktualisieren eines Dokuments im Portal m&uuml;ssen immer <strong>beide</strong> Stellen ersetzt werden. Zeile 92 = CONTENTS.datenbank, Zeile 101 = labels.datenbank. Python-Skript: Ersatz per <code>lines[91].find('"datenbank": "')</code> f&uuml;r CONTENTS und <code>lines[100].find('"datenbank":"')</code> f&uuml;r labels.<br>
-&ndash; <strong>Conditionals-Regel:</strong> Immer «Visible on page load = OFF» (default ausgeblendet) + Conditional «This element is visible» wenn Bedingung erf&uuml;llt. Nie umgekehrt — funktioniert nicht sauber in Bubble.<br>
-&ndash; Truncate bei Text: Height auf Fixed setzen &rarr; Cut off content erscheint automatisch<br>
-&ndash; <strong>Geocoding (WICHTIG):</strong> Wir verwenden <strong>OpenStreetMap Nominatim</strong> (nicht Google Geocoding API) — kostenlos, kein Key n&ouml;tig, funktioniert f&uuml;r DACH. API Connector: Collection «New Collection», Call «Geocode Address», Use as: <strong>Action</strong>. URL: <code>https://nominatim.openstreetmap.org/search</code>. Parameter: <code>q=[address]</code> (NOT Private!), <code>format=json</code>, <code>limit=1</code>. Response-Felder: <code>lat</code> (number), <code>lon</code> (number) — Achtung: heisst <code>lon</code>, nicht <code>lng</code>! Workflow-Muster: API-Action → Make changes to User/Listing: <code>lat = Result of Step X:each item's lat:first item</code>, <code>lng = Result of Step X:each item's lon:first item</code>. Adress-Parameter: <code>Input PLZ's value + " " + Input Ort's value + " " + Dropdown Land's value's Display</code>.<br>
-&ndash; <strong>Google Maps API (Patrick):</strong> Geocoding API muss noch aktiviert werden — f&uuml;r MVP nicht blockierend (OpenStreetMap l&auml;uft). Google Places API + Maps JavaScript API bereits aktiviert. Anleitung: <code>googlemaps_geocoding_anleitung.html</code>.
+&ndash; Bubble-Suche kann nicht direkt durch Beziehungen navigieren<br>
+&ndash; <strong>Portal-Update-Regel (WICHTIG):</strong> Das Portal speichert jeden Dokumentinhalt als Base64 im CONTENTS-Objekt. Python-Pattern: <code>re.search(r'"keyname": "([A-Za-z0-9+/=]+)"', portal)</code> — Leerzeichen nach Doppelpunkt beachten!<br>
+&ndash; <strong>Conditionals-Regel:</strong> Immer «Visible on page load = OFF» + Conditional «This element is visible» wenn Bedingung erfüllt<br>
+&ndash; Flag-Emojis auf Windows Chrome nicht unterstützt — nur Text verwenden<br>
+&ndash; In Bubble Map Marker Address: nur einzelne Werte, keine Konkatenation möglich → map_address (Text) als Zwischenfeld nutzen<br>
+&ndash; <strong>RG-Zellen-Muster:</strong> Group ZusRowItem (direktes Kind der RG) → Data source = <code>Current cell's Listing</code>. Untergruppen mit Type=Listing erhalten Data source = <code>Parent group's Listing</code><br>
+&ndash; <strong>Karte nach Login:</strong> Custom State <code>page_loaded</code> (yes/no) auf Group marketplace-main. «Page is loaded»-Workflow setzt State=yes. Map A: Visible on page load=OFF, Conditional: sichtbar wenn page_loaded=yes<br>
+&ndash; <strong>Handshake-Dropdown (Typ Conversation):</strong> Constraint <code>listing = Parent group's Listing</code>. Caption: <code>Current option's initiator's company_name</code>. Workflow speichert <code>dropdown's value's initiator</code> als partner_business
 </div>
 
 <h2>8. Offene Punkte</h2>
 <ul>
-<li><strong>Disclaimer-Text</strong>: Pr&uuml;fung durch Annette Krey ausstehend</li>
-<li><strong>Google Geocoding API</strong>: Aktivierung durch Patrick ausstehend (nicht blockierend — OpenStreetMap l&auml;uft). Anleitung: googlemaps_geocoding_anleitung.html</li>
+<li><strong>Dropdown «is not a possible option»</strong>: auf listing-detail und my-listings — dropdown-partner-select (Typ Conversation) wird irgendwo noch als User verwendet</li>
+<li><strong>Grosser Geocoding-Test</strong>: Alle drei Workflows testen (Registrierung, Betriebsdaten speichern, Inserat erstellen/bearbeiten)</li>
+<li><strong>Disclaimer-Text</strong>: Prüfung durch Annette Krey ausstehend</li>
 <li><strong>E-Mail-Benachrichtigungen</strong> (Postmark): Warten auf Annette/Patrick</li>
 <li><strong>Admin-Benachrichtigung</strong> bei Neuregistrierung: Entscheid ausstehend</li>
 <li><strong>Ansprechpartner-Sichtbarkeit</strong>: Entscheid Annette</li>
 <li><strong>Stripe Integration</strong> (Phase 4)</li>
+<li><strong>Google Maps JS API</strong>: Für Kartenanzeige — Key vorhanden (Patrick), Geocoding API aktiv. Maps JavaScript API + Places API noch nicht eingebunden.</li>
 </ul>
 
 <h2>9. Feature-Ideen (Phase 2+)</h2>
 <div class="box">
 &ndash; Bewertungsanzeige auf Profil + Inseratskarte<br>
-&ndash; Dringlichkeits-Badge &laquo;Kurzfristig&raquo;<br>
+&ndash; Dringlichkeits-Badge «Kurzfristig»<br>
 &ndash; Gespeicherte Suchalarme<br>
 &ndash; Statistik-Widget auf Inseraten<br>
 &ndash; Schichtart: Ganzer Tag / Teildienst / Wochenende<br>
@@ -192,13 +216,13 @@ B2B-Marktplatz f&uuml;r die Hospitality-Branche (Hotel/Gastro/Camping) im DACH-R
 &ndash; Saisonaler Nachfragekalender<br>
 &ndash; Benutzerhandbuch<br>
 <br>
-<em>Entscheid &uuml;ber Priorisierung liegt bei Annette Krey Solutions.</em>
+<em>Entscheid über Priorisierung liegt bei Annette Krey Solutions.</em>
 </div>
 
 <h2>10. Bezahlmodell (Phase 4)</h2>
 <div class="box warn">
 Stripe noch NICHT eingebunden. Admin schaltet manuell frei.<br>
-Einmalige Aufnahmegeb&uuml;hr: CHF 199 &middot; Classic-Abo: CHF 99/Mt. (12 Mon.) &middot; Flex-Abo: CHF 119/Mt. (monatlich)<br>
+Einmalige Aufnahmegebühr: CHF 199 &middot; Classic-Abo: CHF 99/Mt. (12 Mon.) &middot; Flex-Abo: CHF 119/Mt. (monatlich)<br>
 Stripe-Account MUSS auf Annettes Account laufen.
 </div>
 
@@ -208,9 +232,8 @@ Stripe-Account MUSS auf Annettes Account laufen.
 <li>datenbank.html &harr; funktionsspezifikation.html immer synchron halten</li>
 <li>testkonzept.html + todo.html NIEMALS in ZIP</li>
 <li>ZIP = genau 7 Dateien: index, datenbank, funktionsspezifikation, roadmap, tools_kosten, prototyp, mockup</li>
-<li>Footer: links &laquo;StaffKeeping | Auftraggeber: Annette Krey Solutions&raquo;, rechts &laquo;Arbeitsdokumente erstellt durch Christophe M&uuml;ller&raquo;</li>
-<li>&laquo;Erstellt mit Claude AI&raquo; nirgends</li>
-<li><strong>Ausstehend:</strong> staffkeeping_datenbank.html (website-Feld nachtragen, v1.9 &rarr; v2.0) und staffkeeping_funktionsspezifikation.html synchronisieren.</li>
+<li>Footer: links «StaffKeeping | Auftraggeber: Annette Krey Solutions», rechts «Arbeitsdokumente erstellt durch Christophe Müller»</li>
+<li>«Erstellt mit Claude AI» nirgends</li>
 </ul>
 </div>
 
@@ -219,19 +242,19 @@ Stripe-Account MUSS auf Annettes Account laufen.
 <thead><tr><th>Datei</th><th>Version</th></tr></thead>
 <tbody>
 <tr><td>staffkeeping_index.html</td><td>v2.1</td></tr>
-<tr><td>staffkeeping_datenbank.html</td><td>v1.9 &rarr; v2.0 f&auml;llig (website-Feld eintragen)</td></tr>
-<tr><td>staffkeeping_funktionsspezifikation.html</td><td>v2.0 &rarr; Sync mit DB f&auml;llig</td></tr>
+<tr><td>staffkeeping_datenbank.html</td><td>v2.1 (lat/lng/map_address User + lat/lng Listing nachtragen)</td></tr>
+<tr><td>staffkeeping_funktionsspezifikation.html</td><td>v2.1 (Sync mit DB ausstehend)</td></tr>
 <tr><td>staffkeeping_roadmap.html</td><td>v2.0</td></tr>
 <tr><td>staffkeeping_tools_kosten.html</td><td>v1.0</td></tr>
 <tr><td>staffkeeping_prototyp.html</td><td>v1.0</td></tr>
 <tr><td>staffkeeping_mockup.html</td><td>v1.0</td></tr>
-<tr><td>staffkeeping_todo.html</td><td>v1.1</td></tr>
+<tr><td>staffkeeping_todo.html</td><td>v2.1</td></tr>
 <tr><td>staffkeeping_testkonzept.html</td><td>v1.1</td></tr>
-<tr><td class="gold">staffkeeping_briefing.html</td><td class="gold">v3.7 (Stand 11.05.2026)</td></tr>
+<tr><td class="gold">staffkeeping_briefing.html</td><td class="gold">v4.0 (Stand 24.05.2026)</td></tr>
 </tbody>
 </table>
 
 <div class="sep"></div>
-<p style="color:#7a8fa8;font-size:11px;text-align:center;">StaffKeeping | Auftraggeber: Annette Krey Solutions &middot; Projekt-Briefing &middot; 11.05.2026 &middot; Arbeitsdokumente erstellt durch Christophe M&uuml;ller</p>
+<p style="color:#7a8fa8;font-size:11px;text-align:center;">StaffKeeping | Auftraggeber: Annette Krey Solutions &middot; Projekt-Briefing &middot; 24.05.2026 &middot; Arbeitsdokumente erstellt durch Christophe Müller</p>
 </body>
 </html>
