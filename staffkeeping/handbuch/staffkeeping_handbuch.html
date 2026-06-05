@@ -8,22 +8,24 @@
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap');
 
   :root {
-    --navy: #1C2B4A;
-    --navy-light: #2a3f6b;
+    --navy: #1B263B;
+    --navy-light: #415A77;
     --silver: #8A9BB0;
-    --silver-light: #C8D4E0;
-    --bg: #F7F9FB;
+    --silver-light: #E0E1DD;
+    --bg: #F4F8FA;
     --white: #FFFFFF;
-    --text: #1C2B4A;
+    --text: #1B263B;
     --muted: #6B7A8F;
-    --border: #DDE6EF;
-    --accent: #C9A96E;
-    --accent-light: #F5EDD8;
+    --border: #E0E1DD;
+    --accent: #5BB8D4;
+    --accent-light: #E8F6FA;
+    --header-bg: #5BB8D4;
+    --btn-primary: #415A77;
     --green: #2D9B6F;
     --green-light: #E8F5EF;
     --red: #C94040;
     --red-light: #FAEAEA;
-    --note-bg: #EEF3F9;
+    --note-bg: #E8F6FA;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -31,7 +33,7 @@
   .screenshot-filename {
     display: inline-block;
     background: var(--navy);
-    color: var(--accent);
+    color: var(--accent-light);
     font-family: 'Courier New', monospace;
     font-size: 11px;
     padding: 3px 10px;
@@ -56,7 +58,7 @@
 
   /* COVER PAGE */
   .cover {
-    background: var(--navy);
+    background: linear-gradient(135deg, var(--header-bg), var(--navy));
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -91,13 +93,13 @@
   }
 
   .cover-logo span {
-    color: var(--accent);
+    color: var(--header-bg);
   }
 
   .cover-tag {
     background: rgba(201,169,110,0.2);
     border: 1px solid rgba(201,169,110,0.4);
-    color: var(--accent);
+    color: var(--header-bg);
     padding: 6px 16px;
     border-radius: 20px;
     font-size: 12px;
@@ -155,7 +157,7 @@
   /* SIDEBAR */
   .sidebar {
     width: 280px;
-    background: var(--navy);
+    background: var(--header-bg);
     position: sticky;
     top: 0;
     height: 100vh;
@@ -236,7 +238,7 @@
 
   .page-header-tag {
     font-size: 11px;
-    color: var(--accent);
+    color: var(--header-bg);
     text-transform: uppercase;
     letter-spacing: 1.5px;
     font-weight: 600;
@@ -363,7 +365,7 @@
     font-weight: 600;
   }
   .badge-navy { background: var(--navy); color: white; }
-  .badge-gold { background: var(--accent-light); color: var(--accent); border: 1px solid var(--accent); }
+  .badge-gold { background: var(--accent-light); color: var(--header-bg); border: 1px solid var(--accent); }
   .badge-green { background: var(--green-light); color: var(--green); }
   .badge-red { background: var(--red-light); color: var(--red); }
 
@@ -386,7 +388,7 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    color: var(--accent);
+    color: var(--header-bg);
     text-decoration: none;
     font-size: 13px;
     font-weight: 500;
@@ -469,11 +471,11 @@
   <div class="cover-meta">
     <div class="cover-meta-item">
       <label>Version</label>
-      <span>v1.1</span>
+      <span>v1.2</span>
     </div>
     <div class="cover-meta-item">
       <label>Datum</label>
-      <span>01.06.2026</span>
+      <span>05.06.2026</span>
     </div>
     <div class="cover-meta-item">
       <label>Auftraggeber</label>
