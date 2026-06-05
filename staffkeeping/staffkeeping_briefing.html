@@ -2,259 +2,146 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>StaffKeeping &ndash; Projekt-Briefing für Claude</title>
+<title>StaffKeeping · Briefing</title>
 <style>
-body{font-family:'Courier New',monospace;background:#0d1526;color:#dce4ef;padding:32px;max-width:900px;margin:0 auto;font-size:13px;line-height:1.7;}
-h1{color:#C9A96E;font-size:22px;border-bottom:1px solid rgba(201,169,110,0.3);padding-bottom:10px;margin-bottom:20px;}
-h2{color:#4a9eff;font-size:14px;margin:28px 0 10px;text-transform:uppercase;letter-spacing:1px;}
-p,li{color:#b8c4d4;margin-bottom:6px;}
-ul{padding-left:20px;}
-code{background:rgba(74,158,255,0.12);color:#7ec8ff;padding:1px 6px;border-radius:4px;font-size:12px;}
-.box{background:rgba(255,255,255,0.04);border:1px solid rgba(184,196,212,0.15);border-radius:8px;padding:14px 18px;margin:10px 0;}
-.warn{border-color:rgba(255,140,66,0.4);background:rgba(255,140,66,0.06);color:#ffb87a;}
-.ok{border-color:rgba(62,207,142,0.4);background:rgba(62,207,142,0.06);color:#80e8b8;}
-.rule{border-color:rgba(255,107,107,0.4);background:rgba(255,107,107,0.06);color:#ffaaaa;}
-.next{border-color:rgba(201,169,110,0.4);background:rgba(201,169,110,0.06);color:#C9A96E;}
-table{width:100%;border-collapse:collapse;margin:10px 0;font-size:12px;}
-th{text-align:left;padding:7px 12px;background:rgba(255,255,255,0.06);color:#7a8fa8;text-transform:uppercase;font-size:10px;letter-spacing:0.5px;border:1px solid rgba(184,196,212,0.13);}
-td{padding:7px 12px;border:1px solid rgba(184,196,212,0.1);color:#b8c4d4;vertical-align:top;}
-td:first-child{color:white;font-weight:700;}
-.green{color:#3ecf8e;}
-.gold{color:#C9A96E;}
-.sep{height:1px;background:rgba(184,196,212,0.1);margin:24px 0;}
+  body{font-family:'Inter',system-ui,sans-serif;font-size:13px;line-height:1.6;background:#0f1117;color:#e2e8f0;padding:24px;max-width:900px;margin:0 auto;}
+  h1{font-size:22px;color:white;margin-bottom:4px;}
+  h2{font-size:13px;font-weight:700;color:#4a9eff;text-transform:uppercase;letter-spacing:0.05em;margin:20px 0 8px;}
+  .meta{color:#64748b;font-size:12px;margin-bottom:20px;}
+  .card{background:#1a1d27;border:1px solid #2a2d3a;border-radius:10px;padding:16px;margin-bottom:12px;}
+  .tag{display:inline-block;font-size:10px;font-family:monospace;font-weight:700;padding:2px 8px;border-radius:4px;margin-right:6px;}
+  .red{background:rgba(255,107,107,0.15);color:#ff6b6b;}
+  .yellow{background:rgba(251,191,36,0.15);color:#fbbf24;}
+  .blue{background:rgba(74,158,255,0.15);color:#4a9eff;}
+  .grey{background:rgba(100,116,139,0.2);color:#94a3b8;}
+  .green{background:rgba(62,207,142,0.15);color:#3ecf8e;}
+  ul{margin:6px 0 0 16px;}
+  li{margin-bottom:3px;}
+  code{font-family:monospace;font-size:12px;background:rgba(255,255,255,0.06);padding:1px 5px;border-radius:3px;}
+  table{width:100%;border-collapse:collapse;margin-top:8px;}
+  td,th{padding:6px 10px;border:1px solid #2a2d3a;font-size:12px;text-align:left;}
+  th{color:#64748b;font-weight:600;}
 </style>
 </head>
 <body>
 
-<h1>&#9730; StaffKeeping &ndash; Projekt-Briefing für Claude</h1>
-<p style="color:#7a8fa8;font-size:11px;">Aktualisiert: 24.05.2026 &middot; Für den Einsatz in neuen Claude-Konversationen</p>
+<h1>☂ StaffKeeping · Entwicklungs-Briefing</h1>
+<div class="meta">Stand: 05.06.2026 · Plattform: Bubble.io · Auftraggeber: Annette Krey Solutions</div>
 
-<div class="box ok">
-Du bist Claude, mein Entwicklungs-Assistent für das Projekt StaffKeeping. Lies dieses Dokument sorgfältig bevor du antwortest. Ich bin Bubble-Anfänger &ndash; bitte erkläre Schritte konkret und einfach. Frage nach bevor du etwas erfindest.
-<br><br>
-<strong>Wichtig:</strong> Sobald ein Task vollständig abgeschlossen ist, muss dieses Briefing sofort nachgeführt werden. Falls Änderungen an der Datenbankstruktur vorgenommen wurden, müssen zusätzlich <code>staffkeeping_datenbank.html</code> und <code>staffkeeping_funktionsspezifikation.html</code> synchronisiert werden.
-<br><br>
-<strong>Bubble-Hinweis:</strong> «Visible on page load» befindet sich im Tab <strong>Interaction</strong>, nicht bei Visual.
+<h2>1. Projektübersicht</h2>
+<div class="card">
+  B2B-Marktplatz für temporären Personalaustausch in der Hospitality-Branche (Hotel/Gastro/Camping) im DACH-Raum. Keine Gewinnerzielungsabsicht durch die Vermittlung. Betriebe können Inserate aufschalten (Biete/Suche) und direkt miteinander chatten. Chris Müller (Christophe Müller) ist der Entwickler, Annette Krey Solutions ist der Auftraggeber.
 </div>
 
-<h2>&#9654; Aktueller Fokus</h2>
-<div class="box next">
-<strong>&#9888;&#65039; HIER WEITERFAHREN</strong><br>
-<br>
-<strong>Nächster Schritt:</strong><br>
-&ndash; <strong>Dropdown «is not a possible option»</strong> — Fehler auf listing-detail und my-listings (dropdown-partner-select Typ-Konflikt)<br>
-&ndash; <strong>Grosser Geocoding-Test</strong> — Alle drei Workflows durchspielen<br>
-<br>
-<strong>&#9888; Wichtige Regel:</strong> Dokumente (Briefing, Portal, Handbuch) werden <strong>nur auf explizite Aufforderung</strong> aktualisiert — nie automatisch.<br>
-<br>
-<strong>&#128203; Vollständige Todo-Liste &rarr; Portal:</strong> <code>staffkeeping_portal.html</code> &rarr; Bereich «Todo &amp; Abgleich»<br>
-Dort sind alle offenen Punkte und der Abgleich (Seiten, Data Types, Option Sets) geführt.<br>
-<strong>Das Briefing führt keine Todo-Liste</strong> &mdash; nur den aktuellen Arbeitsfokus. Bei Abschluss eines Todos: Punkt aus dem Portal-Dokument <strong>entfernen</strong> (nicht durchstreichen).<br>
-Das Briefing und das Portal müssen nach jeder Session aktualisiert werden.
+<h2>2. Technologie & Dokumente</h2>
+<div class="card">
+  <ul>
+    <li><strong>Plattform:</strong> Bubble.io (No-Code)</li>
+    <li><strong>Portal:</strong> <code>staffkeeping_portal.html</code> — Master-Datei mit allen Dokumenten als Base64 eingebettet. Keys: <code>index</code>, <code>datenbank</code>, <code>funktionsspec</code>, <code>roadmap</code>, <code>tools</code>, <code>todo</code>, <code>testkonzept</code></li>
+    <li><strong>Dokumentations-Regel:</strong> Immer nur das Portal aktualisieren. Separate HTML-Dateien werden nicht mehr gepflegt. Für ZIP-Export: 7 Dateien direkt aus Portal extrahieren.</li>
+    <li><strong>Sync-Regel:</strong> Änderungen an Datenbank → Funktionsspez prüfen und synchron halten (und umgekehrt)</li>
+    <li><strong>Dokumentation erst wenn vollständig</strong> (Datentyp + Masken + Workflows alle fertig)</li>
+    <li><strong>Kein «Claude»-Verweis in Dokumenten.</strong> Footer: «StaffKeeping | Auftraggeber: Annette Krey Solutions» (links) / «Arbeitsdokumente erstellt durch Christophe Müller» (rechts)</li>
+  </ul>
 </div>
-
-<h2>1. Projektkontext</h2>
-<div class="box">
-<strong>Was ist StaffKeeping?</strong><br>
-B2B-Marktplatz für die Hospitality-Branche (Hotel/Gastro/Camping) im DACH-Raum. Betriebe können temporären Personalüberhang anbieten oder Personalbedarf ausschreiben &ndash; ohne Gewinnabsicht. Plattform-Kategorie in Bubble: <code>Marketplace</code>.
-<br><br>
-<strong>Auftraggeber:</strong> Annette Krey Solutions<br>
-<strong>Entwickler:</strong> Christophe Müller (Chris)<br>
-<strong>Plattform:</strong> Bubble.io (Free Plan während Entwicklung)<br>
-<strong>App-URL:</strong> <code>mockup-31775.bubbleapps.io/version-test/</code>
-</div>
-
-<h2>2. Data Types</h2>
-<table>
-<thead><tr><th>Type</th><th>Felder</th><th>Status</th></tr></thead>
-<tbody>
-<tr><td>User</td><td>company_name, vat_id, industry&rarr;Betrieb_Branche (OS), country&rarr;Land (OS), postal_code, city, betrieb_status (OS Betrieb_Status), is_admin, description, logo, contact_name/phone/email, disclaimer_accepted (yes/no), admin_comment, notification_email, unread_count (Number), website (Text), <strong>lat (Number) &#10003;</strong>, <strong>lng (Number) &#10003;</strong>, <strong>map_address (Text) &#10003;</strong></td><td class="green">&#10003;</td></tr>
-<tr><td>Listing</td><td>business&rarr;User, title, type&rarr;Inserat_Typ (OS), category&rarr;Inserat_Kategorie (OS), industry&rarr;Betrieb_Branche (OS), description, start_date, end_date, country&rarr;Land (OS), postal_code, city, conditions, status&rarr;Inserat_Status (OS), accommodation (yes/no, default: no), lang_de (yes/no, default: yes), lang_fr/it/en/es (yes/no, default: no), partner_business&rarr;User, <strong>lat (Number) &#10003;</strong>, <strong>lng (Number) &#10003;</strong></td><td class="green">&#10003;</td></tr>
-<tr><td>Subscription</td><td>user&rarr;User, plan, is_active, onboarding_fee_paid, next_billing_date, stripe_customer_id, stripe_subscription_id</td><td class="green">&#10003;</td></tr>
-<tr><td>Invoice</td><td>user&rarr;User, amount, description, stripe_invoice_id, pdf_file</td><td class="green">&#10003;</td></tr>
-<tr><td>SavedListing</td><td>user&rarr;User, listing&rarr;Listing</td><td class="green">&#10003;</td></tr>
-<tr><td>Conversation</td><td>initiator&rarr;User, recipient&rarr;User, listing&rarr;Listing, disclaimer_accepted (yes/no), last_message_date (date)</td><td class="green">&#10003;</td></tr>
-<tr><td>Message</td><td>conversation&rarr;Conversation, sender&rarr;User, body (text), is_read (yes/no)</td><td class="green">&#10003;</td></tr>
-<tr><td>BusinessImage</td><td>business&rarr;User, image&rarr;image. Privacy Rules: Admin sieht alle, User sieht eigene.</td><td class="green">&#10003;</td></tr>
-<tr><td>Review</td><td>reviewer&rarr;User, reviewed&rarr;User, listing&rarr;Listing, rating_communication (Number 1&ndash;5), rating_reliability (Number 1&ndash;5), recommend (yes/no), comment (Text)</td><td class="green">&#10003;</td></tr>
-</tbody>
-</table>
 
 <h2>3. Option Sets</h2>
-<table>
-<thead><tr><th>Name</th><th>Werte</th><th>Attribute</th></tr></thead>
-<tbody>
-<tr><td>Betrieb_Branche</td><td>Hotel &middot; Gastro &middot; Camping</td><td>&ndash;</td></tr>
-<tr><td>Betrieb_Status</td><td>Ausstehend &middot; Freigeschaltet &middot; Gesperrt</td><td>&ndash;</td></tr>
-<tr><td>Inserat_Typ</td><td>Biete &middot; Suche</td><td>&ndash;</td></tr>
-<tr><td>Inserat_Kategorie</td><td>Küche &middot; Service &middot; Housekeeping &middot; Technik &middot; Animation</td><td>&ndash;</td></tr>
-<tr><td>Inserat_Status</td><td>Aktiv &middot; Inaktiv &middot; Gesperrt &middot; Vergeben &middot; Abgeschlossen</td><td>&ndash;</td></tr>
-<tr><td>Land</td><td>Schweiz (CH) &middot; Deutschland (DE) &middot; Österreich (AT)</td><td>code (Text): CH/DE/AT</td></tr>
-<tr><td>Ja_Nein</td><td>Ja &middot; Nein</td><td>wert (yes/no): Ja=yes, Nein=no</td></tr>
-</tbody>
-</table>
-
-<h2>4. Seiten</h2>
-<table>
-<thead><tr><th>Seite</th><th>Status</th><th>Anmerkung</th></tr></thead>
-<tbody>
-<tr><td>index</td><td class="green">&#10003;</td><td>Marktplatz + Merkliste-Sidebar. Alle Filter mit Ignore empty=ON. Hero dynamisch. Bookmark-Workflow &#10003;. Kontakt-Workflow &#10003;. Unterkunft-Badge &#10003;. Umkreissuche (PLZ + Radius) &#10003;. Eigene Inserate ausgeblendet (business &ne; Current User) &#10003;. Map zentriert auf Current User's map_address &#10003;. Karte: Custom State page_loaded → rendert erst nach vollständiger Seitenladung &#10003;.</td></tr>
-<tr><td>profile</td><td class="green">&#10003;</td><td>Zwei separate Speichern-Buttons: <code>profile-reg-save-btn</code> (Betriebsdaten + Geocoding, nur sichtbar wenn betrieb_status not empty) und <code>profile-complete-save-btn</code> (Logo/Beschreibung/Kontakt). Website-Feld editierbar &#10003;. E-Mail-Validierung: Conditional «This Input isn't valid» → Background #FFE0E0 &#10003;. Mandatory-Sterne &#10003;. map_address Update via Geocoding &#10003;.</td></tr>
-<tr><td>listing-detail</td><td class="gold">&#9888;</td><td>Alle Felder dynamisch &#10003;. Kontakt-Button &#10003;. Nachrichten-Button (gefiltert) &#10003;. Website-Anzeige &#10003;. Vergeben-Button (nur für Eigentümer, nur wenn Status &ne; Vergeben) &#10003;. Website-Anzeige auf Profilseite: ausstehend.</td></tr>
-<tr><td>admin-businesses</td><td class="green">&#10003;</td><td>Betriebe verwalten. Redirect wenn is_admin &ne; yes.</td></tr>
-<tr><td>admin-dashboard</td><td class="gold">&#9888;</td><td>Impact-Dashboard. Alle Werte noch statisch, müssen dynamisiert werden.</td></tr>
-<tr><td>messages</td><td class="gold">&#9888;</td><td>Split-View vollständig. Inseratstitel &#10003;. Mark as read &#10003;. Ungelesen-Badge &#10003;. Gefilterte Ansicht via GET-Parameter listing_id &#10003;. Inseratstitel in Konversationsliste &#10003;. Grauer Balken unter Senden-Button: offen.</td></tr>
-<tr><td>my-listings</td><td class="gold">&#9888;</td><td>Tabs &#10003;. Vergeben-Workflow &#10003; (Dropdown zeigt nur Betriebe mit Kommunikation, DB-Speicherung korrekt). Inserat-Details-Button in allen Tabs &#10003;. Kommunikations-Anzeige (Count) pro Inserat &#10003;. Sprachen-Labels &#10003;. Privacy Rule «Als Partner» &#10003;. Nachrichten-Icon &#10003;.</td></tr>
-<tr><td>reset_pw</td><td class="green">&#10003;</td><td>Auf Deutsch.</td></tr>
-<tr><td>404</td><td class="green">&#10003;</td><td>Vorhanden.</td></tr>
-</tbody>
-</table>
-
-<h2>5. Accounts</h2>
-<div class="box">
-<strong>Admin:</strong> mueller.christophe@gmail.com (is_admin=yes, country=Schweiz CH)<br>
-<strong>Test-User CH:</strong> chris.login@icloud.com (betrieb_status=Freigeschaltet, country=Schweiz CH)<br>
-<strong>Preview:</strong> mockup-31775.bubbleapps.io/version-test/index
+<div class="card">
+  <table>
+    <tr><th>Name</th><th>Werte</th></tr>
+    <tr><td><code>Inserat_Typ</code></td><td>Biete / Suche</td></tr>
+    <tr><td><code>Inserat_Kategorie</code></td><td>Küche / Service / Housekeeping / Technik / Animation</td></tr>
+    <tr><td><code>Inserat_Status</code></td><td>Aktiv / Inaktiv / Vergeben</td></tr>
+    <tr><td><code>Betrieb_Status</code></td><td>Ausstehend / Freigeschaltet / Gesperrt</td></tr>
+    <tr><td><code>Land</code></td><td>Schweiz (CH) / Deutschland (DE) / Österreich (AT) · hat Attribut <code>code</code></td></tr>
+  </table>
 </div>
 
-<h2>6. Privacy Rules</h2>
-<table>
-<thead><tr><th>Type</th><th>Regel</th><th>Status</th></tr></thead>
-<tbody>
-<tr><td>User</td><td>Admin sieht alle &middot; User sieht eigene Daten</td><td class="green">&#10003;</td></tr>
-<tr><td>Listing</td><td>Admin sieht alle &middot; Eigenes Inserat (Auto-bind) &middot; Eigenes Land &middot; Als Partner (partner_business = Current User, alle Felder View) &middot; Everyone else gesperrt</td><td class="green">&#10003;</td></tr>
-<tr><td>Conversation</td><td>Eigene Conversations (initiator oder recipient = Current User)</td><td class="green">&#10003;</td></tr>
-<tr><td>Message</td><td>Nachrichten eigener Conversations</td><td class="green">&#10003;</td></tr>
-<tr><td>BusinessImage</td><td>Admin sieht alle &middot; Eigenes Bild</td><td class="green">&#10003;</td></tr>
-<tr><td>Review</td><td>Own reviews &middot; Reviews about me &middot; Members view</td><td class="green">&#10003;</td></tr>
-</tbody>
-</table>
-
-<h2>7. Wichtige Implementierungs-Details</h2>
-<div class="box">
-<strong>Google Geocoding API (WICHTIG — ersetzt Nominatim):</strong><br>
-API Connector: Collection «New Collection», Call «Google Geocode Address», Use as: <strong>Action</strong>.<br>
-URL: <code>https://maps.googleapis.com/maps/api/geocode/json</code><br>
-Parameter: <code>address=[address]</code> (NOT Private!), <code>components=[components]</code> (NOT Private!), <code>key=API_KEY</code> (Private!)<br>
-Adress-Parameter im Workflow: <code>Input PLZ's value + " " + Input Ort's value</code><br>
-Components-Parameter: <code>"country:" + Dropdown Land's value's code</code> (z.B. "country:CH")<br>
-Response-Felder (via results-Liste): <code>Result of Step X's results:each item's geometry location lat:first item</code>, <code>...geometry location lng:first item</code>, <code>...formatted_address:first item</code><br>
-Status-Check: <code>Result of Step X's status = "OK"</code> (statt :count > 0)<br>
-<strong>Initialisierung:</strong> Mit Testwerten [8001 Zürich] + [country:CH] initialisieren, danach Werte zurücksetzen auf [address] + [components]. Nicht nochmals Re-initialize klicken!<br>
-<br>
-<strong>Geocoding-Workflows (alle 3 umgestellt auf Google):</strong><br>
-1. <code>profile-reg-submit-btn</code> (Registrierung): Geocode → Show error (status≠OK) → Sign up (status=OK) → Make changes User lat/lng/map_address (status=OK) → Go to profile (status=OK)<br>
-2. <code>profile-complete-save-btn</code> (Profil speichern): Geocode → Show error (status≠OK) → Make changes User (alle Felder, immer) → Make changes User lat/lng/map_address (status=OK) → Make changes Listings industry (immer)<br>
-3. <code>my-listings-create-submit-btn</code> (Inserat erstellen): Geocode → Show error (status≠OK) → Create Listing (status=OK) → Make changes Listing lat/lng (status=OK) → Hide popup (status=OK) → Reset inputs (status=OK)<br>
-4. <code>my-listings-edit-submit-btn</code> (Inserat bearbeiten): Geocode → Show error (status≠OK) → Make changes Listing (status=OK, lat/lng) → Hide popup (status=OK) → Display list (status=OK)<br>
-Fehler-Anzeige: Rotes Text-Element («Standort nicht gefunden») — initial unsichtbar, wird gezeigt wenn status≠OK. Wird ausgeblendet wenn PLZ oder Ort-Input geändert wird (separate Workflows pro Input).<br>
-PLZ/Ort Felder im Create-Popup werden mit Current User's postal_code/city vorausgefüllt.<br>
-<br>
-<strong>Umkreissuche (index-Seite):</strong><br>
-Filter-Elemente: <code>input-filter-plz</code> (Input, Placeholder «z.B. 8001 Zürich»), <code>dropdown-filter-radius</code> (Static: 10/25/50/100 km)<br>
-Custom States auf Group marketplace-filters: <code>search_lat</code>, <code>search_lng</code>, <code>search_radius_km</code>, <code>search_lat_min</code>, <code>search_lat_max</code>, <code>search_lng_min</code>, <code>search_lng_max</code> (alle Number)<br>
-Workflow filter-search-btn: Geocode (address=PLZ+City, components=country:Current User's country's code) → Set states (lat, lng, radius_km, lat_min/max=lat±radius/111, lng_min/max=lng±radius/111)<br>
-RG constraints (Ignore empty=ON): <code>lat ≥ search_lat_min</code>, <code>lat ≤ search_lat_max</code>, <code>lng ≥ search_lng_min</code>, <code>lng ≤ search_lng_max</code><br>
-Eigene Inserate ausgeblendet: Constraint <code>business is not Current User</code> (permanent)<br>
-<br>
-<strong>Karte (index-Seite, Map A):</strong><br>
-Markers: Single · Marker Address: <code>Current User's map_address</code> → zentriert auf Betriebsstandort<br>
-map_address = Google's formatted_address (z.B. «8001 Zürich, Switzerland»)<br>
-<br>
-<strong>Kontakt aufnehmen-Workflow (disclaimer-confirm-btn, index):</strong><br>
-&ndash; Step 1: Create Conversation &middot; Step 2: Create Message &middot; Step 3: Reset &middot; Step 4: Hide &middot; Step 5: Navigate to messages &#10003;
-<br><br>
-<strong>Nachrichten-Seite (messages):</strong><br>
-&ndash; Type of content: leer (kein Page-Typ)<br>
-&ndash; Gefilterte Ansicht via GET-Parameter <code>listing_id</code>: RG filtert via <code>listing = Do a search for Listings (unique id = Get data from page URL "listing_id"):first item</code>, «Ignore empty constraints» ON<br>
-&ndash; Custom State <code>selected_conversation</code> (Typ: Conversation) auf Group messages-chat-panel<br>
-&ndash; NOCH OFFEN: Grauer Balken unter Senden-Button
-<br><br>
-<strong>my-listings / popup-vergeben:</strong><br>
-&ndash; Dropdown dropdown-partner-select: Type=User, Choices=Search for Users (betrieb_status=Freigeschaltet, unique id &lt;&gt; Current User's unique id), Option caption=company_name<br>
-&ndash; partner_business = Dropdown dropdown-partner-select's value<br>
-&ndash; NOCH OFFEN: Auswahl fehlerhaft + DB-Speicherung prüfen<br>
-&ndash; FEHLER: dropdown-partner-select «is not a possible option» (Bubble-Issue)
-<br><br>
-<strong>Bubble-Spezifika:</strong><br>
-&ndash; «Visible on page load» ist im Tab Interaction, nicht Visual<br>
-&ndash; Custom States auf Parent-Group, nicht auf Buttons<br>
-&ndash; Custom States via Workflow «Set state» anlegen (Rechtsklick zeigt Add state nicht immer)<br>
-&ndash; Cell's container layout muss Column sein für Fill-Breite<br>
-&ndash; In Unterelementen: «Parent group's X» statt «Current cell's X»<br>
-&ndash; Rotes «Add» in Datenquellen-Popup: verschwindet beim Schliessen, kein Fehler<br>
-&ndash; Bubble-Suche kann nicht direkt durch Beziehungen navigieren<br>
-&ndash; <strong>Portal-Update-Regel (WICHTIG):</strong> Das Portal speichert jeden Dokumentinhalt als Base64 im CONTENTS-Objekt. Python-Pattern: <code>re.search(r'"keyname": "([A-Za-z0-9+/=]+)"', portal)</code> — Leerzeichen nach Doppelpunkt beachten!<br>
-&ndash; <strong>Conditionals-Regel:</strong> Immer «Visible on page load = OFF» + Conditional «This element is visible» wenn Bedingung erfüllt<br>
-&ndash; Flag-Emojis auf Windows Chrome nicht unterstützt — nur Text verwenden<br>
-&ndash; In Bubble Map Marker Address: nur einzelne Werte, keine Konkatenation möglich → map_address (Text) als Zwischenfeld nutzen<br>
-&ndash; <strong>RG-Zellen-Muster:</strong> Group ZusRowItem (direktes Kind der RG) → Data source = <code>Current cell's Listing</code>. Untergruppen mit Type=Listing erhalten Data source = <code>Parent group's Listing</code><br>
-&ndash; <strong>Karte nach Login:</strong> Custom State <code>page_loaded</code> (yes/no) auf Group marketplace-main. «Page is loaded»-Workflow setzt State=yes. Map A: Visible on page load=OFF, Conditional: sichtbar wenn page_loaded=yes<br>
-&ndash; <strong>Handshake-Dropdown (Typ Conversation):</strong> Constraint <code>listing = Parent group's Listing</code>. Caption: <code>Current option's initiator's company_name</code>. Workflow speichert <code>dropdown's value's initiator</code> als partner_business
+<h2>4. Datenbank (Schlüsselfelder)</h2>
+<div class="card">
+  <table>
+    <tr><th>Data Type</th><th>Wichtige Felder</th></tr>
+    <tr><td>User</td><td>company_name, vat_id, industry, country (Land OS), postal_code, city, betrieb_status (Betrieb_Status OS), is_admin, disclaimer_accepted, notification_email, website, lat (Number), lng (Number), map_address (Text)</td></tr>
+    <tr><td>Listing</td><td>business (→User), title, type (Inserat_Typ OS), category (Inserat_Kategorie OS), industry, start_date, end_date, country (Land OS), postal_code, city, status (Inserat_Status OS), accommodation, partner_business (→User), lat (Number), lng (Number)</td></tr>
+    <tr><td>Conversation</td><td>listing (→Listing), participant1 (→User), participant2 (→User), last_message_date</td></tr>
+    <tr><td>Message</td><td>conversation (→Conversation), sender (→User), content, is_read</td></tr>
+    <tr><td>Review</td><td>reviewer (→User), reviewed (→User), listing (→Listing), rating_communication (Number 1–5), rating_reliability (Number 1–5), recommend (yes/no), comment (Text), slug</td></tr>
+    <tr><td>SavedListing</td><td>user (→User), listing (→Listing)</td></tr>
+  </table>
 </div>
 
-<h2>8. Offene Punkte</h2>
-<ul>
-<li><strong>Dropdown «is not a possible option»</strong>: auf listing-detail und my-listings — dropdown-partner-select (Typ Conversation) wird irgendwo noch als User verwendet</li>
-<li><strong>Grosser Geocoding-Test</strong>: Alle drei Workflows testen (Registrierung, Betriebsdaten speichern, Inserat erstellen/bearbeiten)</li>
-<li><strong>Disclaimer-Text</strong>: Prüfung durch Annette Krey ausstehend</li>
-<li><strong>E-Mail-Benachrichtigungen</strong> (Postmark): Warten auf Annette/Patrick</li>
-<li><strong>Admin-Benachrichtigung</strong> bei Neuregistrierung: Entscheid ausstehend</li>
-<li><strong>Ansprechpartner-Sichtbarkeit</strong>: Entscheid Annette</li>
-<li><strong>Stripe Integration</strong> (Phase 4)</li>
-<li><strong>Google Maps JS API</strong>: Für Kartenanzeige — Key vorhanden (Patrick), Geocoding API aktiv. Maps JavaScript API + Places API noch nicht eingebunden.</li>
-</ul>
-
-<h2>9. Feature-Ideen (Phase 2+)</h2>
-<div class="box">
-&ndash; Bewertungsanzeige auf Profil + Inseratskarte<br>
-&ndash; Dringlichkeits-Badge «Kurzfristig»<br>
-&ndash; Gespeicherte Suchalarme<br>
-&ndash; Statistik-Widget auf Inseraten<br>
-&ndash; Schichtart: Ganzer Tag / Teildienst / Wochenende<br>
-&ndash; Mustervertrag (downloadbar)<br>
-&ndash; Saisonaler Nachfragekalender<br>
-&ndash; Benutzerhandbuch<br>
-<br>
-<em>Entscheid über Priorisierung liegt bei Annette Krey Solutions.</em>
+<h2>5. Seiten</h2>
+<div class="card">
+  <table>
+    <tr><th>Seite</th><th>Zweck</th></tr>
+    <tr><td>index</td><td>Marktplatz / Login für eingeloggte Betriebe · Umkreissuche via Google Geocoding</td></tr>
+    <tr><td>profile</td><td>Registrierung (ausgeloggt) + Profil bearbeiten (eingeloggt) · Disclaimer-Popup + Checkbox</td></tr>
+    <tr><td>my-listings</td><td>Eigene Inserate verwalten (3 Tabs: Meine Inserate / Vergeben / als Partner) · Bewertungssystem</td></tr>
+    <tr><td>listing-detail</td><td>Inserat-Detailseite · Kontakt aufnehmen · Bewertungsanzeige (group-reviews)</td></tr>
+    <tr><td>listing-create</td><td>Inserat erstellen</td></tr>
+    <tr><td>messages</td><td>Chat-Seite</td></tr>
+    <tr><td>admin-businesses</td><td>Admin: Betriebe freischalten/sperren</td></tr>
+    <tr><td>admin-dashboard</td><td>Admin: Übersicht</td></tr>
+  </table>
 </div>
 
-<h2>10. Bezahlmodell (Phase 4)</h2>
-<div class="box warn">
-Stripe noch NICHT eingebunden. Admin schaltet manuell frei.<br>
-Einmalige Aufnahmegebühr: CHF 199 &middot; Classic-Abo: CHF 99/Mt. (12 Mon.) &middot; Flex-Abo: CHF 119/Mt. (monatlich)<br>
-Stripe-Account MUSS auf Annettes Account laufen.
+<h2>6. Bewertungssystem (Stand 05.06.2026)</h2>
+<div class="card">
+  <ul>
+    <li><strong>popup-review</strong> auf my-listings: Sternebewertung (Kommunikation + Zuverlässigkeit), Weiterempfehlung, Kommentar</li>
+    <li><strong>Custom State <code>is_view_mode</code> (yes/no)</strong> auf popup-review: no = editierbar, yes = read-only</li>
+    <li><strong>btn-vergeben-review / btn-partner-review</strong>: sichtbar wenn count = 0. Default unsichtbar. Collapse when hidden: on</li>
+    <li><strong>btn-vergeben-review-view / btn-partner-review-view</strong>: sichtbar wenn count > 0. Öffnet Popup in View-Modus</li>
+    <li><strong>Gegenseitige Bewertung:</strong> review-submit-btn Workflow aufgeteilt in zwei Schritte mit «Only when»-Condition: Inserent bewertet Partner (reviewed = partner_business), Partner bewertet Inserenten (reviewed = business)</li>
+    <li><strong>popup-business-reviews</strong> auf listing-detail: Type Listing. Zeigt Zusammenfassung (Kommunikation, Zuverlässigkeit, Weiterempfehlung, Anzahl) + Kommentarliste. Constraint: reviewed = Current page's Listing's business. Aufruf via Link «★ Bewertungen anzeigen» beim Betriebsnamen (nur sichtbar wenn Bewertungen vorhanden)</li>
+    <li><strong>re-business-reviews</strong>: Reusable Element, Type User. Gleiche Struktur wie popup-business-reviews. Verwendet auf Seite my-reviews.</li>
+    <li><strong>Seite my-reviews:</strong> Neue Seite «Meine Bewertungen» in Sidebar. Zeigt erhaltene Bewertungen des eingeloggten Benutzers via re-business-reviews.</li>
+    <li><strong>Noch offen:</strong> Bewertungs-Button nur nach Inserat-Ende · popup-business-reviews durch re-business-reviews ersetzen (nicht dringend)</li>
+  </ul>
 </div>
 
-<h2>11. Dokumenten-Regeln</h2>
-<div class="box rule">
-<ul>
-<li>datenbank.html &harr; funktionsspezifikation.html immer synchron halten</li>
-<li>testkonzept.html + todo.html NIEMALS in ZIP</li>
-<li>ZIP = genau 7 Dateien: index, datenbank, funktionsspezifikation, roadmap, tools_kosten, prototyp, mockup</li>
-<li>Footer: links «StaffKeeping | Auftraggeber: Annette Krey Solutions», rechts «Arbeitsdokumente erstellt durch Christophe Müller»</li>
-<li>«Erstellt mit Claude AI» nirgends</li>
-</ul>
+<h2>7. APIs & Integrationen</h2>
+<div class="card">
+  <table>
+    <tr><th>Service</th><th>Status</th><th>Details</th></tr>
+    <tr><td>Google Maps JS API</td><td><span class="tag green">AKTIV</span></td><td>Maps JavaScript API + Places API eingebunden. Geocoding aktiv. lat/lng/map_address auf User und Listing gespeichert. Nur Google Maps (kein OpenStreetMap).</td></tr>
+    <tr><td>Postmark</td><td><span class="tag green">AKTIV</span></td><td>API Connector eingerichtet (X-Postmark-Server-Token). staffkeeping.com DKIM + Return-Path verifiziert. Account freigeschaltet. Admin-Benachrichtigung bei Neuregistrierung aktiv (To: annette@staffkeeping.ch). Hinweis: noreply@staffkeeping.com muss bei Annette als sicherer Absender hinterlegt werden.</td></tr>
+    <tr><td>Stripe</td><td><span class="tag grey">PHASE 4</span></td><td>Komplett zurückgestellt. Admin schaltet aktuell manuell frei.</td></tr>
+  </table>
 </div>
 
-<h2>12. Dokumente</h2>
-<table>
-<thead><tr><th>Datei</th><th>Version</th></tr></thead>
-<tbody>
-<tr><td>staffkeeping_index.html</td><td>v2.1</td></tr>
-<tr><td>staffkeeping_datenbank.html</td><td>v2.1 (lat/lng/map_address User + lat/lng Listing nachtragen)</td></tr>
-<tr><td>staffkeeping_funktionsspezifikation.html</td><td>v2.1 (Sync mit DB ausstehend)</td></tr>
-<tr><td>staffkeeping_roadmap.html</td><td>v2.0</td></tr>
-<tr><td>staffkeeping_tools_kosten.html</td><td>v1.0</td></tr>
-<tr><td>staffkeeping_prototyp.html</td><td>v1.0</td></tr>
-<tr><td>staffkeeping_mockup.html</td><td>v1.0</td></tr>
-<tr><td>staffkeeping_todo.html</td><td>v2.1</td></tr>
-<tr><td>staffkeeping_testkonzept.html</td><td>v1.1</td></tr>
-<tr><td class="gold">staffkeeping_briefing.html</td><td class="gold">v4.0 (Stand 24.05.2026)</td></tr>
-</tbody>
-</table>
+<h2>8. Offene Punkte (priorisiert)</h2>
+<div class="card">
+  <table>
+    <tr><th>Priorität</th><th>Punkt</th><th>Details</th></tr>
+    <tr><td><span class="tag red">FEHLER</span></td><td>Dropdown «is not a possible option»</td><td>dropdown-partner-select auf listing-detail + my-listings. Lösung: löschen und neu erstellen.</td></tr>
+    <tr><td><span class="tag red">HOCH</span></td><td>Bewertungsanzeige 0.0-Bug</td><td>listing-detail zeigt 0.0 obwohl Reviews in DB. Search-Constraint «reviewed» falsch aufgelöst.</td></tr>
+    <tr><td><span class="tag red">HOCH</span></td><td>Geocoding-Test</td><td>Alle drei Workflows mit echten DACH-Adressen testen.</td></tr>
+    <tr><td><span class="tag red">HOCH</span></td><td>Bewertungsanzeige Profil-Seite</td><td>group-reviews analog listing-detail bauen.</td></tr>
+    <tr><td><span class="tag yellow">MITTEL</span></td><td>X-Button popup-review</td><td>«Hide Popup popup-review» Workflow hinzufügen.</td></tr>
+    <tr><td><span class="tag yellow">MITTEL</span></td><td>Bewertungs-Button nur nach Inserat-Ende</td><td>Conditional: btn-vergeben-review sichtbar nur wenn end_date < today.</td></tr>
+    <tr><td><span class="tag yellow">MITTEL</span></td><td>Website auf listing-detail</td><td>Link-Element mit business's website, conditional wenn nicht leer.</td></tr>
+    <tr><td><span class="tag blue">WARTEN</span></td><td>Postmark Account-Freigabe</td><td>Patrick → Postmark Support</td></tr>
+    <tr><td><span class="tag blue">WARTEN</span></td><td>Disclaimer-Text</td><td>Annette prüft</td></tr>
+    <tr><td><span class="tag blue">WARTEN</span></td><td>Admin-Benachrichtigung</td><td>Entscheid: bei Registrierung oder nach Stripe?</td></tr>
+    <tr><td><span class="tag blue">WARTEN</span></td><td>Ansprechpartner-Sichtbarkeit</td><td>Entscheid Annette</td></tr>
+    <tr><td><span class="tag grey">PHASE 4</span></td><td>Stripe-Integration</td><td>Komplett zurückgestellt</td></tr>
+  </table>
+</div>
 
-<div class="sep"></div>
-<p style="color:#7a8fa8;font-size:11px;text-align:center;">StaffKeeping | Auftraggeber: Annette Krey Solutions &middot; Projekt-Briefing &middot; 24.05.2026 &middot; Arbeitsdokumente erstellt durch Christophe Müller</p>
+<h2>9. Wichtige Bubble-Eigenheiten</h2>
+<div class="card">
+  <ul>
+    <li>Typ-Inkompatibilitäten → Constraint entfernen statt workaround</li>
+    <li>Option Sets bei Dropdowns, Workflows, Privacy Rules und Display-Elementen überall aktualisieren wenn Felder konvertiert werden</li>
+    <li>«Parent group's thing» = generischer Typ wenn Parent group keinen spezifischen Typ hat — dann Typ setzen</li>
+    <li>Custom States im Preview bleiben manchmal hängen → Hard Refresh (Ctrl+Shift+R)</li>
+    <li>Workflow-Reihenfolge wichtig: State setzen VOR Show Popup wenn Conditionals beim Öffnen evaluiert werden</li>
+    <li>Collapse when hidden aktivieren wenn zwei alternative Buttons nebeneinander stehen</li>
+    <li>Inbox-Sortierung: <code>last_message_date</code> descending auf Conversation</li>
+    <li>Land Option Set hat Attribut <code>code</code> (CH/DE/AT)</li>
+  </ul>
+</div>
+
 </body>
 </html>
