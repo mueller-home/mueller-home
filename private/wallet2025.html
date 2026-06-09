@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wallet 2025 - Krypto Bestand</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            line-height: 1.7; 
+            color: #333; 
+            background: linear-gradient(135deg, #1261A0 0%, #2776EA 50%, #58CCED 100%); 
+            min-height: 100vh; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 1400px; 
+            margin: 0 auto; 
+            background: white; 
+            border-radius: 20px; 
+            overflow: hidden; 
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); 
+        }
+        .hero { 
+            background: linear-gradient(135deg, #1261A0 0%, #2776EA 100%); 
+            color: white; 
+            padding: 40px 40px; 
+            text-align: center; 
+        }
+        .hero h1 { 
+            font-size: 2.5em; 
+            margin-bottom: 15px; 
+            line-height: 1.2; 
+        }
+        .hero p { 
+            font-size: 1.2em; 
+            opacity: 0.95; 
+        }
+        .content {
+            padding: 40px;
+        }
+        .networks-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        .network-column {
+            min-width: 0;
+        }
+        .network-title {
+            font-size: 1.5em;
+            color: #1261A0;
+            margin: 0 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #1261A0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 0;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            font-size: 0.9em;
+        }
+        th {
+            background: #1261A0;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        th.number-col {
+            text-align: right;
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        tr:hover {
+            background: #f5f5f5;
+        }
+        .token-name {
+            font-weight: 600;
+            color: #1261A0;
+        }
+        .price-input, .anzahl-input {
+            width: 100px;
+            padding: 6px;
+            border: 2px solid #90CAF9;
+            border-radius: 6px;
+            font-size: 0.9em;
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+        .price-input:read-only {
+            background: #f5f5f5;
+            cursor: not-allowed;
+            border-color: #BBDEFB;
+        }
+        .price-input:focus, .anzahl-input:focus {
+            outline: none;
+            border-color: #1261A0;
+        }
+        .value {
+            text-align: right;
+            font-weight: 600;
+            color: #2E7D32;
+            font-family: 'Courier New', monospace;
+        }
+        .summary-box {
+            background: #E3F2FD;
+            padding: 20px 30px;
+            border-radius: 12px;
+            border-left: 4px solid #1261A0;
+            margin-top: 25px;
+            width: calc(50% - 7.5px);
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+        }
+        .summary-row:last-child {
+            margin-bottom: 0;
+        }
+        .summary-label {
+            font-weight: 600;
+            color: #0B4A7D;
+        }
+        .summary-value {
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+            font-size: 1.3em;
+        }
+        .total-usd {
+            color: #2E7D32;
+        }
+        .total-chf {
+            color: #1261A0;
+        }
+        .final-total-chf {
+            color: #1261A0;
+            font-size: 1.5em;
+        }
+        .exchange-rate-input {
+            width: 150px;
+            padding: 8px;
+            border: 2px solid #90CAF9;
+            border-radius: 6px;
+            font-size: 1.1em;
+            text-align: right;
+            font-family: 'Courier New', monospace;
+        }
+        .exchange-rate-input:focus {
+            outline: none;
+            border-color: #1261A0;
+        }
+        
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2em; }
+            .content { padding: 25px; }
+            .price-input, .anzahl-input { width: 100px; }
+            .summary-row { flex-direction: column; gap: 10px; }
+            .networks-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+        
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 10mm;
+            }
+            body {
+                padding: 0;
+                margin: 0;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .container {
+                box-shadow: none;
+                border-radius: 0;
+                max-width: 100%;
+            }
+            .hero {
+                padding: 15px 20px !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .hero h1 {
+                font-size: 1.4em !important;
+                margin-bottom: 5px !important;
+            }
+            .hero p {
+                font-size: 0.9em !important;
+            }
+            .content {
+                padding: 10px !important;
+            }
+            .networks-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
+                margin-bottom: 10px;
+            }
+            .network-title {
+                font-size: 1.1em !important;
+                margin: 0 0 8px 0 !important;
+                padding-bottom: 5px !important;
+                border-bottom: 2px solid #1261A0 !important;
+            }
+            .footer-link, .print-btn {
+                display: none !important;
+            }
+            table {
+                box-shadow: none;
+                page-break-inside: avoid;
+                font-size: 0.7em !important;
+                margin-bottom: 0 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            th {
+                background: #1261A0 !important;
+                color: white !important;
+                border: 1px solid #333;
+                padding: 5px 8px !important;
+                font-size: 0.85em !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            td {
+                border: 1px solid #333;
+                padding: 4px 8px !important;
+                background: white !important;
+            }
+            .token-name {
+                font-size: 0.9em !important;
+            }
+            .price-input, .anzahl-input, .exchange-rate-input {
+                border: none;
+                background: transparent;
+                padding: 0;
+                font-size: 0.9em !important;
+            }
+            .value {
+                font-size: 0.9em !important;
+            }
+            .summary-box {
+                background: #E3F2FD !important;
+                border: 2px solid #1261A0;
+                page-break-inside: avoid;
+                padding: 12px 15px !important;
+                margin-top: 10px !important;
+                width: calc(50% - 7.5px) !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .summary-row {
+                margin-bottom: 8px !important;
+                font-size: 0.95em !important;
+            }
+            .summary-label {
+                font-size: 0.9em !important;
+            }
+            .summary-value {
+                font-size: 1em !important;
+            }
+            .total-chf {
+                font-size: 1.1em !important;
+            }
+            .exchange-rate-input {
+                width: 100px !important;
+                font-size: 0.9em !important;
+            }
+            tr.hide-on-print {
+                display: none !important;
+            }
+        }
+        
+        .print-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #2E7D32;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+        
+        .print-btn:hover {
+            background: #1B5E20;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="hero">
+        <h1>💼 Wallet 2025</h1>
+        <p>Krypto Bestand per 31.12.2025</p>
+    </div>
+
+    <div class="content">
+        
+        <div class="networks-grid">
+            <div class="network-column">
+                <h2 class="network-title">🔶 BSC-Netzwerk</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Token</th>
+                            <th class="number-col">Kurs</th>
+                            <th>Währung</th>
+                            <th class="number-col">Anzahl</th>
+                            <th class="number-col">Wert</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="token-name">PC LP (New)</td>
+                            <td style="text-align: right;"><input type="text" class="price-input" data-id="bsc-pclp" data-currency="USD" value="0.3510" readonly></td>
+                            <td style="text-align: center;">USD</td>
+                            <td style="text-align: right;"><input type="text" class="anzahl-input" data-id="bsc-pclp" value="0"></td>
+                            <td class="value" id="value-bsc-pclp">$0.0000</td>
+                        </tr>
+                        <tr>
+                            <td class="token-name">PC LP (Re)</td>
+                            <td style="text-align: right;"><input type="text" class="price-input" data-id="bsc-pclp-re" data-currency="USD" value="0.011837" readonly></td>
+                            <td style="text-align: center;">USD</td>
+                            <td style="text-align: right;"><input type="text" class="anzahl-input" data-id="bsc-pclp-re" value="0"></td>
+                            <td class="value" id="value-bsc-pclp-re">$0.0000</td>
+                        </tr>
+                        <tr>
+                            <td class="token-name">BNB</td>
+                            <td style="text-align: right;"><input type="text" class="price-input" data-id="bsc-bnb" data-currency="CHF" value="681.9100" readonly></td>
+                            <td style="text-align: center;">CHF</td>
+                            <td style="text-align: right;"><input type="text" class="anzahl-input" data-id="bsc-bnb" value="0"></td>
+                            <td class="value" id="value-bsc-bnb">CHF 0.0000</td>
+                        </tr>
+                        <tr>
+                            <td class="token-name">VOW</td>
+                            <td style="text-align: right;"><input type="text" class="price-input" data-id="bsc-vow" data-currency="USD" value="0.02465" readonly></td>
+                            <td style="text-align: center;">USD</td>
+                            <td style="text-align: right;"><input type="text" class="anzahl-input" data-id="bsc-vow" value="0"></td>
+                            <td class="value" id="value-bsc-vow">$0.0000</td>
+                        </tr>
+                        <tr>
+                            <td class="token-name">vUSD</td>
+                            <td style="text-align: right;"><input type="text" class="price-input" data-id="bsc-vusd" data-currency="USD" value="0.06487" readonly></td>
+                            <td style="text-align: center;">USD</td>
+                            <td style="text-align: right;"><input type="text" class="anzahl-input" data-id="bsc-vusd" value="0"></td>
+                            <td class="value" id="value-bsc-vusd">$0.0000</td>
+                        </tr>
+                        <tr>
+                            <td class="token-name">v$</td>
+                            <td style="text-align: right;"><input type="text" class="price-input" data-id="bsc-vs" data-currency="USD" value="0.3450" readonly></td>
+                            <td style="text-align: center;">USD</td>
+                            <td style="text-align: right;"><input type="text" class="anzahl-input" data-id="bsc-vs" value="0"></td>
+                            <td class="value" id="value-bsc-vs">$0.0000</td>
+                        </tr>
+                        <tr>
+                            <td class="token-name">USDT</td>
+                            <td style="text-align: right;"><input type="text" class="price-input" data-id="bsc-usdt" data-currency="USD" value="1.0000" readonly></td>
+                            <td style="text-align: center;">USD</td>
+                            <td style="text-align: right;"><input type="text" class="anzahl-input" data-id="bsc-usdt" value="0"></td>
+                            <td class="value" id="value-bsc-usdt">$0.0000</td>
+                        </tr>
+                        <tr>
+                            <td class="token-name">TLN (old)</td>
+                            <td style="text-align: right;"><input type="text" class="price-input" data-id="bsc-tln-old" data-currency="USD" value="1.0000" readonly></td>
+                            <td style="text-align: center;">USD</td>
+                            <td style="text-align: right;"><input type="text" class="anzahl-input" data-id="bsc-tln-old" value="0"></td>
+                            <td class="value" id="value-bsc-tln-old">$0.0000</td>
+                        </tr>
+                        <tr>
+                            <td class="token-name">TLN+</td>
+                            <td style="text-align: right;"><input type="text" class="price-input" data-id="bsc-tln-plus" data-currency="USD" value="0.005532" readonly></td>
+                            <td style="text-align: center;">USD</td>
+                            <td style="text-align: right;"><input type="text" class="anzahl-input" data-id="bsc-tln-plus" value="0"></td>
+                            <td class="value" id="value-bsc-tln-plus">$0.0000</td>
+                        </tr>
+                        <tr>
+                            <td class="token-name">TLN X</td>
+                            <td style="text-align: right;"><input type="text" class="price-input" data-id="bsc-tln-x" data-currency="USD" value="1.0000" readonly></td>
+                            <td style="text-align: center;">USD</td>
+                            <td style="text-align: right;"><input type="text" class="anzahl-input" data-id="bsc-tln-x" value="0"></td>
+                            <td class="value" id="value-bsc-tln-x">$0.0000</td>
+                        </tr>
+                        <tr>
+                            <td class="token-name">TLN Gold</td>
+                            <td style="text-align: right;"><input type="text" class="price-input" data-id="bsc-tln-gold" data-currency="USD" value="0.1095" readonly></td>
+                            <td style="text-align: center;">USD</td>
+                            <td style="text-align: right;"><input type="text" class="anzahl-input" data-id="bsc-tln-gold" value="0"></td>
+                            <td class="value" id="value-bsc-tln-gold">$0.0000</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="network-column">
+                <h2 class="network-title">⟠ ETH-Netzwerk</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Token</th>
+                            <th class="number-col">Kurs</th>
+                            <th>Währung</th>
+                            <th class="number-col">Anzahl</th>
+                            <th class="number-col">Wert</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="token-name">ETH</td>
+                            <td style="text-align: right;"><input type="text" class="price-input" data-id="eth-eth" data-currency="CHF" value="2'364.0800" readonly></td>
+                            <td style="text-align: center;">CHF</td>
+                            <td style="text-align: right;"><input type="text" class="anzahl-input" data-id="eth-eth" value="0"></td>
+                            <td class="value" id="value-eth-eth">CHF 0.0000</td>
+                        </tr>
+                        <tr>
+                            <td class="token-name">VOW</td>
+                            <td style="text-align: right;"><input type="text" class="price-input" data-id="eth-vow" data-currency="USD" value="0.02465" readonly></td>
+                            <td style="text-align: center;">USD</td>
+                            <td style="text-align: right;"><input type="text" class="anzahl-input" data-id="eth-vow" value="0"></td>
+                            <td class="value" id="value-eth-vow">$0.0000</td>
+                        </tr>
+                        <tr>
+                            <td class="token-name">vUSD</td>
+                            <td style="text-align: right;"><input type="text" class="price-input" data-id="eth-vusd" data-currency="USD" value="0.06487" readonly></td>
+                            <td style="text-align: center;">USD</td>
+                            <td style="text-align: right;"><input type="text" class="anzahl-input" data-id="eth-vusd" value="0"></td>
+                            <td class="value" id="value-eth-vusd">$0.0000</td>
+                        </tr>
+                        <tr>
+                            <td class="token-name">v$</td>
+                            <td style="text-align: right;"><input type="text" class="price-input" data-id="eth-vs" data-currency="USD" value="0.3450" readonly></td>
+                            <td style="text-align: center;">USD</td>
+                            <td style="text-align: right;"><input type="text" class="anzahl-input" data-id="eth-vs" value="0"></td>
+                            <td class="value" id="value-eth-vs">$0.0000</td>
+                        </tr>
+                        <tr>
+                            <td class="token-name">USDT</td>
+                            <td style="text-align: right;"><input type="text" class="price-input" data-id="eth-usdt" data-currency="USD" value="1.0000" readonly></td>
+                            <td style="text-align: center;">USD</td>
+                            <td style="text-align: right;"><input type="text" class="anzahl-input" data-id="eth-usdt" value="0"></td>
+                            <td class="value" id="value-eth-usdt">$0.0000</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="summary-box">
+            <div class="summary-row">
+                <span class="summary-label">Sub-Total USD:</span>
+                <span class="summary-value total-usd" id="subtotal-usd">$0.0000</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">Sub-Total CHF:</span>
+                <span class="summary-value total-chf" id="subtotal-chf">CHF 0.0000</span>
+            </div>
+            <div class="summary-row">
+                <span class="summary-label">$ Kurs 31.12.2025:</span>
+                <input type="text" class="exchange-rate-input" id="exchange-rate" value="0.8004">
+            </div>
+            <div class="summary-row">
+                <span class="summary-label" style="font-weight: 700;">Wert in CHF:</span>
+                <span class="summary-value final-total-chf" id="total-chf" style="font-weight: 700;">CHF 0.0000</span>
+            </div>
+        </div>
+
+    </div>
+
+    <button class="print-btn" onclick="printPage()">🖨️ Drucken</button>
+
+</div>
+
+<script>
+function formatNumber(num) {
+    const formatted = num.toFixed(4);
+    const parts = formatted.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+    return parts.join('.');
+}
+
+function formatInputValue(input) {
+    const value = input.value.replace(/'/g, '');
+    if (value && !isNaN(value)) {
+        const num = parseFloat(value);
+        if (Number.isInteger(num)) {
+            input.value = num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+        } else {
+            const parts = value.split('.');
+            let formatted = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+            if (parts[1]) {
+                formatted += '.' + parts[1];
+            }
+            input.value = formatted;
+        }
+    }
+}
+
+function removeFormatting(input) {
+    input.value = input.value.replace(/'/g, '');
+}
+
+function calculate() {
+    let totalUsd = 0;
+    let totalChf = 0;
+    
+    const priceInputs = document.querySelectorAll('.price-input');
+    priceInputs.forEach(priceInput => {
+        const id = priceInput.getAttribute('data-id');
+        const currency = priceInput.getAttribute('data-currency');
+        const price = parseFloat(priceInput.value.replace(/'/g, '')) || 0;
+        const anzahlInput = document.querySelector(`.anzahl-input[data-id="${id}"]`);
+        const anzahl = parseFloat(anzahlInput.value.replace(/'/g, '')) || 0;
+        const value = price * anzahl;
+        
+        const valueElement = document.getElementById(`value-${id}`);
+        if (currency === 'CHF') {
+            valueElement.textContent = 'CHF ' + formatNumber(value);
+            totalChf += value;
+        } else {
+            valueElement.textContent = '$' + formatNumber(value);
+            totalUsd += value;
+        }
+    });
+    
+    const exchangeRate = parseFloat(document.getElementById('exchange-rate').value.replace(/'/g, '')) || 0;
+    const totalChfFinal = (totalUsd * exchangeRate) + totalChf;
+    
+    document.getElementById('subtotal-usd').textContent = '$' + formatNumber(totalUsd);
+    document.getElementById('subtotal-chf').textContent = 'CHF ' + formatNumber(totalChf);
+    document.getElementById('total-chf').textContent = 'CHF ' + formatNumber(totalChfFinal);
+}
+
+function printPage() {
+    const anzahlInputs = document.querySelectorAll('.anzahl-input');
+    anzahlInputs.forEach(input => {
+        const anzahl = parseFloat(input.value.replace(/'/g, '')) || 0;
+        const row = input.closest('tr');
+        
+        if (anzahl === 0) {
+            row.classList.add('hide-on-print');
+        } else {
+            row.classList.remove('hide-on-print');
+        }
+    });
+    
+    setTimeout(() => {
+        window.print();
+    }, 100);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const anzahlInputs = document.querySelectorAll('.anzahl-input');
+    anzahlInputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            removeFormatting(this);
+        });
+        
+        input.addEventListener('blur', function() {
+            formatInputValue(this);
+            calculate();
+        });
+        
+        input.addEventListener('input', function() {
+            calculate();
+        });
+        
+        formatInputValue(input);
+    });
+    
+    document.getElementById('exchange-rate').addEventListener('input', calculate);
+    
+    calculate();
+});
+</script>
+
+</body>
+</html>

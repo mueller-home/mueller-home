@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Link-Sammlung</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0f0f23;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(102, 126, 234, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(118, 75, 162, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(102, 126, 234, 0.15) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(118, 75, 162, 0.15) 0px, transparent 50%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #e2e8f0;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
+        /* Tab Navigation */
+        .tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+
+        .tab-button {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px 35px;
+            border-radius: 12px;
+            color: #cbd5e1;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .tab-button:hover::before {
+            left: 100%;
+        }
+
+        .tab-button:hover {
+            transform: translateY(-2px);
+            border-color: rgba(102, 126, 234, 0.5);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: transparent;
+            color: white;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            animation: fadeInUp 0.5s ease-out;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Card Grid */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(102, 126, 234, 0.3);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-icon {
+            font-size: 1.8rem;
+        }
+
+        .sub-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .sub-card:last-child {
+            margin-bottom: 0;
+        }
+
+        .sub-card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .links {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .link-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(102, 126, 234, 0.1);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .link-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(180deg, #667eea, #764ba2);
+            transform: scaleY(0);
+            transition: transform 0.2s ease;
+        }
+
+        .link-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+            border-color: rgba(102, 126, 234, 0.3);
+            transform: translateX(5px);
+        }
+
+        .link-item:hover::before {
+            transform: scaleY(1);
+        }
+
+        .link-item a {
+            color: #e2e8f0;
+            text-decoration: none;
+            font-weight: 500;
+            flex: 1;
+            transition: color 0.2s;
+        }
+
+        .link-item:hover a {
+            color: #667eea;
+        }
+
+        .link-icon {
+            font-size: 1.2rem;
+            opacity: 0.7;
+        }
+
+        .external-icon {
+            opacity: 0;
+            transition: opacity 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .link-item:hover .external-icon {
+            opacity: 0.5;
+        }
+
+        .placeholder {
+            color: #64748b;
+            font-style: italic;
+            padding: 12px 16px;
+            text-align: center;
+            opacity: 0.6;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .tabs {
+                gap: 10px;
+            }
+
+            .tab-button {
+                padding: 12px 25px;
+                font-size: 1rem;
+            }
+
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(180deg, #667eea, #764ba2);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(180deg, #7c8ef5, #8b5cb8);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Link-Sammlung</h1>
+            <p class="subtitle">Deine persönliche Navigation</p>
+        </header>
+
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <button class="tab-button active" data-tab="wir">👨‍👩‍👧‍👦 Wir</button>
+            <button class="tab-button" data-tab="financial">💰 Financial</button>
+            <button class="tab-button" data-tab="carmen">💼 Carmen</button>
+            <button class="tab-button" data-tab="chris">🚀 Chris</button>
+        </div>
+
+        <!-- Wir Tab -->
+        <div class="tab-content active" id="wir">
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-title">
+                        <span class="card-icon">🏠</span>
+                        Privat & Familie
+                    </div>
+                    <div class="links">
+                        <div class="link-item">
+                            <span class="link-icon">🎄</span>
+                            <a href="https://lets-go-free.github.io/mueller/" target="_blank">Weihnachtsessen 2025 bei Näni & Nana</a>
+                            <span class="external-icon">↗</span>
+                        </div>
+                        <div class="link-item">
+                            <span class="link-icon">📄</span>
+                            <a href="shortcuts://run-shortcut?name=UnsereDokumenteVerträge" target="_blank">Unsere Dokumente & Verträge</a>
+                            <span class="external-icon">↗</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span class="card-icon">✈️</span>
+                        Reisen & Ferien
+                    </div>
+                    <div class="links">
+                        <div class="link-item">
+                            <span class="link-icon">🌍</span>
+                            <a href="http://muellers-unterwegs.ch" target="_blank">Müllers Unterwegs</a>
+                            <span class="external-icon">↗</span>
+                        </div>
+                        <div class="link-item">
+                            <span class="link-icon">🐧</span>
+                            <a href="https://findpenguins.com/muellers-unterwegs" target="_blank">FindPenguins</a>
+                            <span class="external-icon">↗</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Financial Tab -->
+        <div class="tab-content" id="financial">
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-title">
+                        <span class="card-icon">💡</span>
+                        Allgemein
+                    </div>
+                    <div class="links">
+                        <div class="link-item">
+                            <span class="link-icon">🔧</span>
+                            <a href="shortcuts://run-shortcut?name=DefiToolsReferralLinks" target="_blank">Defi Tools und Referral Links</a>
+                            <span class="external-icon">↗</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span class="card-icon">📊</span>
+                        TLN/VOW
+                    </div>
+                    
+                    <div class="sub-card">
+                        <div class="links">
+                            <div class="link-item">
+                                <span class="link-icon">🏠</span>
+                                <a href="https://letsgofree.me/tlnvow" target="_blank">Startseite</a>
+                                <span class="external-icon">↗</span>
+                            </div>
+                            <div class="link-item">
+                                <span class="link-icon">🌐</span>
+                                <a href="https://tlnprotocol.com/app" target="_blank">dApp</a>
+                                <span class="external-icon">↗</span>
+                            </div>
+                            <div class="link-item">
+                                <span class="link-icon">✍️</span>
+                                <a href="https://letsgofree.me/tlnvow/private/tlnloans" target="_blank">Unsere Loans, Erfassung</a>
+                                <span class="external-icon">↗</span>
+                            </div>
+                            <div class="link-item">
+                                <span class="link-icon">🎥</span>
+                                <a href="shortcuts://run-shortcut?name=TLN_Online_Präsentation" target="_blank">Aufzeichnung Online-Präsentation</a>
+                                <span class="external-icon">↗</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span class="card-icon">🏛️</span>
+                        dao1
+                    </div>
+                    
+                    <div class="sub-card">
+                        <div class="links">
+                            <div class="link-item">
+                                <span class="link-icon">🏠</span>
+                                <a href="https://letsgofree.me/dao1" target="_blank">Startseite</a>
+                                <span class="external-icon">↗</span>
+                            </div>
+                            <div class="link-item">
+                                <span class="link-icon">🌐</span>
+                                <a href="https://app.dao1.ai" target="_blank">dApp</a>
+                                <span class="external-icon">↗</span>
+                            </div>
+                            <div class="link-item">
+                                <span class="link-icon">🪙</span>
+                                <a href="shortcuts://run-shortcut?name=dao1-NotizTokenAdressen" target="_blank">Token-Adressen</a>
+                                <span class="external-icon">↗</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span class="card-icon">💱</span>
+                        neo.FX
+                    </div>
+                    
+                    <div class="sub-card">
+                        <div class="links">
+                            <div class="link-item">
+                                <span class="link-icon">🏠</span>
+                                <a href="https://letsgofree.me/neofx" target="_blank">Startseite</a>
+                                <span class="external-icon">↗</span>
+                            </div>
+                            <div class="link-item">
+                                <span class="link-icon">🏦</span>
+                                <a href="https://portal.tagmarkets.com" target="_blank">Portal TagMarkets</a>
+                                <span class="external-icon">↗</span>
+                            </div>
+                            <div class="link-item">
+                                <span class="link-icon">🔐</span>
+                                <a href="https://exfusion.ibportal.io" target="_blank">IB-Portal</a>
+                                <span class="external-icon">↗</span>
+                            </div>
+                            <div class="link-item">
+                                <span class="link-icon">📊</span>
+                                <a href="https://docs.google.com/spreadsheets/d/1JseyzsRTi5lNeX6dvGiTKYOM849NJ6fPAO4P57-2BA8/edit?gid=0#gid=0" target="_blank">GoogleSheets Trading-Statistik</a>
+                                <span class="external-icon">↗</span>
+                            </div>
+                            <div class="link-item">
+                                <span class="link-icon">📝</span>
+                                <a href="shortcuts://run-shortcut?name=neoFX-Notizen" target="_blank">Notizen</a>
+                                <span class="external-icon">↗</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">
+                        <span class="card-icon">🔷</span>
+                        Arbcore
+                    </div>
+                    
+                    <div class="sub-card">
+                        <div class="links">
+                            <div class="link-item">
+                                <span class="link-icon">🏠</span>
+                                <a href="https://www.letsgofree.me/arbcore/" target="_blank">Startseite</a>
+                                <span class="external-icon">↗</span>
+                            </div>
+                            <div class="link-item">
+                                <span class="link-icon">📱</span>
+                                <a href="https://arbcore.app/" target="_blank">App</a>
+                                <span class="external-icon">↗</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carmen Tab -->
+        <div class="tab-content" id="carmen">
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-title">
+                        <span class="card-icon">🎭</span>
+                        Pott&Pott
+                    </div>
+
+                    <div class="sub-card">
+                        <div class="sub-card-title">👤 Face Reading (PW: pott)</div>
+                        <div class="links">
+                            <div class="link-item">
+                                <span class="link-icon">📁</span>
+                                <a href="https://mueller-synology.DSCloud.me:5001/d/s/15obaZFYxgDv0ni3568PgcXDnRxSCF8A/64j9SKpTH7B3gLyF7mMamd-h8DwyoqnP-rrvgHZHRxww" target="_blank">Face Reading Aufzeichnungen</a>
+                                <span class="external-icon">↗</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sub-card">
+                        <div class="sub-card-title">📱 Social Media (PW: pott)</div>
+                        <div class="links">
+                            <div class="link-item">
+                                <span class="link-icon">📁</span>
+                                <a href="https://mueller-synology.DSCloud.me:5001/d/s/15obarrQNQbcUzWGpRTZCy5S59vDtdBf/qLE47qFlGvNNA32m56Z1mIdEKuATC-8l-bbXAcMsm5gw" target="_blank">Social Media Aufzeichnungen</a>
+                                <span class="external-icon">↗</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sub-card">
+                        <div class="sub-card-title">🎯 Verkaufs-Training (PW: pott)</div>
+                        <div class="links">
+                            <div class="link-item">
+                                <span class="link-icon">📁</span>
+                                <a href="https://mueller-synology.DSCloud.me:5001/d/s/15obbDGR6WbkDc04ckZKEBBSmVxuWYGH/-RGuFL8ft7-4Z0gy2WCX8FBJegu6i-do-irXgueMm5gw" target="_blank">Verkaufs-Training Aufzeichnungen</a>
+                                <span class="external-icon">↗</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chris Tab -->
+        <div class="tab-content" id="chris">
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-title">
+                        <span class="card-icon">₿</span>
+                        DeFi Coaching
+                    </div>
+                    <div class="links">
+                        <div class="link-item">
+                            <span class="link-icon">🏠</span>
+                            <a href="https://letsgofree.me" target="_blank">Startseite</a>
+                            <span class="external-icon">↗</span>
+                        </div>
+                        <div class="link-item">
+                            <span class="link-icon">🎓</span>
+                            <a href="https://letsgofree.me/coaching" target="_blank">Coaching</a>
+                            <span class="external-icon">↗</span>
+                        </div>
+                        <div class="link-item">
+                            <span class="link-icon">🎁</span>
+                            <a href="https://letsgofree.me/freebies" target="_blank">Freebies</a>
+                            <span class="external-icon">↗</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab Switching
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const targetTab = button.dataset.tab;
+
+                // Remove active class from all buttons and contents
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+
+                // Add active class to clicked button and corresponding content
+                button.classList.add('active');
+                document.getElementById(targetTab).classList.add('active');
+
+                // Save last active tab to localStorage
+                localStorage.setItem('activeTab', targetTab);
+            });
+        });
+
+        // Restore last active tab on page load
+        window.addEventListener('load', () => {
+            const lastActiveTab = localStorage.getItem('activeTab');
+            if (lastActiveTab) {
+                const button = document.querySelector(`[data-tab="${lastActiveTab}"]`);
+                if (button) {
+                    button.click();
+                }
+            }
+        });
+
+        // Add keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+                const currentActive = document.querySelector('.tab-button.active');
+                const buttons = Array.from(tabButtons);
+                const currentIndex = buttons.indexOf(currentActive);
+                
+                let newIndex;
+                if (e.key === 'ArrowLeft') {
+                    newIndex = currentIndex > 0 ? currentIndex - 1 : buttons.length - 1;
+                } else {
+                    newIndex = currentIndex < buttons.length - 1 ? currentIndex + 1 : 0;
+                }
+                
+                buttons[newIndex].click();
+            }
+        });
+    </script>
+</body>
+</html>

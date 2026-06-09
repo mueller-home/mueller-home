@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>VUSD Token Burns - BSC & ETH</title>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.6.0/dist/ethers.umd.min.js"></script>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #0f172a;
+  color: #e5e7eb;
+  padding: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+h1 {
+  text-align: center;
+  margin-bottom: 10px;
+  color: #93c5fd;
+}
+.subtitle {
+  text-align: center;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin-bottom: 30px;
+}
+.summary {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 30px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.summary-card {
+  background: #020617;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 20px;
+  min-width: 180px;
+  text-align: center;
+}
+.summary-label {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  margin-bottom: 8px;
+}
+.summary-value {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #ef4444;
+}
+.bsc-color { color: #f0b90b; }
+.eth-color { color: #627eea; }
+.total-color { color: #ef4444; }
+.controls {
+  text-align: center;
+  margin-bottom: 30px;
+}
+button {
+  background: #22c55e;
+  color: #020617;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 0 5px;
+}
+button:hover {
+  background: #16a34a;
+}
+button:disabled {
+  background: #334155;
+  cursor: not-allowed;
+}
+.table-container {
+  background: #020617;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th {
+  background: #1e293b;
+  color: #93c5fd;
+  padding: 15px;
+  text-align: left;
+  font-weight: bold;
+  border-bottom: 2px solid #334155;
+  white-space: nowrap;
+}
+td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #1e293b;
+}
+tr:hover {
+  background: #1e293b;
+}
+.burn-amount {
+  font-weight: bold;
+}
+.loading {
+  text-align: center;
+  padding: 40px;
+  color: #fbbf24;
+  font-size: 1.1rem;
+}
+.error {
+  text-align: center;
+  padding: 40px;
+  color: #ef4444;
+  font-size: 1.1rem;
+}
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: #94a3b8;
+}
+.date-cell {
+  color: #93c5fd;
+}
+.chain-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  margin-left: 8px;
+}
+.badge-bsc {
+  background: #f0b90b;
+  color: #020617;
+}
+.badge-eth {
+  background: #627eea;
+  color: #ffffff;
+}
+.progress {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #94a3b8;
+}
+</style>
+
+</head>
+
+<body>
+
+<h1>🔥 VUSD Token Burns</h1>
+<div class="subtitle">Tägliche Verbrennungen auf BSC & Ethereum seit 01.01.2026</div>
+
+<div class="summary">
+  <div class="summary-card">
+    <div class="summary-label">BSC Total</div>
+    <div id="totalBurnedBSC" class="summary-value bsc-color">-</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-label">ETH Total</div>
+    <div id="totalBurnedETH" class="summary-value eth-color">-</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-label">Gesamt Total</div>
+    <div id="totalBurnedAll" class="summary-value total-color">-</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-label">Anzahl Tage</div>
+    <div id="daysCount" class="summary-value" style="color: #93c5fd;">-</div>
+  </div>
+  <div class="summary-card">
+    <div class="summary-label">Ø pro Tag</div>
+    <div id="avgPerDay" class="summary-value" style="color: #fbbf24;">-</div>
+  </div>
+</div>
+
+<div class="controls">
+  <button id="loadBtn" onclick="loadBurnData()">Daten laden</button>
+  <button onclick="exportData()" style="background: #3b82f6;">CSV Export</button>
+</div>
+
+<div class="table-container">
+  <div id="loading" class="loading" style="display: none;">
+    Lade Burn-Events von beiden Blockchains...
+    <div id="progress" class="progress"></div>
+  </div>
+  <div id="error" class="error" style="display: none;"></div>
+  <div id="noData" class="no-data" style="display: none;">
+    Noch keine Daten geladen. Klicke auf "Daten laden".
+  </div>
+  <table id="burnTable" style="display: none;">
+    <thead>
+      <tr id="tableHeader">
+        <th>Chain</th>
+        <!-- Date columns will be added dynamically -->
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+    </tbody>
+  </table>
+</div>
+
+<script>
+// Chain configurations
+const CHAINS = {
+  bsc: {
+    name: "BSC",
+    rpc: "https://bsc-dataseed.binance.org/",
+    vusdContract: "0xc0D8DaA6516BaB4eFCe440860987E735BaB44160",
+    color: "#f0b90b",
+    blockTime: 3 // seconds per block
+  },
+  eth: {
+    name: "Ethereum",
+    rpc: "https://eth.llamarpc.com",
+    vusdContract: "0x0fc6C0465C9739d4a42dAca22eB3b2CB0Eb9937A",
+    color: "#627eea",
+    blockTime: 12 // seconds per block
+  }
+};
+
+const BURN_ADDRESSES = [
+  "0x000000000000000000000000000000000000dEaD",
+  "0x0000000000000000000000000000000000000000"
+];
+const START_DATE = new Date("2026-01-01T00:00:00Z");
+
+const ERC20_ABI = [
+  "event Transfer(address indexed from, address indexed to, uint256 value)"
+];
+
+let burnDataByDay = {};
+
+function updateProgress(message) {
+  const progressDiv = document.getElementById("progress");
+  if (progressDiv) {
+    progressDiv.textContent = message;
+  }
+}
+
+async function loadChainBurnData(chainKey) {
+  const chain = CHAINS[chainKey];
+  const provider = new ethers.JsonRpcProvider(chain.rpc);
+  
+  updateProgress(`Lade ${chain.name} Daten...`);
+
+  try {
+    const currentBlock = await provider.getBlockNumber();
+    
+    // Calculate approximate start block
+    const startTimestamp = Math.floor(START_DATE.getTime() / 1000);
+    const currentTimestamp = Math.floor(Date.now() / 1000);
+    const secondsSinceStart = currentTimestamp - startTimestamp;
+    const blocksSinceStart = Math.floor(secondsSinceStart / chain.blockTime);
+    const startBlock = Math.max(0, currentBlock - blocksSinceStart);
+
+    console.log(`${chain.name}: Suche vom Block ${startBlock} bis ${currentBlock}`);
+
+    const contract = new ethers.Contract(chain.vusdContract, ERC20_ABI, provider);
+    
+    // Query transfers to both burn addresses
+    let allEvents = [];
+    
+    for (const burnAddress of BURN_ADDRESSES) {
+      const filter = contract.filters.Transfer(null, burnAddress);
+      
+      // For large ranges, we might need to split the query
+      const CHUNK_SIZE = 2000; // blocks per query
+      
+      for (let fromBlock = startBlock; fromBlock <= currentBlock; fromBlock += CHUNK_SIZE) {
+        const toBlock = Math.min(fromBlock + CHUNK_SIZE - 1, currentBlock);
+        updateProgress(`${chain.name}: Block ${fromBlock} - ${toBlock} (${burnAddress.slice(0, 10)}...)...`);
+        
+        try {
+          const events = await contract.queryFilter(filter, fromBlock, toBlock);
+          allEvents = allEvents.concat(events);
+          
+          // Small delay to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 100));
+        } catch (err) {
+          console.warn(`Fehler bei ${chain.name} Block-Range ${fromBlock}-${toBlock}:`, err.message);
+          // Continue with next range
+        }
+      }
+    }
+
+    console.log(`${chain.name}: ${allEvents.length} Burn-Events gefunden`);
+
+    // Process events
+    for (const event of allEvents) {
+      try {
+        const block = await provider.getBlock(event.blockNumber);
+        const timestamp = block.timestamp * 1000;
+        
+        if (timestamp < START_DATE.getTime()) continue;
+
+        const date = new Date(timestamp);
+        const dateKey = date.toISOString().split('T')[0];
+
+        const amount = Number(ethers.formatUnits(event.args.value, 18));
+
+        if (!burnDataByDay[dateKey]) {
+          burnDataByDay[dateKey] = {
+            date: dateKey,
+            bsc: 0,
+            eth: 0,
+            bscCount: 0,
+            ethCount: 0
+          };
+        }
+
+        if (chainKey === 'bsc') {
+          burnDataByDay[dateKey].bsc += amount;
+          burnDataByDay[dateKey].bscCount += 1;
+        } else {
+          burnDataByDay[dateKey].eth += amount;
+          burnDataByDay[dateKey].ethCount += 1;
+        }
+      } catch (err) {
+        console.warn(`Fehler beim Verarbeiten von Event:`, err);
+      }
+    }
+
+    return { success: true, count: allEvents.length };
+
+  } catch (err) {
+    console.error(`Fehler bei ${chain.name}:`, err);
+    return { success: false, error: err.message };
+  }
+}
+
+async function loadBurnData() {
+  const loadingDiv = document.getElementById("loading");
+  const errorDiv = document.getElementById("error");
+  const noDataDiv = document.getElementById("noData");
+  const tableDiv = document.getElementById("burnTable");
+  const loadBtn = document.getElementById("loadBtn");
+
+  loadingDiv.style.display = "block";
+  errorDiv.style.display = "none";
+  noDataDiv.style.display = "none";
+  tableDiv.style.display = "none";
+  loadBtn.disabled = true;
+
+  burnDataByDay = {};
+
+  try {
+    // Load BSC data
+    const bscResult = await loadChainBurnData('bsc');
+    
+    // Load ETH data
+    const ethResult = await loadChainBurnData('eth');
+
+    if (!bscResult.success && !ethResult.success) {
+      throw new Error("Beide Chains konnten nicht geladen werden.");
+    }
+
+    updateProgress("Daten werden aufbereitet...");
+    displayData();
+
+  } catch (err) {
+    console.error("Fehler beim Laden:", err);
+    errorDiv.textContent = `Fehler: ${err.message}`;
+    errorDiv.style.display = "block";
+    loadingDiv.style.display = "none";
+  } finally {
+    loadBtn.disabled = false;
+  }
+}
+
+function displayData() {
+  const loadingDiv = document.getElementById("loading");
+  const noDataDiv = document.getElementById("noData");
+  const tableDiv = document.getElementById("burnTable");
+  const tableHeader = document.getElementById("tableHeader");
+  const tableBody = document.getElementById("tableBody");
+
+  loadingDiv.style.display = "none";
+
+  const dates = Object.keys(burnDataByDay).sort(); // chronological order
+
+  if (dates.length === 0) {
+    noDataDiv.textContent = "Keine Burns seit dem 01.01.2026 gefunden.";
+    noDataDiv.style.display = "block";
+    return;
+  }
+
+  // Calculate summary stats
+  let totalBurnedBSC = 0;
+  let totalBurnedETH = 0;
+  dates.forEach(date => {
+    totalBurnedBSC += burnDataByDay[date].bsc;
+    totalBurnedETH += burnDataByDay[date].eth;
+  });
+  const totalBurnedAll = totalBurnedBSC + totalBurnedETH;
+  const avgPerDay = dates.length > 0 ? totalBurnedAll / dates.length : 0;
+
+  document.getElementById("totalBurnedBSC").textContent = 
+    totalBurnedBSC.toLocaleString('de-CH', {maximumFractionDigits: 0});
+  document.getElementById("totalBurnedETH").textContent = 
+    totalBurnedETH.toLocaleString('de-CH', {maximumFractionDigits: 0});
+  document.getElementById("totalBurnedAll").textContent = 
+    totalBurnedAll.toLocaleString('de-CH', {maximumFractionDigits: 0});
+  document.getElementById("daysCount").textContent = dates.length;
+  document.getElementById("avgPerDay").textContent = 
+    avgPerDay.toLocaleString('de-CH', {maximumFractionDigits: 0});
+
+  // Build table header with dates as columns
+  tableHeader.innerHTML = '<th>Chain</th>';
+  dates.forEach(dateKey => {
+    const th = document.createElement('th');
+    th.textContent = new Date(dateKey).toLocaleDateString('de-CH', {
+      day: '2-digit',
+      month: '2-digit'
+    });
+    th.title = dateKey; // Full date on hover
+    tableHeader.appendChild(th);
+  });
+
+  // Add Total column
+  const totalTh = document.createElement('th');
+  totalTh.textContent = 'TOTAL';
+  totalTh.style.background = '#2d1b1b';
+  tableHeader.appendChild(totalTh);
+
+  // Build table body - BSC row
+  tableBody.innerHTML = '';
+  
+  const bscRow = document.createElement('tr');
+  const bscLabelCell = document.createElement('td');
+  bscLabelCell.innerHTML = '<span class="chain-badge badge-bsc">BSC</span>';
+  bscLabelCell.style.fontWeight = 'bold';
+  bscRow.appendChild(bscLabelCell);
+  
+  let bscTotal = 0;
+  dates.forEach(dateKey => {
+    const data = burnDataByDay[dateKey];
+    const cell = document.createElement('td');
+    cell.className = 'burn-amount';
+    cell.style.color = CHAINS.bsc.color;
+    if (data.bsc > 0) {
+      cell.textContent = data.bsc.toLocaleString('de-CH', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      });
+      bscTotal += data.bsc;
+    } else {
+      cell.textContent = '-';
+      cell.style.color = '#334155';
+    }
+    bscRow.appendChild(cell);
+  });
+  
+  const bscTotalCell = document.createElement('td');
+  bscTotalCell.className = 'burn-amount';
+  bscTotalCell.style.color = CHAINS.bsc.color;
+  bscTotalCell.style.fontWeight = 'bold';
+  bscTotalCell.style.background = '#2d1b1b';
+  bscTotalCell.textContent = bscTotal.toLocaleString('de-CH', {maximumFractionDigits: 0});
+  bscRow.appendChild(bscTotalCell);
+  
+  tableBody.appendChild(bscRow);
+
+  // Build ETH row
+  const ethRow = document.createElement('tr');
+  const ethLabelCell = document.createElement('td');
+  ethLabelCell.innerHTML = '<span class="chain-badge badge-eth">ETH</span>';
+  ethLabelCell.style.fontWeight = 'bold';
+  ethRow.appendChild(ethLabelCell);
+  
+  let ethTotal = 0;
+  dates.forEach(dateKey => {
+    const data = burnDataByDay[dateKey];
+    const cell = document.createElement('td');
+    cell.className = 'burn-amount';
+    cell.style.color = CHAINS.eth.color;
+    if (data.eth > 0) {
+      cell.textContent = data.eth.toLocaleString('de-CH', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      });
+      ethTotal += data.eth;
+    } else {
+      cell.textContent = '-';
+      cell.style.color = '#334155';
+    }
+    ethRow.appendChild(cell);
+  });
+  
+  const ethTotalCell = document.createElement('td');
+  ethTotalCell.className = 'burn-amount';
+  ethTotalCell.style.color = CHAINS.eth.color;
+  ethTotalCell.style.fontWeight = 'bold';
+  ethTotalCell.style.background = '#2d1b1b';
+  ethTotalCell.textContent = ethTotal.toLocaleString('de-CH', {maximumFractionDigits: 0});
+  ethRow.appendChild(ethTotalCell);
+  
+  tableBody.appendChild(ethRow);
+
+  // Build TOTAL row
+  const totalRow = document.createElement('tr');
+  totalRow.style.borderTop = '2px solid #334155';
+  const totalLabelCell = document.createElement('td');
+  totalLabelCell.textContent = 'TOTAL';
+  totalLabelCell.style.fontWeight = 'bold';
+  totalLabelCell.style.color = '#ef4444';
+  totalRow.appendChild(totalLabelCell);
+  
+  let grandTotal = 0;
+  dates.forEach(dateKey => {
+    const data = burnDataByDay[dateKey];
+    const dayTotal = data.bsc + data.eth;
+    const cell = document.createElement('td');
+    cell.className = 'burn-amount';
+    cell.style.color = '#ef4444';
+    cell.style.fontWeight = 'bold';
+    if (dayTotal > 0) {
+      cell.textContent = dayTotal.toLocaleString('de-CH', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      });
+      grandTotal += dayTotal;
+    } else {
+      cell.textContent = '-';
+      cell.style.color = '#334155';
+    }
+    totalRow.appendChild(cell);
+  });
+  
+  const grandTotalCell = document.createElement('td');
+  grandTotalCell.className = 'burn-amount';
+  grandTotalCell.style.color = '#ef4444';
+  grandTotalCell.style.fontWeight = 'bold';
+  grandTotalCell.style.background = '#2d1b1b';
+  grandTotalCell.textContent = grandTotal.toLocaleString('de-CH', {maximumFractionDigits: 0});
+  totalRow.appendChild(grandTotalCell);
+  
+  tableBody.appendChild(totalRow);
+
+  tableDiv.style.display = "table";
+  noDataDiv.style.display = "none";
+}
+
+function exportData() {
+  if (Object.keys(burnDataByDay).length === 0) {
+    alert("Keine Daten zum Exportieren. Bitte zuerst Daten laden.");
+    return;
+  }
+
+  const dates = Object.keys(burnDataByDay).sort();
+  
+  let csv = "Datum,BSC Burns,ETH Burns,Total Burns\n";
+  
+  dates.forEach(dateKey => {
+    const data = burnDataByDay[dateKey];
+    const total = data.bsc + data.eth;
+    csv += `${dateKey},${data.bsc.toFixed(2)},${data.eth.toFixed(2)},${total.toFixed(2)}\n`;
+  });
+
+  // Create download link
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", `vusd_burns_${new Date().toISOString().split('T')[0]}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+// Show initial message
+document.getElementById("noData").style.display = "block";
+</script>
+
+</body>
+</html>
