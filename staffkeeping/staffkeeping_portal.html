@@ -110,7 +110,14 @@ function b64toHtml(b64) {
   return new TextDecoder('utf-8').decode(bytes);
 }
 
-function openDoc(key) {
+function openDoc(key, updateHash) {
+  if (!CONTENTS[key]) return;
+
+  // Hash in URL schreiben (ausser wenn wir vom hashchange kommen)
+  if (updateHash !== false) {
+    history.replaceState(null, '', '#' + key);
+  }
+
   // Nav
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const navEl = document.getElementById('nav-' + key);
@@ -156,6 +163,22 @@ function openDoc(key) {
     fr.classList.add('active');
   }
 }
+
+// Hash beim Laden auswerten
+window.addEventListener('DOMContentLoaded', function() {
+  const hash = window.location.hash.replace('#', '');
+  if (hash && CONTENTS[hash]) {
+    openDoc(hash, false);
+  }
+});
+
+// Browser-Navigation (Vor/Zurück) und direkte Hash-Änderung abfangen
+window.addEventListener('hashchange', function() {
+  const hash = window.location.hash.replace('#', '');
+  if (hash && CONTENTS[hash]) {
+    openDoc(hash, false);
+  }
+});
 </script>
 <!-- TECHNISCHER HINWEIS: Alle Dokumente als Base64 im const CONTENTS-Objekt eingebettet. Enthaltene Dokumente: index, datenbank, funktionsspec, roadmap, tools, todo, testkonzept. Stand: 07.06.2026 -->
 </body>
