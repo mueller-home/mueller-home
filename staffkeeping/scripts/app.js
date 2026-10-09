@@ -1,12 +1,12 @@
 /* StaffKeeping 0.27.1 – zentrale Administration und Navigation */
 'use strict';
-const screens=['login','register','reset','pending','market','profile','my-listings','detail','messages','reviews','admin-businesses','admin-listings','admin-dashboard','admin-docs'];
+const screens=['login','register','reset','pending','market','profile','my-listings','detail','messages','reviews','admin-businesses','admin-listings','admin-dashboard','admin-docs','admin-home','admin-activity','help'];
 const navOnly=document.querySelectorAll('.nav-only'), guests=document.querySelectorAll('.guest-only');
-const publicViews=new Set(['login','register','reset','pending']);
+const publicViews=new Set(['login','register','reset','pending','help']);
 let demoSignedIn=false;
 let skAdmin=false;
-let skPending=false;
-window.SK_UI={setAccess(isApproved,isAdmin){demoSignedIn=!!isApproved;skAdmin=!!isAdmin;skPending=!isApproved;performShow(isApproved?'market':'pending',false);},show,logoutView(){demoSignedIn=false;skAdmin=false;skPending=false;performShow('login',false);}};
+let skPending=false;let skCanProfile=false;
+window.SK_UI={setAccess(isApproved,isAdmin,reviewState){demoSignedIn=!!isApproved;skAdmin=!!isAdmin;skPending=!isApproved;skCanProfile=!!reviewState;performShow(isAdmin?'admin-home':isApproved?'market':(reviewState==='draft'||reviewState==='changes_requested')?'profile':'pending',false);},show,logoutView(){demoSignedIn=false;skAdmin=false;skPending=false;skCanProfile=false;performShow('login',false);}};
 let currentScreen='login', navigationBusy=false;
 async function show(view,updateUrl=true){
   if(navigationBusy)return;
@@ -23,14 +23,14 @@ async function show(view,updateUrl=true){
 function performShow(view,updateUrl=true){
   if(!screens.includes(view))view='login';
   // Demo-Ansicht: Nur ein explizit gestarteter Demo-Zugang darf interne Seiten sehen.
-  if(!demoSignedIn && !publicViews.has(view))view=skPending?'pending':'login';
-  if(!skAdmin && view.startsWith('admin-'))view=demoSignedIn?'market':'login';
+  if(!demoSignedIn && !publicViews.has(view) && !(view==='profile'&&skCanProfile))view=skPending?'pending':'login';
+  if(!skAdmin && view.startsWith('admin-'))view=demoSignedIn?'market':skCanProfile?'profile':'login';
   if(demoSignedIn && view==='login')view='market';
   if(currentScreen==='admin-docs'&&view!=='admin-docs')window.SK_DOCS?.close();
   currentScreen=view;
   screens.forEach(v=>document.getElementById('view-'+v).classList.toggle('hidden',v!==view));
-  const inApp=demoSignedIn && !publicViews.has(view);
-  navOnly.forEach(n=>n.classList.toggle('hidden',!inApp));
+  const inApp=(demoSignedIn||skCanProfile) && !publicViews.has(view);
+  navOnly.forEach(n=>n.classList.toggle('hidden',!inApp || (skCanProfile&&!demoSignedIn&&!['profile','login'].includes(n.dataset.view))));
   guests.forEach(n=>n.classList.toggle('hidden',inApp||skPending));
   document.querySelectorAll('.admin-nav, .admin-tabs').forEach(n=>n.classList.toggle('hidden',!skAdmin));
   document.querySelectorAll('.admin-tabs [data-view]').forEach(b=>{const active=b.dataset.view===view;b.classList.toggle('active',active);b.setAttribute('aria-current',active?'page':'false');});
@@ -43,7 +43,9 @@ function performShow(view,updateUrl=true){
   if(view==='messages')renderChats();
   if(view==='admin-businesses')renderBusinesses();
   if(view==='admin-listings')renderAdminListings();
-  if(view==='admin-docs')renderProjectDocs();
+  if(view==='admin-docs'){renderProjectDocs();window.SK_HELP?.loadAdmin();}
+  if(view==='admin-home'||view==='admin-activity')window.SK_ADMIN_HOME?.load(view);
+  if(view==='help')window.SK_HELP?.load();
 }
 async function logout(){
  if(currentScreen==='profile'&&window.SK_PROFILE?.hasPending()){
@@ -107,8 +109,8 @@ function renderBusinesses(){
  root.textContent='Unternehmen werden geladen …';
  window.SK_AUTH.loadBusinesses().then(rows=>{
   skBusinessList=rows;
-  root.innerHTML='<div class="table-wrap"><table class="data-table"><thead><tr><th>Betrieb</th><th>Land</th><th>Status</th><th>Prüfung</th></tr></thead><tbody>'+
-   rows.map(c=>`<tr><td>${esc(c.company_name)}</td><td>${esc(c.country)}</td><td>${esc(c.status)}</td><td><button class="subtle-btn" type="button" data-review-business="${esc(c.id)}">Details / Prüfen</button></td></tr>`).join('')+
+  root.innerHTML='<div class="table-wrap"><table class="data-table"><thead><tr><th>Betrieb</th><th>Land</th><th>Status</th><th>Prüfstatus</th><th>Prüfung</th></tr></thead><tbody>'+
+   rows.map(c=>`<tr><td>${esc(c.company_name)}</td><td>${esc(c.country)}</td><td>${esc(c.status)}</td><td>${esc(c.review_state||'–')}</td><td><button class="subtle-btn" type="button" data-review-business="${esc(c.id)}">Details / Prüfen</button></td></tr>`).join('')+
    '</tbody></table></div>';
   if(!rows.length)root.textContent='Noch keine registrierten Betriebe.';
  }).catch(e=>root.textContent='Laden fehlgeschlagen: '+e.message);
@@ -125,12 +127,12 @@ async function openBusinessReview(id){
    if(skSelectedBusiness!==id)return;
    const b=info.business; const notes=info.notes||[], audit=info.audit||[], members=info.members||[];
    panel.innerHTML=`<div class="business-review-heading"><div><span class="overline">ADMIN · BETRIEBSPRÜFUNG</span><h2>${esc(b.company_name)}</h2><span class="status-tag">${esc(b.status)}</span></div><button type="button" class="subtle-btn" id="business-review-close">Schliessen</button></div>
-   <div class="business-review-grid"><section><h3>Unternehmensangaben</h3><dl class="business-info">${detailsRow('Firmenname',b.company_name)}${detailsRow('Branche',b.industry)}${detailsRow('Land',b.country)}${detailsRow('PLZ / Ort',[b.postal_code,b.city].filter(Boolean).join(' '))}${detailsRow('Strasse / Hausnummer',[b.street,b.house_number].filter(Boolean).join(' '))}${detailsRow('Adresszusatz',b.address_extra)}${detailsRow('Strassenadresse öffentlich',b.show_street_address?'Ja':'Nein')}${detailsRow('USt-/UID-Nr.',b.vat_id)}${detailsRow('Beschreibung',b.description)}${detailsRow('E-Mail-Benachrichtigungen (Vorliebe)',b.email_notifications_enabled?'Ja':'Nein')}${detailsRow('Registriert',dateTimeDisplay(b.created_at))}${detailsRow('Nutzungsbedingungen bestätigt',dateTimeDisplay(b.terms_accepted_at))}</dl></section>
+   <div class="business-review-grid"><section><h3>Unternehmensangaben</h3><dl class="business-info">${detailsRow('Firmenname',b.company_name)}${detailsRow('Branche',b.industry)}${detailsRow('Land',b.country)}${detailsRow('PLZ / Ort',[b.postal_code,b.city].filter(Boolean).join(' '))}${detailsRow('Strasse / Hausnummer',[b.street,b.house_number].filter(Boolean).join(' '))}${detailsRow('Adresszusatz',b.address_extra)}${detailsRow('Strassenadresse öffentlich',b.show_street_address?'Ja':'Nein')}${detailsRow('USt-/UID-Nr.',b.vat_id)}${detailsRow('Beschreibung',b.description)}${detailsRow('Prüfstatus',b.review_state)}${detailsRow('Eingereicht',dateTimeDisplay(b.submitted_at))}${detailsRow('Nachbesserungsgrund',b.review_message)}${detailsRow('E-Mail-Benachrichtigungen (Vorliebe)',b.email_notifications_enabled?'Ja':'Nein')}${detailsRow('Registriert',dateTimeDisplay(b.created_at))}${detailsRow('Nutzungsbedingungen bestätigt',dateTimeDisplay(b.terms_accepted_at))}</dl></section>
    <section><h3>Kontakt &amp; Benutzer</h3><dl class="business-info">${detailsRow('Kontaktperson',b.contact_name)}${detailsRow('E-Mail',b.contact_email)}${detailsRow('Telefon',b.contact_phone)}</dl><div class="business-contact-actions"><a class="subtle-btn" href="mailto:${encodeURIComponent(b.contact_email||'')}">E-Mail schreiben ↗</a>${b.contact_phone?`<a class="subtle-btn" href="tel:${encodeURIComponent(b.contact_phone)}">Anrufen ↗</a>`:''}</div><h4>Konten</h4>${members.length?members.map(m=>`<p class="business-minor">${esc(m.email)} · ${esc(m.role)}</p>`).join(''):'<p class="muted">Keine Benutzerzuordnung</p>'}</section></div>
    <section class="business-review-media"><h3>Standort des Betriebs</h3><div id="business-admin-map" class="business-map" role="region" aria-label="Standortkarte des Betriebs"></div><p id="business-admin-map-status" class="muted"></p></section><section class="business-review-media"><h3>Firmenlogo und Betriebsbilder</h3><div id="business-admin-media" class="admin-media-preview">Medien werden geladen …</div></section>
    <div class="business-review-grid"><section><h3>Interne Admin-Notizen</h3><p class="muted">Nur für Administratoren. Einträge werden mit Datum und Autor protokolliert.</p><form id="business-note-form"><label for="business-note">Neue Notiz</label><textarea id="business-note" rows="3" maxlength="3000" required placeholder="Rückfrage, Gesprächsnotiz, Prüfergebnis …"></textarea><button class="btn btn-small" type="submit">Notiz speichern</button><p class="form-feedback" id="business-note-status" role="status"></p></form><div class="business-events">${notes.length?notes.map(n=>`<article><small>${esc(dateTimeDisplay(n.created_at))} · ${esc(n.author)}</small><p>${esc(n.note)}</p></article>`).join(''):'<p class="muted">Noch keine Notizen.</p>'}</div></section>
    <section><h3>Freigabehistorie</h3><div class="business-events">${audit.length?audit.map(a=>`<article><small>${esc(dateTimeDisplay(a.changed_at))} · ${esc(a.changed_by)}</small><p>${esc(a.old_status)} → ${esc(a.new_status)}</p></article>`).join(''):'<p class="muted">Noch keine Statusänderungen.</p>'}</div></section></div>
-   <div class="business-review-actions"><button type="button" class="btn" data-review-status="Freigeschaltet">Betrieb freischalten</button><button type="button" class="subtle-btn" data-review-status="Gesperrt">Betrieb sperren</button><p class="form-feedback" role="status" id="business-review-status"></p></div>`;
+   <div class="business-review-actions">${b.status==='Ausstehend'&&b.review_state==='submitted'?'<button type="button" class="btn" data-review-action="approve">Eingereichten Betrieb freigeben</button><button type="button" class="subtle-btn" data-review-action="changes">Nachbesserung verlangen</button>':''}<button type="button" class="subtle-btn" data-review-status="Gesperrt">Betrieb sperren</button><p class="form-feedback" role="status" id="business-review-status"></p></div>`;
    loadAdminBusinessMedia(id);
    void window.SK_LOCATION?.showAdmin(b);
    document.getElementById('business-review-close').addEventListener('click',()=>{skSelectedBusiness=null;panel.classList.add('hidden');});
@@ -153,6 +155,16 @@ async function loadAdminBusinessMedia(id){
   for(const item of all){const im=document.createElement('img');im.src=item.url;im.alt=item.name.startsWith('logo.')?'Firmenlogo':'Betriebsbild '+item.name.split('.')[0];im.loading='lazy';root.append(im);}
  }catch(err){root.textContent='Medien konnten nicht geladen werden: '+err.message;}
 }
+document.getElementById('business-review-panel').addEventListener('click',async e=>{
+ const button=e.target.closest('[data-review-action]');if(!button||!skSelectedBusiness)return;
+ const action=button.dataset.reviewAction;
+ const message=action==='changes'?prompt('Welche Angaben soll der Betrieb nachbessern?'):null;
+ if(action==='changes'&&(message===null||message.trim().length<5))return;
+ if(action==='approve'&&!confirm('Vollständigen Betriebsantrag verbindlich freigeben?'))return;
+ button.disabled=true;
+ try{await window.SK_AUTH.reviewBusiness(skSelectedBusiness,action,message);renderBusinesses();await openBusinessReview(skSelectedBusiness);window.SK_ADMIN_HOME?.refresh();}
+ catch(err){document.getElementById('business-review-status').textContent='Prüfung fehlgeschlagen: '+err.message;button.disabled=false;}
+});
 document.getElementById('admin-business-table').addEventListener('click',e=>{
  const button=e.target.closest('[data-review-business]');if(button)openBusinessReview(button.dataset.reviewBusiness);
 });
@@ -165,6 +177,7 @@ document.getElementById('business-review-panel').addEventListener('click',async 
  try{await window.SK_AUTH.setBusinessStatus(id,status);renderBusinesses();await openBusinessReview(id);}
  catch(err){document.getElementById('business-review-status').textContent='Statusänderung fehlgeschlagen: '+err.message;button.disabled=false;}
 });
+window.SK_ADMIN_UI={openBusinessReview};
 function renderAdminListings(){const country=document.getElementById('admin-country').value,status=document.getElementById('admin-status').value;const filtered=listings.filter(l=>(!country||l.country===country)&&(!status||listingStatus.get(l.id)===status));document.getElementById('admin-listing-table').innerHTML='<div class="table-wrap"><table class="data-table"><thead><tr><th>Inserat</th><th>Land</th><th>Status</th><th>Aktionen</th></tr></thead><tbody>'+filtered.map(l=>`<tr><td>${esc(l.title)}</td><td>${esc(l.country)}</td><td><span class="status-tag">${esc(listingStatus.get(l.id))}</span></td><td class="table-actions"><button data-moderate="${l.id}" data-action="edit">Bearbeiten</button><button data-moderate="${l.id}" data-action="toggle">${listingStatus.get(l.id)==='Aktiv'?'Sperren':'Aktivieren'}</button></td></tr>`).join('')+'</tbody></table></div>';}
 document.getElementById('admin-listing-table').addEventListener('click',e=>{const b=e.target.closest('[data-moderate]');if(!b)return;const id=Number(b.dataset.moderate);if(b.dataset.action==='toggle'){listingStatus.set(id,listingStatus.get(id)==='Aktiv'?'Gesperrt':'Aktiv');renderAdminListings()}else{const l=listings.find(x=>x.id===id);modal('Inserat prüfen','<p><strong>'+esc(l.title)+'</strong></p><p>'+esc(l.desc)+'</p><p class="muted">Bearbeitung und dauerhafte Löschung folgen mit Backend und Berechtigungsprüfung.</p>')}});
 ['admin-country','admin-status'].forEach(id=>document.getElementById(id).addEventListener('change',renderAdminListings));

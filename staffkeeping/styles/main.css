@@ -62,3 +62,14 @@
 #pr-location-search,#pr-location-correct{margin:5px 8px 5px 0}
 #pr-location-status{margin:10px 0;font-size:13px}
 @media(max-width:700px){.business-map{height:260px}}
+/* 0.30 – integrated handbook, review process, live admin dashboard */
+.review-bar{border:1px solid var(--steel,#415A77);border-radius:12px;padding:1rem 1.2rem;margin:0 0 1.25rem;background:rgba(65,90,119,.07)}
+.review-bar p{line-height:1.6}.review-bar .btn{margin-top:.5rem}
+.activity-row{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1rem 0;border-bottom:1px solid rgba(65,90,119,.2)}
+.activity-row p{margin:.3rem 0}.activity-actions{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:flex-end}
+.help-nav{font-weight:600}.help-drawer{position:fixed;z-index:1000;right:1rem;top:5rem;bottom:1rem;width:min(460px,calc(100vw - 2rem));overflow:auto;background:var(--silver,#E0E1DD);color:var(--navy,#1B263B);border:1px solid #9da8b5;border-radius:14px;box-shadow:0 14px 55px rgba(0,0,0,.22);padding:1.5rem}
+.help-drawer-title{display:flex;align-items:center;justify-content:space-between;gap:1rem;border-bottom:1px solid #a7b2bf;margin-bottom:1rem}
+.help-drawer h2,.doc-content h2{line-height:1.3}.help-drawer p,.doc-content p{line-height:1.7}
+.help-screenshot{background:rgba(65,90,119,.06);border:1px dashed #8694a7;border-radius:10px;text-align:center;padding:1rem;margin:1.5rem 0}.help-screenshot img{width:100%;max-height:550px;object-fit:contain;border-radius:7px}
+#help-admin-list{display:flex;gap:.5rem;flex-wrap:wrap;margin:1rem 0}#help-admin-editor{max-width:900px;display:grid;gap:.5rem}#help-admin-editor textarea{width:100%;min-height:15rem}#help-admin-editor input,#help-admin-editor select{max-width:100%}
+@media(max-width:700px){.activity-row{flex-direction:column;align-items:flex-start}.activity-actions{justify-content:flex-start}}

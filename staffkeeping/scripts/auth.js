@@ -89,10 +89,14 @@
    mark('company',!!business,'3',business?'Unternehmen erfasst':'Noch nicht vollständig');
    mark('approval',business?.status==='Freigeschaltet','4',business?.status==='Gesperrt'?'Gesperrt':business?.status==='Freigeschaltet'?'Freigegeben':'Warten auf die Freigabe');
    const blocked=business?.status==='Gesperrt';
-   document.getElementById('pending-status-label').textContent=blocked?'Status · Gesperrt':'Status · Administratorfreigabe ausstehend';
+   const submitted=business?.review_state==='submitted';const edit=business&&['draft','changes_requested'].includes(business.review_state);
+   document.getElementById('pending-status-label').textContent=blocked?'Status · Gesperrt':submitted?'Status · Zur Prüfung eingereicht':'Status · Profil vorbereiten';
+   document.getElementById('pending-profile-button').classList.toggle('hidden',!edit);
    document.getElementById('pending-title').textContent=blocked?'Zugang derzeit gesperrt.':'Vielen Dank für Ihre Registrierung.';
    document.getElementById('pending-description').textContent=blocked?'Bitte wenden Sie sich an die StaffKeeping-Administration.':
-     business?'Ihre E-Mail-Adresse ist bestätigt und Ihr Betrieb «'+business.company_name+'» ist registriert. Sobald die Administration den Betrieb freigibt, können Sie den Marktplatz nutzen.':
+     business?(business.review_state==='changes_requested'?'Nachbesserung: '+(business.review_message||'Bitte Profil korrigieren.'):
+    submitted?'Ihr Betrieb «'+business.company_name+'» ist eingereicht. Das Profil ist bis zur Entscheidung gesperrt.':
+    'Vervollständige das Profil deines Betriebs «'+business.company_name+'» und reiche es anschliessend zur Prüfung ein.'):
      'Bitte schliessen Sie zunächst die Unternehmensregistrierung ab.';
  }
  async function evaluate(){
@@ -108,25 +112,44 @@
   if(!members?.length){setCompletionMode(user);return;}
   const {data:approved,error:pe}=await db.rpc('sk_is_approved_member',{p_business_id:members[0].business_id});if(pe)throw pe;
   exitCompletionMode();
+  let business=null;
   if(!approved){
-    const {data:business,error:be}=await db.from('sk_businesses').select('company_name,status').eq('id',members[0].business_id).single();
-    if(be)throw be;pendingStatus(business);
+    const {data:record,error:be}=await db.from('sk_businesses').select('company_name,status,review_state,review_message').eq('id',members[0].business_id).single();
+    if(be)throw be;business=record;pendingStatus(business);
   }
-  ui().setAccess(!!approved,false);
+  ui().setAccess(!!approved,false,approved?'approved':business.review_state||'draft');
  }
  async function safeEvaluate(){try{await evaluate();}catch(e){msg('auth-message','Prüfung fehlgeschlagen: '+e.message);if(!recoveryMode)ui().logoutView();else showRecovery();}}
  window.SK_AUTH={
   async listProjectDocs(){if(!isAdmin)throw Error('Nur Administratoren');const {data,error}=await db.rpc('sk_admin_list_project_docs');if(error)throw error;return data||[];},
   async saveProjectDoc(slug,body){if(!isAdmin)throw Error('Nur Administratoren');const {error}=await db.rpc('sk_admin_save_project_doc',{p_slug:slug,p_body:body});if(error)throw error;},
   async logout(){clearRecovery();exitCompletionMode();await db.auth.signOut();currentUser=null;isAdmin=false;ui().logoutView();},
-  async loadBusinesses(){if(!isAdmin)throw Error('Nur Administratoren');const {data,error}=await db.from('sk_businesses').select('id,company_name,country,status').order('created_at',{ascending:false});if(error)throw error;return data||[];},
+  async loadBusinesses(){if(!isAdmin)throw Error('Nur Administratoren');const {data,error}=await db.from('sk_businesses').select('id,company_name,country,status,review_state').order('created_at',{ascending:false});if(error)throw error;return data||[];},
   async getBusinessDetails(id){if(!isAdmin)throw Error('Nur Administratoren');const {data,error}=await db.rpc('sk_admin_get_business_details',{p_business_id:id});if(error)throw error;return data;},
   async addBusinessNote(id,note){if(!isAdmin)throw Error('Nur Administratoren');const {error}=await db.rpc('sk_admin_add_business_note',{p_business_id:id,p_note:note});if(error)throw error;},
   async setBusinessStatus(id,status){if(!isAdmin)throw Error('Nur Administratoren');const {error}=await db.rpc('sk_admin_set_business_status',{p_business_id:id,p_status:status});if(error)throw error;},
+  async submitMyBusiness(){const {error}=await db.rpc('sk_submit_my_business');if(error)throw error;await safeEvaluate();},
+  async reviewBusiness(id,action,message){if(!isAdmin)throw Error('Nur Admins');const {error}=await db.rpc('sk_admin_review_business',{p_business_id:id,p_action:action,p_message:message||null});if(error)throw error;},
+  async requestSensitiveChange(field,value){const {error}=await db.rpc('sk_request_sensitive_change',{p_field:field,p_new_value:value});if(error)throw error;},
+  async adminActivity(){if(!isAdmin)throw Error('Nur Admins');const {data,error}=await db.rpc('sk_admin_activity');if(error)throw error;return data;},
+  async resolveAdminEvent(id){if(!isAdmin)throw Error('Nur Admins');const {error}=await db.rpc('sk_admin_resolve_event',{p_event_id:id});if(error)throw error;},
+  async reviewSensitiveChange(id,approved,message){if(!isAdmin)throw Error('Nur Admins');const {error}=await db.rpc('sk_admin_review_sensitive_change',{p_request_id:id,p_approve:approved,p_message:message||null});if(error)throw error;},
+  async logMediaChange(message){const {error}=await db.rpc('sk_log_my_media_change',{p_detail:message});if(error)throw error;},
+  isAdmin(){return isAdmin;},
+  async listHelp(preview=false){const {data,error}=await db.rpc('sk_help_list',{p_preview:preview});if(error)throw error;return data||[];},
+  async saveHelp(payload){if(!isAdmin)throw Error('Nur Admins');const {error}=await db.rpc('sk_admin_save_help',payload);if(error)throw error;},
+  async uploadHelpScreenshot(slug,imageId,file){if(!isAdmin)throw Error('Nur Admins');if(!/^[a-z0-9-]{2,60}$/.test(slug)||!/^[a-z0-9-]{2,80}$/.test(imageId))throw Error('Ungültige ID');
+    const ext={'image/png':'png','image/jpeg':'jpg','image/webp':'webp'}[file?.type];if(!ext||file.size>5242880)throw Error('Nur PNG/JPG/WebP bis 5 MB');
+    const store=db.storage.from('sk-help-images');
+    const oldPaths=['png','jpg','webp'].filter(e=>e!==ext).map(e=>slug+'/'+imageId+'.'+e);
+    const {error:deleteError}=await store.remove(oldPaths);if(deleteError)throw deleteError;
+    const path=slug+'/'+imageId+'.'+ext;const {error}=await store.upload(path,file,{upsert:true,contentType:file.type});if(error)throw error;return db.storage.from('sk-help-images').getPublicUrl(path).data.publicUrl;},
+  helpImageUrl(slug,imageId,ext){return db.storage.from('sk-help-images').getPublicUrl(slug+'/'+imageId+'.'+ext).data.publicUrl;},
   async getMyProfile(){
     const {data,error}=await db.rpc('sk_get_my_business_profile');if(error)throw error;return data;
   },
   async saveMyProfile(payload){const {error}=await db.rpc('sk_update_my_business_profile',payload);if(error)throw error;},
+  async saveRegistrationLegal(payload){const {error}=await db.rpc('sk_update_my_registration_legal',payload);if(error)throw error;},
   async saveMyLocation(payload){const {error}=await db.rpc('sk_set_my_business_location',payload);if(error)throw error;},
   async listBusinessMedia(businessId){
     const result={logo:[],photos:[]};
@@ -142,7 +165,7 @@
     }return result;
   },
   async uploadBusinessMedia(businessId,kind,slot,file){
-    if(!currentUser||isAdmin)throw Error('Bitte als freigeschalteter Betrieb anmelden.');
+    if(!currentUser||isAdmin)throw Error('Bitte als berechtigter Betrieb anmelden.');
     const types={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'};
     const ext=types[file.type];if(!ext)throw Error('Nur JPG, PNG oder WebP erlaubt.');
     const max=kind==='logo'?2097152:5242880;

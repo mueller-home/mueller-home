@@ -10,7 +10,7 @@
  const address=b=>[clean(b.street)+' '+clean(b.house_number),clean(b.postal_code)+' '+clean(b.city),label[b.country]||clean(b.country)].filter(x=>x.trim()).join(', ');
  function say(text){$('pr-location-status').textContent=text;}
  function updateReset(){const button=$('pr-location-reset');if(button){button.classList.toggle('hidden',!writable||activeBusiness?.location_source!=='manual');button.disabled=!writable||locationBusy;}}
- function current(){return {...activeBusiness,postal_code:$('pr-postal').value,city:$('pr-city').value,street:$('pr-street').value,house_number:$('pr-number').value};}
+ function current(){return {...activeBusiness,country:$('pr-country').value,postal_code:$('pr-postal').value,city:$('pr-city').value,street:$('pr-street').value,house_number:$('pr-number').value};}
  function hasCoordinates(b){return b&&Number.isFinite(Number(b.latitude))&&Number.isFinite(Number(b.longitude))&&b.latitude!=null&&b.longitude!=null;}
  function google(){
    if(window.google?.maps)return Promise.resolve(window.google.maps);
@@ -83,7 +83,7 @@
  }
  async function addressSaved(b,payload){
    if(!activeBusiness||!writable)return;
-   const next={...activeBusiness,company_name:payload.p_company_name,postal_code:payload.p_postal_code,city:payload.p_city,street:payload.p_street,house_number:payload.p_house_number};
+   const next={...activeBusiness,country:$('pr-country').value,company_name:payload.p_company_name,postal_code:payload.p_postal_code,city:payload.p_city,street:payload.p_street,house_number:payload.p_house_number};
    const now=key(next);activeBusiness={...activeBusiness,...next};
    if(now!==lastAddress){lastAddress=now;
      if(activeBusiness.location_source==='manual')say('Adresse geändert. Der manuell bestätigte Standort bleibt erhalten; bitte auf Richtigkeit prüfen.');
