@@ -73,3 +73,8 @@
 .help-screenshot{background:rgba(65,90,119,.06);border:1px dashed #8694a7;border-radius:10px;text-align:center;padding:1rem;margin:1.5rem 0}.help-screenshot img{width:100%;max-height:550px;object-fit:contain;border-radius:7px}
 #help-admin-list{display:flex;gap:.5rem;flex-wrap:wrap;margin:1rem 0}#help-admin-editor{max-width:900px;display:grid;gap:.5rem}#help-admin-editor textarea{width:100%;min-height:15rem}#help-admin-editor input,#help-admin-editor select{max-width:100%}
 @media(max-width:700px){.activity-row{flex-direction:column;align-items:flex-start}.activity-actions{justify-content:flex-start}}
+
+/* 0.31 · Löschverwaltung */
+.sk-deletion-profile{margin-top:1.5rem}.sk-deletion-card{margin:1rem 0;padding:1rem}.sk-deletion-card .doc-actions{display:flex;gap:.6rem;flex-wrap:wrap}
+
+.help-data-table{width:100%;border-collapse:collapse;margin:1rem 0;font-size:.93rem}.help-data-table th,.help-data-table td{border-bottom:1px solid var(--border-color,#ccd2da);padding:.65rem .75rem;text-align:left;vertical-align:top}.help-data-table th{background:var(--silver,#e0e1dd);color:#1b263b;font-weight:700}.help-data-table tbody tr:nth-child(even){background:rgba(65,90,119,.055)}

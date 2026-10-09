@@ -8,7 +8,21 @@
  function render(target,chapter){target.replaceChildren();if(!chapter){target.textContent='Für diese Seite ist noch kein veröffentlichtes Handbuchkapitel verfügbar.';return;}
   const h=document.createElement('h2');h.textContent=chapter.title;target.append(h);
   const lines=chapter.body.replace(/\r\n?/g,'\n').split('\n');let list=null;
-  for(const text of lines){if(!text.trim()){list=null;continue;}
+  for(let lineIndex=0;lineIndex<lines.length;lineIndex++){const text=lines[lineIndex];if(!text.trim()){list=null;continue;}
+   // Einfache Markdown-Tabellen als echte, sichere HTML-Tabellen darstellen.
+   const splitCells=row=>row.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(cell=>cell.trim());
+   if(text.trim().startsWith('|') && lineIndex+1<lines.length &&
+      /^\s*\|?\s*:?-{3,}:?(?:\s*\|\s*:?-{3,}:?)+\s*\|?\s*$/.test(lines[lineIndex+1])){
+     const columns=splitCells(text),table=document.createElement('table');table.className='help-data-table';
+     const head=document.createElement('thead'),heading=document.createElement('tr');
+     for(const value of columns){const cell=document.createElement('th');cell.textContent=value;heading.append(cell);}head.append(heading);table.append(head);
+     const body=document.createElement('tbody');lineIndex+=2;
+     while(lineIndex<lines.length&&lines[lineIndex].trim().startsWith('|')){
+       const row=document.createElement('tr');const cells=splitCells(lines[lineIndex]);
+       for(let col=0;col<columns.length;col++){const cell=document.createElement('td');cell.textContent=cells[col]||'';row.append(cell);}body.append(row);lineIndex++;
+     }
+     lineIndex--;table.append(body);target.append(table);list=null;continue;
+   }
    const shot=text.match(/^!\[([^\]]*)\]\(screenshot:([a-z0-9-]{2,80})\)$/);
    if(shot){const container=document.createElement('figure');container.className='help-screenshot';container.classList.toggle('hidden',!window.SK_AUTH?.isAdmin());
     const img=document.createElement('img');img.alt=shot[1];img.loading='lazy';img.className='hidden';

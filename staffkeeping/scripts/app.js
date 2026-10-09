@@ -1,6 +1,6 @@
 /* StaffKeeping 0.27.1 – zentrale Administration und Navigation */
 'use strict';
-const screens=['login','register','reset','pending','market','profile','my-listings','detail','messages','reviews','admin-businesses','admin-listings','admin-dashboard','admin-docs','admin-home','admin-activity','help'];
+const screens=['login','register','reset','pending','market','profile','my-listings','detail','messages','reviews','admin-businesses','admin-listings','admin-dashboard','admin-docs','admin-home','admin-activity','admin-deletions','help'];
 const navOnly=document.querySelectorAll('.nav-only'), guests=document.querySelectorAll('.guest-only');
 const publicViews=new Set(['login','register','reset','pending','help']);
 let demoSignedIn=false;
@@ -37,11 +37,12 @@ function performShow(view,updateUrl=true){
   document.querySelectorAll('.headnav [data-view]').forEach(n=>n.setAttribute('aria-current',n.dataset.view===view?'page':'false'));
   if(updateUrl && location.hash!=='#'+view)history.pushState({view},'', '#'+view);
   window.scrollTo(0,0);
-  if(view==='profile')window.SK_PROFILE?.load();
+  if(view==='profile'){window.SK_PROFILE?.load();window.SK_DELETION?.refreshMy();}
   if(view==='market')render();
   if(view==='my-listings')renderMyListings();
   if(view==='messages')renderChats();
   if(view==='admin-businesses')renderBusinesses();
+  if(view==='admin-deletions')window.SK_DELETION?.refreshAdmin();
   if(view==='admin-listings')renderAdminListings();
   if(view==='admin-docs'){renderProjectDocs();window.SK_HELP?.loadAdmin();}
   if(view==='admin-home'||view==='admin-activity')window.SK_ADMIN_HOME?.load(view);
