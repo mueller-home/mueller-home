@@ -42,3 +42,6 @@ Kapitel 3–5 beschreiben Bubble Data Types, Tabellen, RLS und Supabase Auth. Di
 
 ## Nachtrag 0.20
 Backend 0.19 ist in Supabase installiert. Frontend 0.20 verwendet signInWithPassword, signUp, resetPasswordForEmail und sk_register_business / sk_is_admin / sk_is_approved_member / sk_admin_set_business_status. Keine Key-Werte in Doku speichern. Teststatus: noch nicht live geprüft.
+
+## Ergänzung 0.21: Passwort-Recovery
+Recovery über `resetPasswordForEmail` und `PASSWORD_RECOVERY`-Ereignis. Der Recovery-Zustand muss vor normaler Auth-Sitzungsprüfung UI-priorisiert werden. Nach geprüftem `updateUser({password})` erfolgt `signOut` und erneuter E-Mail-/Passwort-Login. Postmark SMTP vom Anwender konfiguriert, tatsächlicher End-to-End-Test weiterhin offen.

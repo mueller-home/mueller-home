@@ -21,3 +21,8 @@
 
 17. **Browser-Konfiguration:** Ausschliesslich Project URL + Publishable Key in scripts/config.js; keine Secret-/Service-Role-Keys. Kein echtes Login durch lokalen Demo-Flag ersetzen.
 18. **Auth-Tests:** Änderungen erst als produktiv deklarieren, wenn bestätigte Testkonten, Adminfreigabe, RLS-Negativtests und Passwort-Reset mit SMTP validiert sind.
+
+## Authentifizierungsregel ab 0.21
+- Passwort-Recovery darf nicht durch Session-Initialisierung oder Rollenprüfung überschrieben werden.
+- Keine Recovery-/SMTP-Schlüssel, Zugangstokens oder Passwörter in Frontend-Konfiguration, Projektdateien oder Dokumentation.
+- Auth-Release erst nach echten Tests als funktionsfähig deklarieren.

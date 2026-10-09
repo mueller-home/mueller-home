@@ -26,3 +26,10 @@ SQL-Basismigration für Unternehmen, Firmenmitgliedschaften, Backend-Administrat
 - Erster Administrator in sk_internal.staff_admins angelegt.
 - 0.20: echte E-Mail/Passwort-Anmeldung, Signup, Bestätigung/Registrierungs-RPC, Session und Admin-Betriebsstatus in JavaScript implementiert. **Live-End-to-End-Test ausstehend; Konfiguration noch leer.**
 - Inserate, Nachrichten, Profiländerungen und Bewertungen weiterhin Demo. Original-Projektdokumente noch nicht geschützt online eingebunden.
+
+## Version 0.21 – Passwort-Recovery-Reparatur (Code fertig, Live-Test ausstehend)
+- Tatsächlicher Stand: Supabase Auth ist unter der Testdomain konfiguriert; erster Administrator ist angelegt, jedoch war der Passwort-Login bislang nicht erfolgreich.
+- Der Recovery-Link führte zu einer angemeldeten Sitzung ohne sichtbares Passwortformular; 0.21 priorisiert den Recovery-Modus vor der normalen Session-/Rollenprüfung und ergänzt eine Passwortbestätigung.
+- Bei erfolgreicher Passwortänderung wird die Sitzung beendet und der Nutzer zur normalen Anmeldung geführt.
+- Postmark: DKIM und Return-Path für `mueller-home.me` bestätigt; Postmark-Konto freigegeben; Supabase Custom SMTP nach Rückmeldung erfolgreich konfiguriert. Tatsächliche Zustellung und Reset-End-to-End **noch nicht getestet**.
+- Es werden keine neuen SQL-Migrationen benötigt. Inserate, Nachrichten und andere Fachmasken bleiben Demo.

@@ -20,3 +20,6 @@ Mit jeder neuen Version `docs/` und die Demo-Inhalte der Projektdoku konsistent 
 ## 0.20 Supabase Auth (Konfiguration erforderlich)
 
 In `scripts/config.js` **nur** die Project URL und den Publishable Key eintragen. Keine geheimen Schlüssel. Supabase Auth: Site URL und Redirect URL auf die verwendete App-Adresse setzen. Custom SMTP/Postmark vor breiten Registrierungstests konfigurieren. Erst danach mit Admin und Testfirma testen. Registrierung wird erst nach bestätigter E-Mail abgeschlossen; der Zwischenentwurf verbleibt bis dahin lokal im gleichen Browser (nicht in Supabase). Bei Browserwechsel den Vorgang ggf. neu starten – vor Produktivstart zu verbessern. Inserate und Chats bleiben Beispiele.
+
+## Version 0.21 – Recovery-Korrektur
+Postmark-SMTP für `mueller-home.me` ist laut Einrichtung bestätigt, Versand muss noch live getestet werden. Recovery-Links zeigen nun vorrangig das Formular für ein neues Passwort. Die App sollte nach Änderung abmelden und mit dem neuen Passwort erneut anmelden lassen. Siehe `docs/testplan.md`; vollständiger Browsertest noch offen. `scripts/config.js` bleibt unverändert und enthält ausschliesslich öffentliche Supabase-Verbindungsdaten.

@@ -37,3 +37,10 @@ Weitere offene Vorgaben laut Original: BusinessImage-Struktur, Bewertungsvalidie
 4. Test über fremden Benutzer und direkte REST/RPC-Anfragen, keinen ungeprüften Marktplatz-Zugang.
 5. Registrierung über mehrere Geräte: noch kein langlebiger serverseitiger Registrierungsentwurf; lokale Entwurfsdaten nur im gleichen Browser. Für produktive Nutzung verbessern.
 6. Fehlende rechtsverbindliche Nutzungsbedingungen vor Produktivregistrierung ergänzen.
+
+## Neu: P0 nach 0.21
+1. Recovery-Link live öffnen: Passwortformular statt Marktplatz; neues Passwort zweimal setzen und danach regulären Login nach Logout prüfen. Bei E-Mail-Ratelimits keine wiederholten Testversuche starten.
+2. Postmark-Transactional-Zustellung nachweisen, einschließlich From-Adresse und Supabase-Redirect.
+3. Falsche Bestätigung, ungültige/verbrauchte Links, Browserreload und anderer Browser testen.
+4. Bereits angelegtes Administratorkonto behalten, keine neuen Admin-UUIDs erzeugen.
+5. Anmeldung, Registrierung, Adminfreigabe und negative RLS-Tests mit zwei Firmen nachholen.

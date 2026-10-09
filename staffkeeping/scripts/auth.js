@@ -1,4 +1,4 @@
-/* StaffKeeping 0.20 – echte Authentifizierung und Firmenfreigabe */
+/* StaffKeeping 0.21 – Supabase Auth und stabiler Passwort-Recovery-Ablauf */
 'use strict';
 (function(){
  const cfg=window.SK_CONFIG||{};
@@ -10,9 +10,34 @@
  }
  if(!window.supabase?.createClient){msg('auth-message','Supabase-Bibliothek konnte nicht geladen werden. Netzwerk/Content-Blocker prüfen.');return;}
  const db=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
- let currentUser=null, isAdmin=false, latestCheck=0;
+ let currentUser=null, isAdmin=false;
+ // Recovery-Links erzeugen eine Supabase-Sitzung, dürfen aber NICHT als normale Anmeldung
+ // behandelt werden. Nur der Modus-Marker wird für Reloads gespeichert, niemals Tokens.
+ const RECOVERY_KEY='sk-password-recovery-in-progress';
+ const initialRecoveryLink=(new URLSearchParams(location.search).get('type')==='recovery') ||
+   (new URLSearchParams(location.hash.slice(1)).get('type')==='recovery');
+ let recoveryMode=initialRecoveryLink || sessionStorage.getItem(RECOVERY_KEY)==='1';
+ function showRecovery(){
+   recoveryMode=true;
+   sessionStorage.setItem(RECOVERY_KEY,'1');
+   document.getElementById('reset-form').classList.add('hidden');
+   document.getElementById('new-password-form').classList.remove('hidden');
+   document.getElementById('reset-result').classList.add('hidden');
+   ui().show('reset',false);
+   msg('new-password-result','Geben Sie jetzt Ihr neues Passwort ein.');
+ }
+ function clearRecovery(){
+   recoveryMode=false;
+   sessionStorage.removeItem(RECOVERY_KEY);
+   document.getElementById('reset-form').classList.remove('hidden');
+   document.getElementById('new-password-form').classList.add('hidden');
+   document.getElementById('new-password-form').reset();
+ }
+ if(recoveryMode)showRecovery();
  async function evaluate(){
+  if(recoveryMode){showRecovery();return;}
   const {data:{user},error}=await db.auth.getUser(); if(error&&error.status!==400)throw error;
+  if(recoveryMode){showRecovery();return;}
   currentUser=user||null;isAdmin=false;
   if(!user){ui().logoutView();return;}
   const {data:admin,error:ae}=await db.rpc('sk_is_admin');if(ae)throw ae;
@@ -23,9 +48,9 @@
   const {data:approved,error:pe}=await db.rpc('sk_is_approved_member',{p_business_id:members[0].business_id});if(pe)throw pe;
   ui().setAccess(!!approved,false);
  }
- async function safeEvaluate(){try{await evaluate();}catch(e){msg('auth-message','Prüfung fehlgeschlagen: '+e.message);ui().logoutView();}}
+ async function safeEvaluate(){try{await evaluate();}catch(e){msg('auth-message','Prüfung fehlgeschlagen: '+e.message);if(!recoveryMode)ui().logoutView();else showRecovery();}}
  window.SK_AUTH={
-  async logout(){await db.auth.signOut();currentUser=null;isAdmin=false;ui().logoutView();},
+  async logout(){clearRecovery();await db.auth.signOut();currentUser=null;isAdmin=false;ui().logoutView();},
   async loadBusinesses(){if(!isAdmin)throw Error('Nur Administratoren');const {data,error}=await db.from('sk_businesses').select('id,company_name,country,status').order('created_at',{ascending:false});if(error)throw error;return data||[];},
   async setBusinessStatus(id,status){if(!isAdmin)throw Error('Nur Administratoren');const {error}=await db.rpc('sk_admin_set_business_status',{p_business_id:id,p_status:status});if(error)throw error;},
   refresh:safeEvaluate
@@ -62,14 +87,51 @@
   const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
   const result=document.getElementById('reset-result');result.classList.remove('hidden');result.textContent=error?'Zurücksetzen fehlgeschlagen: '+error.message:'Wenn ein Konto existiert, wurde eine E-Mail angefordert.';
  });
+ document.querySelector('#view-reset [data-view="login"]').addEventListener('click',async e=>{
+  if(!recoveryMode)return;
+  e.preventDefault();e.stopPropagation();
+  clearRecovery();
+  await db.auth.signOut();
+  ui().logoutView();
+ });
  document.getElementById('new-password-form').addEventListener('submit',async e=>{
-  e.preventDefault();const pwd=document.getElementById('new-password').value;const {error}=await db.auth.updateUser({password:pwd});
-  msg('new-password-result',error?'Passwortänderung fehlgeschlagen: '+error.message:'Passwort geändert. Bitte melden Sie sich erneut an.');
-  if(!error){await db.auth.signOut();document.getElementById('new-password-form').classList.add('hidden');ui().show('login');}
+  e.preventDefault();
+  if(!recoveryMode){msg('new-password-result','Bitte zuerst einen gültigen Wiederherstellungslink öffnen.');return;}
+  const form=e.currentTarget;
+  const pwd=document.getElementById('new-password').value;
+  const confirmation=document.getElementById('new-password-confirm').value;
+  if(pwd.length<8){msg('new-password-result','Bitte ein Passwort mit mindestens 8 Zeichen eingeben.');return;}
+  if(pwd!==confirmation){msg('new-password-result','Die beiden Passwörter stimmen nicht überein.');return;}
+  const submit=form.querySelector('button[type="submit"]');
+  submit.disabled=true;
+  msg('new-password-result','Passwort wird gespeichert …');
+  try{
+   const {data:{session},error:se}=await db.auth.getSession();
+   if(se)throw se;
+   if(!session)throw Error('Der Wiederherstellungslink ist ungültig oder abgelaufen. Bitte einen neuen Link anfordern.');
+   const {error}=await db.auth.updateUser({password:pwd});
+   if(error)throw error;
+   // Sign-out erst nach erfolgreicher Passwortänderung. Ereignis SIGNED_OUT darf
+   // erst danach wieder zum normalen Login leiten.
+   clearRecovery();
+   const {error:outError}=await db.auth.signOut();
+   if(outError)throw outError;
+   ui().logoutView();
+   msg('auth-message','Passwort erfolgreich geändert. Bitte mit dem neuen Passwort anmelden.');
+  }catch(err){msg('new-password-result','Passwortänderung fehlgeschlagen: '+err.message);if(recoveryMode)showRecovery();}
+  finally{submit.disabled=false;}
  });
  db.auth.onAuthStateChange((event)=>{
-  if(event==='SIGNED_OUT')ui().logoutView();
-  if(event==='PASSWORD_RECOVERY'){ui().show('reset');document.getElementById('new-password-form').classList.remove('hidden');msg('auth-message','Wiederherstellungslink erkannt. Bitte neues Passwort setzen.');}
+  // Listener ohne await/weitere Supabase-API-Aufrufe: verhindert Auth-Deadlocks.
+  if(event==='PASSWORD_RECOVERY'){showRecovery();return;}
+  if(event==='SIGNED_OUT'&&!recoveryMode)ui().logoutView();
  });
- (async()=>{await finishRegistration();await safeEvaluate();})();
+ (async()=>{
+  if(recoveryMode){
+   // Supabase verarbeitet den Callback asynchron; niemals voreilig evaluate() starten.
+   showRecovery();return;
+  }
+  await finishRegistration();
+  if(!recoveryMode)await safeEvaluate();
+ })();
 })();

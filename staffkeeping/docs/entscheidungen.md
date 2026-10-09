@@ -20,3 +20,7 @@
 
 ## 0.20
 Kein Magic-Link-Zwang beim Login, sondern E-Mail/Passwort. Registrierungen mit Bestätigung und anschliessendem RPC; Status Ausstehend. Mailversand produktiv mit eigenem SMTP/Postmark; bestehender Administrator über auth.users-ID kontrolliert vergeben.
+
+## Postmark und Recovery (09.10.2026)
+- Entwicklungs-Senderdomain `mueller-home.me` (Postmark DKIM und Return-Path verifiziert); bei Übergabe Umstellung auf Annettes Domain. Kein privater SMTP-Schlüssel in Git oder Dokumentation.
+- Normales Login erfolgt weiterhin per E-Mail/Passwort. Recovery-Link öffnet ausschliesslich die Passwortneuvergabe; erst nach erfolgreicher Änderung erfolgt neue Anmeldung.

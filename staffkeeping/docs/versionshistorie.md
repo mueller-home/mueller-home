@@ -19,3 +19,6 @@ Ausstehend: echte Authentifizierung und backendgeschützter Originaldokument-Zug
 
 ## 0.20 – Auth-Integrationsstand (09.10.2026)
 Echte Auth- und Freigabeaufrufe programmiert. scripts/config.js muss noch ergänzt werden; SMTP und E2E-Tests stehen aus. Kein vollständig produktiver Stand.
+
+## 0.21 – 09.10.2026
+Passwort-Recovery stabilisiert: Recovery-Modus gegenüber automatischer Sitzungs-/Rollenbewertung priorisiert; doppelte Passworteingabe, Plausibilitätsprüfung, Statusmeldungen, Sign-out nach erfolgreicher Passwortänderung, Abbruchmöglichkeit. Admin-Doku auf aktuellen Supabase-/Postmark-Stand gebracht. **Statischer Code-Test; Live-Browsertest und Versandtest ausstehend.**

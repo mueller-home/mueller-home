@@ -23,3 +23,6 @@ Bitte `docs/uebergabe-annette.md` lesen: Bestehende GitHub-, Supabase- und Postm
 
 ## Übergabe-Update 0.20
 Supabase-Schema 0.19 installiert und geprüft; erster DB-Administrator angelegt. Code 0.20 für Auth/RPC vorbereitet, aber Projekt-URL/Publishable Key fehlen noch; End-to-End-Tests ausstehend. Vor Produktivnutzung Nutzungsbedingungen, zuverlässiger SMTP-Versand, Registrierungsfortsetzung über Geräte, RLS- und Rollen-Negativtests. Keine Produktivfähigkeit behaupten.
+
+## Übergabe-Update 0.21 (09.10.2026)
+Supabase 0.19 Schema und Admin-Konto sind installiert; Auth 0.20 ist mit Public URL/Publishable Key und Weiterleitungsadressen konfiguriert. Login schlug bisher mit `Invalid login credentials` fehl. Recovery-Mail meldete zwar eine Sitzung an, zeigte aber nicht das Formular zum Setzen eines Passworts. Postmark für `mueller-home.me` wurde mit DKIM, Return-Path, Freigabe und Supabase SMTP konfiguriert; ein echter Zustelltest fehlt. 0.21 behebt die UI-/State-Kollision des Recovery-Modus und ergänzt Passwortbestätigung; **echten Retest noch durchführen**. Fachfunktionen sind weiterhin Demo. ZIP-/CSS-/Dokumentationsregeln gelten fort.

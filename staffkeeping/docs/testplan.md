@@ -47,3 +47,13 @@ Siehe `docs/uebergabe-annette.md`.
 - Passwort-Reset-Mail und neue Passwortvergabe testen.
 - Bestätigung in anderem Browser/Gerät: Registrierung muss wiederaufgenommen werden (derzeit noch eingeschränkt).
 - Browserkonsole, mobile Ansicht, öffentliche docs-Dateien und Berechtigungen prüfen.
+
+## Auth-Recovery Version 0.21 – verpflichtender Retest
+- [ ] Custom SMTP Postmark: Testmail an berechtigte Adresse tatsächlich angekommen.
+- [ ] Ein Recovery-Link öffnet die Ansicht „Neues Passwort“ und NICHT den Marktplatz, trotz authentifizierter Recovery-Sitzung.
+- [ ] Zwei unterschiedliche Passwörter werden vor dem Update abgewiesen.
+- [ ] Zwei identische gültige Passwörter werden gespeichert; danach Abmeldung und reguläre Anmeldung mit neuem Passwort.
+- [ ] Seitenreload während Recovery zeigt weiterhin Passwortformular.
+- [ ] Ungültiger/abgelaufener Recovery-Link ergibt klare Fehlermeldung; kein unbeabsichtigter Zugang zum Marktplatz.
+- [ ] Nach explizitem Zurück zur Anmeldung wird der Recovery-Modus beendet.
+- [ ] Adminfreigabe und RLS-Negativtests bleiben ausstehend und sind separat durchzuführen.
