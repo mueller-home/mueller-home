@@ -3,13 +3,15 @@
 (function(){
  let profile=null, token=0, writable=false;
  let timer=null, changed=false, saving=null, savedJson=null, generation=0;
- const dataIds=['pr-company','pr-industry','pr-postal','pr-city','pr-contact','pr-contact-email','pr-phone','pr-desc','pr-notifications'];
+ const dataIds=['pr-company','pr-industry','pr-postal','pr-city','pr-contact','pr-contact-email','pr-phone','pr-desc','pr-notifications','pr-street','pr-number','pr-address-extra','pr-public-address'];
  function payload(){return {
    p_company_name:$('pr-company').value,p_industry:$('pr-industry').value,
    p_postal_code:$('pr-postal').value,p_city:$('pr-city').value,
    p_contact_name:$('pr-contact').value,p_contact_email:$('pr-contact-email').value,
    p_contact_phone:$('pr-phone').value,p_description:$('pr-desc').value,
-   p_email_notifications_enabled:$('pr-notifications').checked
+   p_email_notifications_enabled:$('pr-notifications').checked,
+   p_street:$('pr-street').value,p_house_number:$('pr-number').value,p_address_extra:$('pr-address-extra').value,
+   p_show_street_address:$('pr-public-address').checked
  };}
  function status(t,error=false){const el=$('profile-info');el.textContent=t;el.classList.remove('hidden');el.classList.toggle('save-error',error);$('pr-retry-save').classList.toggle('hidden',!error);}
  function changedNow(){return writable && (changed || JSON.stringify(payload())!==savedJson || !!saving);}
@@ -33,6 +35,7 @@
      if(sequence!==generation)return false;
      savedJson=snapshot;changed=JSON.stringify(payload())!==snapshot;
      status(changed?'Weitere Änderungen warten auf Speicherung …':'Gespeichert ✓');
+     if(!changed)void window.SK_LOCATION?.addressSaved(profile.business,JSON.parse(snapshot));
      if(changed){clearTimeout(timer);timer=setTimeout(()=>{void flush();},250);}
      return true;
    }catch(e){changed=true;status('Nicht gespeichert: '+e.message,true);return false;}
@@ -88,6 +91,7 @@
    field('pr-vat',b.vat_id);field('pr-postal',b.postal_code);field('pr-city',b.city);
    field('pr-contact',b.contact_name);field('pr-contact-email',b.contact_email);field('pr-phone',b.contact_phone);
    field('pr-desc',b.description);$('pr-notifications').checked=b.email_notifications_enabled;
+   field('pr-street',b.street);field('pr-number',b.house_number);field('pr-address-extra',b.address_extra);$('pr-public-address').checked=!!b.show_street_address;
    $('pr-login-email').textContent=result.login_email||'–';
    writable=b.status==='Freigeschaltet'&&result.role==='owner';
    generation++;changed=false;savedJson=JSON.stringify(payload());clearTimeout(timer);timer=null;status(writable?'Gespeichert ✓':'Nur lesbar');
@@ -95,6 +99,7 @@
    $('pr-logo-file').disabled=!writable;$('pr-logo-delete').disabled=!writable;
    $('profile-loading').textContent=writable?'Angaben werden in Supabase gespeichert.':'Nur freigeschaltete Firmeninhaber können Änderungen speichern.';
    await renderMedia();
+   void window.SK_LOCATION?.load(b,writable);
   }catch(e){$('profile-loading').textContent='Profil konnte nicht geladen werden: '+e.message;}
  }
  for(const id of dataIds){

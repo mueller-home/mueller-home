@@ -127,6 +127,7 @@
     const {data,error}=await db.rpc('sk_get_my_business_profile');if(error)throw error;return data;
   },
   async saveMyProfile(payload){const {error}=await db.rpc('sk_update_my_business_profile',payload);if(error)throw error;},
+  async saveMyLocation(payload){const {error}=await db.rpc('sk_set_my_business_location',payload);if(error)throw error;},
   async listBusinessMedia(businessId){
     const result={logo:[],photos:[]};
     for(const [kind,bucket] of [['logo','sk-business-logos'],['photos','sk-business-photos']]){
