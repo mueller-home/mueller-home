@@ -1,23 +1,29 @@
-# StaffKeeping 0.1 – Startseite
+# StaffKeeping – Designprototyp 0.11
 
-Statischer, responsiver Designprototyp entsprechend Kapitel 13 des Migrationskonzepts. Keine Supabase-Verbindung, kein echter Login, keine Registrierung und keine Speicherung von Daten.
+Ziel: ausschliesslich **Applikation**, keine Marketing-Website. Die separate StaffKeeping-Homepage verlinkt später auf diese App.
 
-## Start
-`index.html` lokal im Browser öffnen oder den Inhalt dieses Ordners ins Root des für StaffKeeping vorgesehenen GitHub-Pages-Repositories kopieren. Relative Pfade funktionieren auch unter Projekt-Unterpfaden.
+## Bestandteil
+- `index.html`: Login, Registrierung, Passwort-Reset-Platzhalter, Freigabe-Warteseite und Marktplatz.
+- `styles/tokens.css`: CI-Farbdefinitionen (gegenüber 0.10 unverändert; wird **nicht** im Update-ZIP mitgeliefert).
+- `styles/main.css`: App-Layout, Responsive-Design.
+- `scripts/app.js`: ausschliesslich lokale Demo-Interaktionen (keine Supabase-Verbindung).
 
-## Design
-- CI-Farben aus Migrationskonzept: #1B263B, #E0E1DD, #FFFFFF, #415A77.
-- Schriftart im Konzept ausdrücklich offen: neutrale Systemschrift als Platzhalter.
-- Nicht definierter fünfter Hero-Blauton bewusst nicht eingesetzt.
-- Abfolge der acht Abschnitte aus Kapitel 13.2 übernommen.
-- Das gezeigte Schirm-Signet sowie die Strichillustrationen sind **neu gezeichnete Platzhalter**; sie sind nicht die originale Marken-/Illustrationsdatei.
-- Laufende Texte sind Entwurfstexte zur Freigabe durch Annette, keine verbindlichen Werbeversprechen.
-- Preisangaben bewusst nicht als aktuelle Angebote dargestellt; die 50%-Talent-Fonds-Aussage stammt aus dem Dokument.
-- Kontakt-Mailadresse im Link ist eine Annahme aus der Domain und muss vor Produktivsetzung bestätigt werden.
-- Impressum / Datenschutz sind aktuell nur Platzhalter; vor öffentlicher Produktivveröffentlichung ergänzen.
+## Wichtige Einschränkungen
+- **Keine echte Authentifizierung.** Jedes formal gültig ausgefüllte Login-Formular öffnet die Demo-Marktplatzansicht.
+- **Keine Speicherung, kein Versand.** Registrierung, Passwort-Rücksetzung, Merkliste und Suche sind ausschliesslich Demo-Funktionen.
+- **Kein realer Datenzugriff.** Inserate sind vollständig fiktiv. Länder-/Radiusregeln sind noch nicht serverseitig umgesetzt.
+- Registrierungsfelder sind eine Design-Musteransicht; Abgleich mit Kapitel 5 des Migrationskonzepts vor tatsächlicher Supabase-Implementierung erforderlich.
+- Eine endgültige Schriftart ist laut Migrationskonzept noch offen; bis dahin Systemschrift.
+- Schirmmarke als gezeichneter Platzhalter, originale Logo-Datei fehlt weiterhin.
+- Impressum/Datenschutz/Nutzungsbedingungen werden später über die bestehende Homepage bzw. verbindliche Rechtstexte verlinkt; keine unbestätigten URLs hinterlegt.
 
-## Tests
-1. `index.html` auf Desktop und Smartphone öffnen.
-2. Menünavigation und mobile Menü-Taste testen.
-3. Ankerlinks und Textdarstellung prüfen.
-4. Annette: Logo, Schriftart, Hero-Farbton, Texte, Kontaktangaben, Preismodell und Bilder abnehmen lassen.
+## Testablauf
+1. `index.html` im Browser öffnen.
+2. Login mit beliebiger syntaktisch gültiger E-Mail und Passwort probieren → Demo-Marktplatz.
+3. Ausloggen → Unternehmen registrieren → Freigabestatus.
+4. Zurück zum Login → Passwort vergessen → Demo-Meldung (keine E-Mail versendet).
+5. Im Marktplatz Suchfilter und Merkliste testen; Karte ist bewusst ein Platzhalter.
+6. Desktop und Mobilansicht mit Annette beurteilen.
+
+## Update-Regeln
+ZIP `sk-update-<Version>-<YYYYMMDD-HHMMSS>.zip`; alle Dateien unter `staffkeeping/`; nur neue/geänderte Dateien. `styles/tokens.css` ist aus 0.10 unverändert, und die bisherige `assets/illustrations.svg` wird von der App nicht mehr verwendet (kann im Projekt gelöscht werden). Eine ZIP-Datei löscht vorhandene Altdateien nicht automatisch.
