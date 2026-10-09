@@ -17,8 +17,8 @@ Reiner Frontend-Designprototyp (kein Supabase, keine echten Login- oder Datenban
 ## Dateien
 - `index.html`: Alle Demo-Masken (ohne eingebettete Styles / Skripte)
 - `styles/tokens.css`: CI-Farbwerte und zentrale Variablen, unverändert aus Version 0.14
-- `styles/main.css`: gemeinsames Layout, responsive Komponenten, Version 0.16
-- `scripts/app.js`: Demo-Navigation, Muster-Daten und Interaktionen, Version 0.16
+- `styles/main.css`: gemeinsames Layout, responsive Komponenten, Version 0.17
+- `scripts/app.js`: Demo-Navigation, Muster-Daten und Interaktionen, Version 0.17
 
 ## Installation
 Das Update-ZIP im Wurzelverzeichnis des Git-Repositories entpacken. Alle Pfade beginnen mit `staffkeeping/`; nur die geänderten Dateien werden ausgeliefert. GitHub Pages: URL zu `/staffkeeping/` verwenden.
@@ -39,3 +39,11 @@ Das Update-ZIP im Wurzelverzeichnis des Git-Repositories entpacken. Alle Pfade b
 - Technische Benachrichtigungen, Karten/Radius-Suche, Uploads, Zahlungen/Impact, echte Bewertungen sowie persistente Inserate und Nachrichten.
 
 Beim Übergang zu Supabase werden alle Demo-Daten und die simulierten Schreibvorgänge durch authentifizierte API-Zugriffe mit RLS und administrativen Rollenchecks ersetzt.
+
+## Navigation (Korrektur 0.17)
+
+- Nach der Demo-Anmeldung öffnet sich einmalig der Marktplatz. Danach sind alle Ansichten über die App-Navigation erreichbar.
+- Die aktuelle Ansicht steht im URL-Fragment (`#messages`, `#profile` usw.) und bleibt bei einem Reload erhalten.
+- Die Demo-Anmeldung gilt nur für den aktuellen Browser-Tab (`sessionStorage`); Abmelden beendet sie. Keine echte Authentifizierung und keine Datenbankverbindung.
+- Für CSS und JavaScript sind Versionsparameter angehängt, um veraltete Browser-Caches beim Update auszuschliessen.
+- Das Logo führt im angemeldeten Zustand zum Marktplatz statt zur Login-Maske.

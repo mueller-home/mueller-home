@@ -2,9 +2,39 @@
 'use strict';
 const screens=['login','register','reset','pending','market','profile','my-listings','detail','messages','reviews','admin-businesses','admin-listings','admin-dashboard'];
 const navOnly=document.querySelectorAll('.nav-only'), guests=document.querySelectorAll('.guest-only');
-function show(view){if(!screens.includes(view))view='login';screens.forEach(v=>document.getElementById('view-'+v).classList.toggle('hidden',v!==view));const inApp=!['login','register','reset','pending'].includes(view);navOnly.forEach(n=>n.classList.toggle('hidden',!inApp));guests.forEach(n=>n.classList.toggle('hidden',inApp));window.scrollTo(0,0);if(view==='market')render();if(view==='my-listings')renderMyListings();if(view==='messages')renderChats();if(view==='admin-businesses')renderBusinesses();if(view==='admin-listings')renderAdminListings();}
-document.addEventListener('click',e=>{const el=e.target.closest('[data-view]');if(el){e.preventDefault();show(el.dataset.view)}});
-document.getElementById('login-form').addEventListener('submit',e=>{e.preventDefault();show('market')});
+const publicViews=new Set(['login','register','reset','pending']);
+let demoSignedIn=sessionStorage.getItem('sk-demo-signed-in')==='yes';
+function show(view,updateUrl=true){
+  if(!screens.includes(view))view='login';
+  // Demo-Ansicht: Nur ein explizit gestarteter Demo-Zugang darf interne Seiten sehen.
+  if(!demoSignedIn && !publicViews.has(view))view='login';
+  if(demoSignedIn && view==='login')view='market';
+  screens.forEach(v=>document.getElementById('view-'+v).classList.toggle('hidden',v!==view));
+  const inApp=demoSignedIn && !publicViews.has(view);
+  navOnly.forEach(n=>n.classList.toggle('hidden',!inApp));
+  guests.forEach(n=>n.classList.toggle('hidden',inApp));
+  document.querySelectorAll('.headnav [data-view]').forEach(n=>n.setAttribute('aria-current',n.dataset.view===view?'page':'false'));
+  if(updateUrl && location.hash!=='#'+view)history.pushState({view},'', '#'+view);
+  window.scrollTo(0,0);
+  if(view==='market')render();
+  if(view==='my-listings')renderMyListings();
+  if(view==='messages')renderChats();
+  if(view==='admin-businesses')renderBusinesses();
+  if(view==='admin-listings')renderAdminListings();
+}
+function logout(){demoSignedIn=false;sessionStorage.removeItem('sk-demo-signed-in');show('login');}
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-view]');if(!el)return;
+  e.preventDefault();
+  if(el.id==='logout')logout();else show(el.dataset.view);
+});
+document.getElementById('login-form').addEventListener('submit',e=>{
+  e.preventDefault();
+  demoSignedIn=true;
+  sessionStorage.setItem('sk-demo-signed-in','yes');
+  show('market');
+});
+window.addEventListener('popstate',()=>show(location.hash.slice(1)||'login',false));
 document.getElementById('registration-form').addEventListener('submit',e=>{e.preventDefault();show('pending')});
 document.getElementById('reset-form').addEventListener('submit',e=>{e.preventDefault();document.getElementById('reset-result').classList.remove('hidden')});
 document.querySelectorAll('.pw-toggle').forEach(b=>b.addEventListener('click',()=>{const i=document.getElementById(b.dataset.target);i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'Anzeigen':'Verbergen'}));
@@ -52,4 +82,4 @@ document.getElementById('admin-business-table').addEventListener('click',e=>{con
 function renderAdminListings(){const country=document.getElementById('admin-country').value,status=document.getElementById('admin-status').value;const filtered=listings.filter(l=>(!country||l.country===country)&&(!status||listingStatus.get(l.id)===status));document.getElementById('admin-listing-table').innerHTML='<div class="table-wrap"><table class="data-table"><thead><tr><th>Inserat</th><th>Land</th><th>Status</th><th>Aktionen</th></tr></thead><tbody>'+filtered.map(l=>`<tr><td>${esc(l.title)}</td><td>${esc(l.country)}</td><td><span class="status-tag">${esc(listingStatus.get(l.id))}</span></td><td class="table-actions"><button data-moderate="${l.id}" data-action="edit">Bearbeiten</button><button data-moderate="${l.id}" data-action="toggle">${listingStatus.get(l.id)==='Aktiv'?'Sperren':'Aktivieren'}</button></td></tr>`).join('')+'</tbody></table></div>';}
 document.getElementById('admin-listing-table').addEventListener('click',e=>{const b=e.target.closest('[data-moderate]');if(!b)return;const id=Number(b.dataset.moderate);if(b.dataset.action==='toggle'){listingStatus.set(id,listingStatus.get(id)==='Aktiv'?'Gesperrt':'Aktiv');renderAdminListings()}else{const l=listings.find(x=>x.id===id);modal('Inserat prüfen','<p><strong>'+esc(l.title)+'</strong></p><p>'+esc(l.desc)+'</p><p class="muted">Bearbeitung und dauerhafte Löschung folgen mit Backend und Berechtigungsprüfung.</p>')}});
 ['admin-country','admin-status'].forEach(id=>document.getElementById(id).addEventListener('change',renderAdminListings));
-show('login');
+show(location.hash.slice(1)||(demoSignedIn?'market':'login'),false);
