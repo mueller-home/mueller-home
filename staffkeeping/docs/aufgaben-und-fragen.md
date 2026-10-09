@@ -51,3 +51,11 @@ Weitere offene Vorgaben laut Original: BusinessImage-Struktur, Bewertungsvalidie
 - **P0:** Adminfreigabe, Firmenstatus und RLS-Negativtest mit zwei neuen Konten.
 - **P1:** Spam-Einstufung prüfen (Postmark-Berichte, SPF/DMARC, Vorlage); das SMTP-Setup ist bereits erfolgreich durchgeführt.
 - **Erledigt und live bestätigt:** Version 0.21 Passwort-Reset, Logout und anschliessender Login mit neuem Passwort.
+
+## Version 0.23 – P0 Test und Folgearbeiten
+- [ ] Mit bestehendem, bestätigtem Testkonto **ohne** Unternehmensdatensatz anmelden: Firmenformular erscheint statt allgemeiner Warteseite.
+- [ ] Bereits ausgefüllte Felder falls vorhanden vorgefüllt; fehlende Werte manuell ergänzen; Abschluss ohne erneute Registrierungsmail.
+- [ ] `sk_businesses` und `sk_business_members` prüfen: genau eine Firma, Rolle `owner`, Status `Ausstehend`.
+- [ ] Benutzer ohne Freigabe sieht Marktplatz nicht; Administrator kann Firma freigeben; danach Login und Zugriff prüfen.
+- [ ] Negativtests mit zwei verschiedenen Unternehmen und direkten API-Anfragen; Spamzustellung separat behandeln.
+- [ ] Langfristig serverseitigen, geräteübergreifenden Registrierungsentwurf erwägen, nicht als bereits implementiert markieren.

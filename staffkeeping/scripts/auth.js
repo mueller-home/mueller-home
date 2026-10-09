@@ -1,4 +1,4 @@
-/* StaffKeeping 0.22 – Supabase Auth, stabile Callback-URL und Passwort-Recovery */
+/* StaffKeeping 0.23 – Supabase Auth, stabile Callback-URL und Passwort-Recovery */
 'use strict';
 (function(){
  const cfg=window.SK_CONFIG||{};
@@ -28,6 +28,33 @@
  }
  const db=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  let currentUser=null, isAdmin=false;
+ // A confirmed auth account can exist without a company (e.g. redirected to homepage).
+ // Such users must resume the COMPANY form, never sign up a second auth account.
+ let completionMode=false;
+ function setCompletionMode(user){
+   completionMode=true;
+   const email=document.getElementById('reg-email');
+   const password=document.getElementById('reg-password');
+   const passwordBlock=document.getElementById('reg-password-field');
+   email.value=user.email||'';email.readOnly=true;
+   password.required=false;password.value='';passwordBlock.classList.add('hidden');
+   document.getElementById('registration-title').textContent='Unternehmensregistrierung abschliessen';
+   msg('registration-message','Ihre E-Mail ist bestätigt. Ergänzen oder prüfen Sie die Firmendaten und schliessen Sie die Registrierung ab – ohne neue Bestätigungsmail.');
+   const raw=localStorage.getItem('sk-registration-draft');
+   if(raw){try{const draft=JSON.parse(raw);if(draft.email?.toLowerCase()===user.email?.toLowerCase()){
+     const map={'company':'p_company_name','vat':'p_vat_id','industry':'p_industry','country':'p_country','postal':'p_postal_code','city':'p_city','contact':'p_contact_name','phone':'p_contact_phone'};
+     for(const [id,key] of Object.entries(map)){const el=document.getElementById(id);if(el&&draft.details?.[key]!=null)el.value=draft.details[key];}
+   }}catch{}}
+   ui().show('register',false);
+ }
+ function exitCompletionMode(){
+   completionMode=false;
+   const email=document.getElementById('reg-email');const password=document.getElementById('reg-password');
+   email.readOnly=false;password.required=true;
+   document.getElementById('reg-password-field').classList.remove('hidden');
+   document.getElementById('registration-title').textContent='Unternehmen registrieren';
+ }
+
  // Recovery-Links erzeugen eine Supabase-Sitzung, dürfen aber NICHT als normale Anmeldung
  // behandelt werden. Nur der Modus-Marker wird für Reloads gespeichert, niemals Tokens.
  const RECOVERY_KEY='sk-password-recovery-in-progress';
@@ -56,18 +83,18 @@
   const {data:{user},error}=await db.auth.getUser(); if(error&&error.status!==400)throw error;
   if(recoveryMode){showRecovery();return;}
   currentUser=user||null;isAdmin=false;
-  if(!user){ui().logoutView();return;}
+  if(!user){exitCompletionMode();ui().logoutView();return;}
   const {data:admin,error:ae}=await db.rpc('sk_is_admin');if(ae)throw ae;
   isAdmin=!!admin;
-  if(isAdmin){ui().setAccess(true,true);return;}
+  if(isAdmin){exitCompletionMode();ui().setAccess(true,true);return;}
   const {data:members,error:me}=await db.from('sk_business_members').select('business_id').eq('user_id',user.id).limit(1);if(me)throw me;
-  if(!members?.length){ui().setAccess(false,false);return;}
+  if(!members?.length){setCompletionMode(user);return;}
   const {data:approved,error:pe}=await db.rpc('sk_is_approved_member',{p_business_id:members[0].business_id});if(pe)throw pe;
-  ui().setAccess(!!approved,false);
+  exitCompletionMode();ui().setAccess(!!approved,false);
  }
  async function safeEvaluate(){try{await evaluate();}catch(e){msg('auth-message','Prüfung fehlgeschlagen: '+e.message);if(!recoveryMode)ui().logoutView();else showRecovery();}}
  window.SK_AUTH={
-  async logout(){clearRecovery();await db.auth.signOut();currentUser=null;isAdmin=false;ui().logoutView();},
+  async logout(){clearRecovery();exitCompletionMode();await db.auth.signOut();currentUser=null;isAdmin=false;ui().logoutView();},
   async loadBusinesses(){if(!isAdmin)throw Error('Nur Administratoren');const {data,error}=await db.from('sk_businesses').select('id,company_name,country,status').order('created_at',{ascending:false});if(error)throw error;return data||[];},
   async setBusinessStatus(id,status){if(!isAdmin)throw Error('Nur Administratoren');const {error}=await db.rpc('sk_admin_set_business_status',{p_business_id:id,p_status:status});if(error)throw error;},
   refresh:safeEvaluate
@@ -78,26 +105,51 @@
   if(error){msg('auth-message','Anmeldung fehlgeschlagen: '+error.message);return;}
   document.getElementById('login-password').value='';msg('auth-message','');await safeEvaluate();
  });
+ function registrationDetails(email){return {p_company_name:document.getElementById('company').value,p_vat_id:document.getElementById('vat').value,p_industry:document.getElementById('industry').value,p_country:document.getElementById('country').value,p_postal_code:document.getElementById('postal').value,p_city:document.getElementById('city').value,p_contact_name:document.getElementById('contact').value,p_contact_email:email,p_contact_phone:document.getElementById('phone').value,p_terms_accepted:true};}
+ async function createCompany(details){
+   const {error}=await db.rpc('sk_register_business',details);
+   if(error)throw error;
+   localStorage.removeItem('sk-registration-draft');
+   exitCompletionMode();
+   await safeEvaluate();
+ }
  document.getElementById('registration-form').addEventListener('submit',async e=>{
-  e.preventDefault();msg('registration-message','Registrierung läuft …');
-  const email=document.getElementById('reg-email').value.trim();
-  const password=document.getElementById('reg-password').value;
-  const details={p_company_name:document.getElementById('company').value,p_vat_id:document.getElementById('vat').value,p_industry:document.getElementById('industry').value,p_country:document.getElementById('country').value,p_postal_code:document.getElementById('postal').value,p_city:document.getElementById('city').value,p_contact_name:document.getElementById('contact').value,p_contact_email:email,p_contact_phone:document.getElementById('phone').value,p_terms_accepted:true};
-  const {data,error}=await db.auth.signUp({email,password,emailRedirectTo:callbackUrl});
-  document.getElementById('reg-password').value='';
-  if(error){msg('registration-message','Registrierung fehlgeschlagen: '+error.message);return;}
-  // Pending registration exists only in current browser. Require confirmed auth before RPC.
-  localStorage.setItem('sk-registration-draft',JSON.stringify({email,details}));
-  if(!data.session){msg('registration-message','Bestätigungsmail prüfen. Anschliessend in diesem Browser wieder öffnen und anmelden.');ui().show('pending');return;}
-  await finishRegistration();
+   e.preventDefault();
+   msg('registration-message','Registrierung läuft …');
+   const email=document.getElementById('reg-email').value.trim();
+   const details=registrationDetails(email);
+   try{
+     // Already authenticated/verified: NEVER call signUp again and NEVER send email.
+     const {data:{user},error:ue}=await db.auth.getUser();
+     if(ue && ue.status!==400)throw ue;
+     if(user){
+       if(!user.email_confirmed_at)throw Error('Bitte zuerst Ihre E-Mail bestätigen.');
+       if(user.email?.toLowerCase()!==email.toLowerCase())throw Error('Bitte die E-Mail-Adresse des angemeldeten Kontos verwenden.');
+       await createCompany(details);return;
+     }
+     if(completionMode)throw Error('Sitzung abgelaufen. Bitte erneut anmelden.');
+     const password=document.getElementById('reg-password').value;
+     // Preserve details before signup, so an auth state change cannot lose the draft.
+     localStorage.setItem('sk-registration-draft',JSON.stringify({email,details}));
+     const {data,error}=await db.auth.signUp({email,password,options:{emailRedirectTo:callbackUrl}});
+     document.getElementById('reg-password').value='';
+     if(error)throw error;
+     if(!data.session){msg('registration-message','Bestätigungsmail prüfen. Anschliessend anmelden, um das Unternehmen anzulegen.');ui().show('pending');return;}
+     await finishRegistration();
+     await safeEvaluate();
+   }catch(error){msg('registration-message','Registrierung konnte nicht abgeschlossen werden: '+error.message);ui().show('register',false);}
  });
  async function finishRegistration(){
-  const raw=localStorage.getItem('sk-registration-draft');if(!raw)return;
-  let draft;try{draft=JSON.parse(raw);}catch{return;}
-  const {data:{user}}=await db.auth.getUser();if(!user||user.email?.toLowerCase()!==draft.email.toLowerCase()||!user.email_confirmed_at)return;
-  const {error}=await db.rpc('sk_register_business',draft.details);
-  if(error){msg('registration-message','Firma konnte nicht angelegt werden: '+error.message);return;}
-  localStorage.removeItem('sk-registration-draft');
+   const raw=localStorage.getItem('sk-registration-draft');if(!raw)return false;
+   let draft;try{draft=JSON.parse(raw);}catch{localStorage.removeItem('sk-registration-draft');return false;}
+   const {data:{user}}=await db.auth.getUser();
+   if(!user||user.email?.toLowerCase()!==draft.email?.toLowerCase()||!user.email_confirmed_at)return false;
+   // A draft may outlive a successful registration (refresh / different tab).
+   const {data:members,error:me}=await db.from('sk_business_members').select('business_id').eq('user_id',user.id).limit(1);
+   if(me)throw me;
+   if(members?.length){localStorage.removeItem('sk-registration-draft');return true;}
+   try{await createCompany(draft.details);return true;}
+   catch(error){msg('registration-message','Unternehmen noch nicht angelegt: '+error.message);setCompletionMode(user);return false;}
  }
  document.getElementById('reset-form').addEventListener('submit',async e=>{
   e.preventDefault();const email=document.getElementById('reset-email').value.trim();
@@ -148,7 +200,7 @@
    // Supabase verarbeitet den Callback asynchron; niemals voreilig evaluate() starten.
    showRecovery();return;
   }
-  await finishRegistration();
+  try{await finishRegistration();}catch(e){msg('registration-message','Registrierung konnte nicht abgeschlossen werden: '+e.message);}
   if(!recoveryMode)await safeEvaluate();
  })();
 })();

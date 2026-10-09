@@ -34,3 +34,6 @@ Bestehendes Repository, Supabase-Projekt und Postmark-Verwaltung nach Entwicklun
 
 ## Auth-Implementierung 0.20
 Supabase Auth E-Mail/Passwort; nach E-Mail-Bestätigung wird sk_register_business aufgerufen. Status Ausstehend; nur Freigeschaltet oder sk_is_admin erlaubt App-Zugang. Adminstatus aus sk_internal.staff_admins, kein clientseitig gesetztes Flag als Zugriffsquelle. Firmenfreigabe per sk_admin_set_business_status. Client nutzt ausschliesslich Publishable Key; serverseitige RLS/RPC-Prüfung bleibt maßgeblich. Konfiguration in scripts/config.js (öffentlich).
+
+## Ergänzung 0.23 – Registrierung und getrennte Zustände
+Auth-Benutzer, Unternehmensdatensatz und dessen Freigabe sind verschiedene Zustände. Ein bestätigter Benutzer ohne Firmenmitgliedschaft muss vorhandene Test-Firmendaten nacherfassen können (über `sk_register_business`, kein zweites `signUp`). Nur für tatsächlich angelegte Unternehmen ist der Status `Ausstehend` im Sinne der Admin-Freigabe relevant. Bestätigte Test-Auth-Konten werden nicht gelöscht. Die Anwendung wird im Live-Test noch validiert.

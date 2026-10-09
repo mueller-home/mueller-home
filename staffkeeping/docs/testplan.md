@@ -65,3 +65,13 @@ Siehe `docs/uebergabe-annette.md`.
 - [ ] Passwort-Reset-Link erneut auf `/staffkeeping/` überprüfen (nur falls nötig; keine unnötigen zusätzlichen Mails).
 - [ ] Adminfreigabe und Berechtigung mit zwei Firmen; Browserwechsel bei Signup als bekannter offener Fall.
 - [ ] Spam-Zustellung bei Postmark/Gmail prüfen; nicht als behoben markieren.
+
+## Version 0.23 – Fortsetzung der Registrierung (vor Ort zu testen)
+- [ ] Bereits bestätigter Testbenutzer ohne Mitgliedschaft meldet sich an und gelangt zu „Unternehmensregistrierung abschliessen“, nicht zu „Prüfung ausstehend“.
+- [ ] Das Formular enthält keine Passwortpflicht; E-Mail entspricht dem bestehenden Auth-Konto.
+- [ ] Firmenangaben vervollständigen, speichern, keine weitere Auth-Mail / kein zweiter Auth-User.
+- [ ] SQL: genau eine Firma und eine Mitgliedschaft; Status `Ausstehend`.
+- [ ] Ausstehender Benutzer bleibt von Marktplatz und Administrations-API ausgeschlossen.
+- [ ] Admin sieht neue Firma, gibt sie frei; Benutzer kann danach zugreifen.
+- [ ] Negativ: Benutzer mit vorhandener Firma darf keine zweite anlegen; falsche Session/E-Mail darf fremde Registrierungsdaten nicht nutzen.
+- [ ] Neue Registrierung inklusive Bestätigungslink sowie Login nach Browser-/Gerätewechsel separat testen.

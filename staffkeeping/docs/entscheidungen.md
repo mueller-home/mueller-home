@@ -27,3 +27,6 @@ Kein Magic-Link-Zwang beim Login, sondern E-Mail/Passwort. Registrierungen mit B
 
 ## 09.10.2026 – Auth-Callback-URL
 Bei GitHub Pages liegt die App unter `/staffkeeping/`, die Marketing-Homepage auf `/`. Signup- und Passwort-Reset-E-Mails müssen immer die App als Rücksprungadresse verwenden. Die App-Basis wird aus der geladenen Datei `scripts/auth.js` ermittelt; abweichende Domains/Pfade werden abgewiesen statt stillschweigend zur Homepage umzuleiten. Beim geplanten Wechsel zur Domain von Annette muss dieser harte Pfadtest überprüft bzw. bewusst angepasst werden. Supabase Site URL und Redirect-Allowlist zusätzlich auf die neue Domain umstellen.
+
+## Ergänzung 0.23 – Registrierung unterbrechen und fortsetzen
+Ein bestätigtes Auth-Konto ohne Firmenmitgliedschaft ist **nicht** gleichbedeutend mit einem Unternehmen im Status `Ausstehend`. Die Anwendung muss das Formular zur Unternehmensregistrierung anbieten, ohne eine neue Auth-Registrierung/E-Mail anzustossen. Die tatsächliche Firmenanlage erfolgt ausschließlich über `public.sk_register_business`; erst dann gilt die Adminfreigabe als ausstehend.

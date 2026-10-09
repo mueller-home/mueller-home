@@ -45,3 +45,6 @@ Backend 0.19 ist in Supabase installiert. Frontend 0.20 verwendet signInWithPass
 
 ## Ergänzung 0.21: Passwort-Recovery
 Recovery über `resetPasswordForEmail` und `PASSWORD_RECOVERY`-Ereignis. Der Recovery-Zustand muss vor normaler Auth-Sitzungsprüfung UI-priorisiert werden. Nach geprüftem `updateUser({password})` erfolgt `signOut` und erneuter E-Mail-/Passwort-Login. Postmark SMTP vom Anwender konfiguriert, tatsächlicher End-to-End-Test weiterhin offen.
+
+## 0.23 – Bestätigter Benutzer ohne Firma
+Supabase Auth und Unternehmen sind getrennte Lebenszyklen. `auth.users` mit bestätigter E-Mail, aber ohne `sk_business_members`, darf nicht als Firma im Freigabestatus behandelt werden. Die App zeigt die Firmenregistrierung mit gesperrter Login-E-Mail und ohne erneutes Passwortfeld. Nach erfolgreicher RPC `public.sk_register_business` entsteht der Datensatz in `sk_businesses` (Default `Ausstehend`) sowie die Mitgliedschaft als `owner`. Ein erneutes Auth-`signUp` wird in diesem Pfad nicht ausgeführt. Fachliche Rechte bleiben durch Datenbank-RLS und RPC zu sichern; der Anzeigestatus allein ist kein Sicherheitsbeweis. Live-Test offen.

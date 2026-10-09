@@ -28,3 +28,9 @@ Passwort-Recovery stabilisiert: Recovery-Modus gegenüber automatischer Sitzungs
 - Versionsanzeige in Hinweisbalken, Footer und Admin-Projektdoku synchronisiert; öffentliche Dokumentation / Übergabetext aktualisiert.
 - Kein SQL- oder Secret-Wechsel; User-Konfiguration bleibt unverändert. Live-Bestätigung der neuen Registrierungslinks ausstehend.
 - Nachgetragen: Passwort-Reset 0.21 einschliesslich Logout und erneutem Login wurde live erfolgreich getestet.
+
+## 0.23 – 09.10.2026
+- Bestätigte Test-E-Mail hatte noch keine Firma; 0.22 zeigte trotzdem nur den Wartestatus.
+- 0.23: Nach Login ohne Firmenzuordnung Formular zum Vervollständigen der Firma; keine zweite Auth-Registrierung/kein Mailversand.
+- Pending erst nach Anlage von `sk_businesses` und `sk_business_members`; SQL unverändert, Live-Test offen.
+- App-/Admin-Versionsanzeigen und Dokumentation aktualisiert.

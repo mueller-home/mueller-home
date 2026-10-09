@@ -40,3 +40,9 @@ SQL-Basismigration für Unternehmen, Firmenmitgliedschaften, Backend-Administrat
 - **Korrektur 0.22:** `emailRedirectTo` und `redirectTo` werden aus der URL der tatsächlich geladenen Datei `scripts/auth.js` hergeleitet (`/staffkeeping/`), nicht mehr aus `location.pathname`. Kein Supabase-SQL, keine Änderung an der öffentlichen `scripts/config.js` nötig.
 - Die alte Bestätigungsmail bleibt unverändert; eine neue Mail und der komplette Firmen-Flow sind **noch zu testen**. Bereits geteilter Bestätigungslink enthält einen Auth-Token und sollte nicht wiederverwendet werden.
 - Postmark zugestellt, aber Bestätigungsmail im Spam: Zustellbarkeit separat prüfen. Weiterhin Demo: Inserate, Chats, Profiländerungen, Bewertungen.
+
+## Version 0.23 – Unterbrochene Unternehmensregistrierung (Code erstellt, Live-Test offen)
+- Beim Live-Test ist das zweite Supabase-Auth-Konto per E-Mail **bestätigt**; die SQL-Abfrage auf `sk_businesses` + Mitgliedschaften lieferte **keine Zeilen**. Die App zeigte fälschlich „Prüfung ausstehend“.
+- Ab 0.23 wird nach `getUser`/`sk_is_admin`/Mitgliedschaft geprüft: Ein bestätigter Benutzer ohne Unternehmenszuordnung sieht das Formular „Unternehmensregistrierung abschliessen“. Bereits vorhandene Daten aus dem lokalen Entwurf werden für die gleiche E-Mail vorgefüllt; sonst kann der Benutzer die Angaben neu erfassen. **Es erfolgt kein erneutes `signUp` und keine neue Bestätigungsmail.**
+- `sk_register_business` bleibt die einzige Anlagefunktion; Status `Ausstehend` wird in der Datenbank gesetzt. Bestehende bestätigte Test-Auth-Konten bleiben erhalten.
+- Live-Prüfung der Firma, Admin-Freigabe, Marktplatz-Sperre und RLS-Zugriffe stehen weiterhin aus. Ohne serverseitigen Registrierungsentwurf werden Daten bei Browser-/Gerätewechsel nur durch neue Formulareingabe ergänzt.
