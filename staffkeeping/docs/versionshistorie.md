@@ -15,3 +15,7 @@ Ausstehend: echte Authentifizierung und backendgeschützter Originaldokument-Zug
 - **0.19 – vorbereitet:** Neues versioniertes SQL-Basisschema (Unternehmen/Mitgliedschaften/Admin/Audit, RLS, RPC), DB-/Auth-Installationsanleitung und Dokumentationsaktualisierung. Kein Deployment und keine Funktionstests nachgewiesen.
 
 - **0.19.1 – Dokumentation/Übergabeplanung:** GitHub/Supabase/Postmark an Annette, zusätzlicher Adminzugang für Entwickler, vorhandener Google-Maps-Key, Domain/Mail-Umstellung; Checkliste und Demo-Admin-Kapitel. **Keine** echten Transfers, keine SQL-Ausführung, keine Auth-Anbindung.
+
+
+## 0.20 – Auth-Integrationsstand (09.10.2026)
+Echte Auth- und Freigabeaufrufe programmiert. scripts/config.js muss noch ergänzt werden; SMTP und E2E-Tests stehen aus. Kein vollständig produktiver Stand.

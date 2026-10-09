@@ -3,16 +3,21 @@
 const screens=['login','register','reset','pending','market','profile','my-listings','detail','messages','reviews','admin-businesses','admin-listings','admin-dashboard','admin-docs'];
 const navOnly=document.querySelectorAll('.nav-only'), guests=document.querySelectorAll('.guest-only');
 const publicViews=new Set(['login','register','reset','pending']);
-let demoSignedIn=sessionStorage.getItem('sk-demo-signed-in')==='yes';
+let demoSignedIn=false;
+let skAdmin=false;
+let skPending=false;
+window.SK_UI={setAccess(isApproved,isAdmin){demoSignedIn=!!isApproved;skAdmin=!!isAdmin;skPending=!isApproved;show(isApproved?'market':'pending',false);},show,logoutView(){demoSignedIn=false;skAdmin=false;skPending=false;show('login',false);}};
 function show(view,updateUrl=true){
   if(!screens.includes(view))view='login';
   // Demo-Ansicht: Nur ein explizit gestarteter Demo-Zugang darf interne Seiten sehen.
-  if(!demoSignedIn && !publicViews.has(view))view='login';
+  if(!demoSignedIn && !publicViews.has(view))view=skPending?'pending':'login';
+  if(!skAdmin && view.startsWith('admin-'))view=demoSignedIn?'market':'login';
   if(demoSignedIn && view==='login')view='market';
   screens.forEach(v=>document.getElementById('view-'+v).classList.toggle('hidden',v!==view));
   const inApp=demoSignedIn && !publicViews.has(view);
   navOnly.forEach(n=>n.classList.toggle('hidden',!inApp));
-  guests.forEach(n=>n.classList.toggle('hidden',inApp));
+  guests.forEach(n=>n.classList.toggle('hidden',inApp||skPending));
+  document.querySelectorAll('.admin-nav, .admin-tabs').forEach(n=>n.classList.toggle('hidden',!skAdmin));
   document.querySelectorAll('.headnav [data-view]').forEach(n=>n.setAttribute('aria-current',n.dataset.view===view?'page':'false'));
   if(updateUrl && location.hash!=='#'+view)history.pushState({view},'', '#'+view);
   window.scrollTo(0,0);
@@ -23,21 +28,13 @@ function show(view,updateUrl=true){
   if(view==='admin-listings')renderAdminListings();
   if(view==='admin-docs')renderProjectDocs();
 }
-function logout(){demoSignedIn=false;sessionStorage.removeItem('sk-demo-signed-in');show('login');}
+function logout(){if(window.SK_AUTH) window.SK_AUTH.logout(); else window.SK_UI.logoutView();}
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-view]');if(!el)return;
   e.preventDefault();
   if(el.id==='logout')logout();else show(el.dataset.view);
 });
-document.getElementById('login-form').addEventListener('submit',e=>{
-  e.preventDefault();
-  demoSignedIn=true;
-  sessionStorage.setItem('sk-demo-signed-in','yes');
-  show('market');
-});
 window.addEventListener('popstate',()=>show(location.hash.slice(1)||'login',false));
-document.getElementById('registration-form').addEventListener('submit',e=>{e.preventDefault();show('pending')});
-document.getElementById('reset-form').addEventListener('submit',e=>{e.preventDefault();document.getElementById('reset-result').classList.remove('hidden')});
 document.querySelectorAll('.pw-toggle').forEach(b=>b.addEventListener('click',()=>{const i=document.getElementById(b.dataset.target);i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'Anzeigen':'Verbergen'}));
 const listings=[
 {id:1,title:'Service-Mitarbeitende für Wintersaison',type:'Personal gesucht',branch:'Gastronomie',city:'Luzern',country:'Schweiz',date:'2026-12-01',period:'Dezember – März',stay:true,languages:['DE','EN'],desc:'Verstärkung für Restaurant und Gästebetreuung gesucht.'},
@@ -78,12 +75,26 @@ function renderChats(){document.getElementById('conversation-buttons').innerHTML
 document.getElementById('conversation-buttons').addEventListener('click',e=>{const b=e.target.closest('[data-chat]');if(b){selectedChat=Number(b.dataset.chat);renderChats()}});document.getElementById('chat-form').addEventListener('submit',e=>{e.preventDefault();const field=document.getElementById('chat-entry');chats[selectedChat].messages.push(['mine',field.value]);field.value='';renderChats()});
 document.getElementById('profile-form').addEventListener('submit',e=>{e.preventDefault();document.getElementById('profile-info').classList.remove('hidden');document.getElementById('profile-info').textContent='Designvorschau: Änderungen werden nicht auf einem Server gespeichert.'});
 const companies=[{name:'Alpenhotel Panorama',land:'Schweiz',status:'Ausstehend'},{name:'Restaurant Seeblick',land:'Schweiz',status:'Ausstehend'},{name:'Camping am Park',land:'Deutschland',status:'Aktiv'},{name:'Hotel Tirol',land:'Österreich',status:'Aktiv'}];
-function renderBusinesses(){document.getElementById('admin-business-table').innerHTML='<div class="table-wrap"><table class="data-table"><thead><tr><th>Betrieb</th><th>Land</th><th>Status</th><th>Aktionen</th></tr></thead><tbody>'+companies.map((c,i)=>`<tr><td>${esc(c.name)}</td><td>${esc(c.land)}</td><td><span class="status-tag">${esc(c.status)}</span></td><td class="table-actions"><button data-company="${i}" data-action="activate">Freischalten</button><button data-company="${i}" data-action="block">Sperren</button><button data-company="${i}" data-action="note">Kommentar</button></td></tr>`).join('')+'</tbody></table></div>';}
-document.getElementById('admin-business-table').addEventListener('click',e=>{const b=e.target.closest('[data-company]');if(!b)return;const c=companies[Number(b.dataset.company)];if(b.dataset.action==='note')modal('Interner Admin-Kommentar','<label>Kommentar</label><textarea rows="4" placeholder="Nur für die Administration"></textarea><p class="muted">Kein Speichern in dieser Demo.</p>');else{c.status=b.dataset.action==='activate'?'Aktiv':'Gesperrt';renderBusinesses()}});
+function renderBusinesses(){
+ const root=document.getElementById('admin-business-table');
+ if(!skAdmin){root.textContent='Nur für Administratoren.';return;}
+ if(!window.SK_AUTH){root.textContent='Supabase-Verbindung wird geladen …';return;}
+ root.textContent='Unternehmen werden geladen …';
+ window.SK_AUTH.loadBusinesses().then(rows=>{
+  root.innerHTML='<div class="table-wrap"><table class="data-table"><thead><tr><th>Betrieb</th><th>Land</th><th>Status</th><th>Aktionen</th></tr></thead><tbody>'+rows.map(c=>`<tr><td>${esc(c.company_name)}</td><td>${esc(c.country)}</td><td>${esc(c.status)}</td><td><button data-real-business="${esc(c.id)}" data-status="Freigeschaltet">Freischalten</button> <button data-real-business="${esc(c.id)}" data-status="Gesperrt">Sperren</button></td></tr>`).join('')+'</tbody></table></div>';
+ }).catch(e=>root.textContent='Laden fehlgeschlagen: '+e.message);
+}
+document.getElementById('admin-business-table').addEventListener('click', async e=>{
+ const b=e.target.closest('[data-real-business]'); if(!b||!skAdmin||!window.SK_AUTH)return;
+ const status=b.dataset.status;
+ if(!confirm('Unternehmen wirklich auf '+status+' setzen?'))return;
+ b.disabled=true;
+ try{await window.SK_AUTH.setBusinessStatus(b.dataset.realBusiness,status);renderBusinesses();}catch(err){alert('Freigabe fehlgeschlagen: '+err.message);b.disabled=false;}
+});
 function renderAdminListings(){const country=document.getElementById('admin-country').value,status=document.getElementById('admin-status').value;const filtered=listings.filter(l=>(!country||l.country===country)&&(!status||listingStatus.get(l.id)===status));document.getElementById('admin-listing-table').innerHTML='<div class="table-wrap"><table class="data-table"><thead><tr><th>Inserat</th><th>Land</th><th>Status</th><th>Aktionen</th></tr></thead><tbody>'+filtered.map(l=>`<tr><td>${esc(l.title)}</td><td>${esc(l.country)}</td><td><span class="status-tag">${esc(listingStatus.get(l.id))}</span></td><td class="table-actions"><button data-moderate="${l.id}" data-action="edit">Bearbeiten</button><button data-moderate="${l.id}" data-action="toggle">${listingStatus.get(l.id)==='Aktiv'?'Sperren':'Aktivieren'}</button></td></tr>`).join('')+'</tbody></table></div>';}
 document.getElementById('admin-listing-table').addEventListener('click',e=>{const b=e.target.closest('[data-moderate]');if(!b)return;const id=Number(b.dataset.moderate);if(b.dataset.action==='toggle'){listingStatus.set(id,listingStatus.get(id)==='Aktiv'?'Gesperrt':'Aktiv');renderAdminListings()}else{const l=listings.find(x=>x.id===id);modal('Inserat prüfen','<p><strong>'+esc(l.title)+'</strong></p><p>'+esc(l.desc)+'</p><p class="muted">Bearbeitung und dauerhafte Löschung folgen mit Backend und Berechtigungsprüfung.</p>')}});
 ['admin-country','admin-status'].forEach(id=>document.getElementById(id).addEventListener('change',renderAdminListings));
-show(location.hash.slice(1)||(demoSignedIn?'market':'login'),false);
+show('login',false);
 
 /* Projektdokumentation – nur bewusst öffentlichkeitsfähiger Auszug.
    Vollständiges Originalkonzept nicht in öffentlich ausgelieferte Assets integrieren. */

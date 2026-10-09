@@ -30,3 +30,7 @@ Relevante Widersprüche und Entscheidungen des Originals (Kapitel 21) müssen vo
 
 ## Eigentümerschaft und Betriebsübergabe (Beschluss 09.10.2026)
 Bestehendes Repository, Supabase-Projekt und Postmark-Verwaltung nach Entwicklung an Annette übertragen; Entwickler behält zusätzliche Adminrechte. Google-Maps-Key gehört bereits Annette. Die App-Domain und E-Mail-Absender werden auf ihre Domain/Konten umgestellt. Getrennte Neuinstallation ist **nicht** der bevorzugte Weg. Technische Provider-Voraussetzungen vor Übergabe verifizieren. Vollständige Checkliste: `docs/uebergabe-annette.md`.
+
+
+## Auth-Implementierung 0.20
+Supabase Auth E-Mail/Passwort; nach E-Mail-Bestätigung wird sk_register_business aufgerufen. Status Ausstehend; nur Freigeschaltet oder sk_is_admin erlaubt App-Zugang. Adminstatus aus sk_internal.staff_admins, kein clientseitig gesetztes Flag als Zugriffsquelle. Firmenfreigabe per sk_admin_set_business_status. Client nutzt ausschliesslich Publishable Key; serverseitige RLS/RPC-Prüfung bleibt maßgeblich. Konfiguration in scripts/config.js (öffentlich).

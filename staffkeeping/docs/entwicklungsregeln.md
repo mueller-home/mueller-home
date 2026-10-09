@@ -18,3 +18,6 @@
 15. **Testdaten:** Keine bestehenden Unternehmen/Benutzer aus Bubble übernehmen; neue Testkonten in StaffKeeping/Supabase registrieren.
 
 16. **Eigentümerschaft/Übergabe:** Bestehende GitHub-, Supabase- und Postmark-Ressourcen werden für die Übergabe an Annette vorbereitet; sie übernimmt Eigentum/Verwaltung/Billing, bisheriger Entwickler behält zusätzliche Adminrechte. Bestehenden Google Maps Key von Annette verwenden; Domain, Auth-Redirects und Mail-Domain umstellen. Transfermöglichkeiten je Provider vorab prüfen. Checkliste `docs/uebergabe-annette.md` bei relevanten Releases nachführen.
+
+17. **Browser-Konfiguration:** Ausschliesslich Project URL + Publishable Key in scripts/config.js; keine Secret-/Service-Role-Keys. Kein echtes Login durch lokalen Demo-Flag ersetzen.
+18. **Auth-Tests:** Änderungen erst als produktiv deklarieren, wenn bestätigte Testkonten, Adminfreigabe, RLS-Negativtests und Passwort-Reset mit SMTP validiert sind.

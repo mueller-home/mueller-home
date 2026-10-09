@@ -16,3 +16,7 @@
 - Interne Administrator- und Auditdaten im nicht exponierten Schema `sk_internal`. Keine frei wählbaren Admin-Rollen im Frontend.
 
 - **Übergabe an Annette (09.10.2026):** Bestehendes GitHub-Repository, Supabase-Projekt und Postmark-Verwaltung in Annettes Verantwortung übertragen; bisheriger Entwickler bleibt zusätzlicher Admin. Google-Maps-Key ist bereits über Annette eingerichtet. App-Domain und Mail-Absender später auf Annettes Vorgaben umstellen. Transferfähigkeit und Providerrollen erst noch überprüfen; keine Durchführung behaupten.
+
+
+## 0.20
+Kein Magic-Link-Zwang beim Login, sondern E-Mail/Passwort. Registrierungen mit Bestätigung und anschliessendem RPC; Status Ausstehend. Mailversand produktiv mit eigenem SMTP/Postmark; bestehender Administrator über auth.users-ID kontrolliert vergeben.

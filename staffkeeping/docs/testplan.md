@@ -37,3 +37,13 @@ Aktuelle Kästchen sind **ausstehende Tests**, keine bereits bestandenen Tests.
 - [ ] RLS und Berechtigungen nach Transfer mit mehreren Firmen/Admins negativ testen.
 - [ ] Testdatenbereinigung und Sicherung vor Produktivstart verifizieren.
 Siehe `docs/uebergabe-annette.md`.
+
+
+## Auth-Tests 0.20 (noch offen)
+- Falsches Passwort abweisen; gültiger Admin login; Logout; erneutes Laden.
+- Neues Testunternehmen registrieren, E-Mail bestätigen, Registrierung vervollständigen, Status Ausstehend.
+- Kein Marktplatzzugang solange Ausstehend oder Gesperrt, auch per URL-Hash und API.
+- Admin kann Freigeschaltet/Gesperrt via RPC ändern, Nichtadmin erhält Fehler.
+- Passwort-Reset-Mail und neue Passwortvergabe testen.
+- Bestätigung in anderem Browser/Gerät: Registrierung muss wiederaufgenommen werden (derzeit noch eingeschränkt).
+- Browserkonsole, mobile Ansicht, öffentliche docs-Dateien und Berechtigungen prüfen.

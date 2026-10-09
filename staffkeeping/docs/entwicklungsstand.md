@@ -19,3 +19,10 @@ SQL-Basismigration für Unternehmen, Firmenmitgliedschaften, Backend-Administrat
 
 ## Version 0.19.1 – dokumentiert (09.10.2026)
 Übergabeplanung für Annette in `docs/uebergabe-annette.md` aufgenommen und in der Demo-Admin-Ansicht ergänzt. Keine Datenbankänderung, keine echte Auth-Anbindung, kein Infrastrukturtransfer. SQL-Stand 0.19 unverändert: **vorbereitet, nicht ausgeführt**. Nächster technischer Schritt: Supabase-Schema im richtigen Projekt kontrolliert installieren und RLS testen; danach echte Registrierung/Login.
+
+
+## Stand 0.20 (Auth-Integration vorbereitet)
+- Das Supabase-Schema 0.19 wurde vom Benutzer in StaffKeeping ausgeführt; RLS, Policies, RPC-Ausführungsrechte und interne Adminrechte durch SQL-Abfragen überprüft.
+- Erster Administrator in sk_internal.staff_admins angelegt.
+- 0.20: echte E-Mail/Passwort-Anmeldung, Signup, Bestätigung/Registrierungs-RPC, Session und Admin-Betriebsstatus in JavaScript implementiert. **Live-End-to-End-Test ausstehend; Konfiguration noch leer.**
+- Inserate, Nachrichten, Profiländerungen und Bewertungen weiterhin Demo. Original-Projektdokumente noch nicht geschützt online eingebunden.

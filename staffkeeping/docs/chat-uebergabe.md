@@ -19,3 +19,7 @@ SQL-Fundament liegt in `supabase/migrations/20261009120000_auth_foundation.sql` 
 
 ## Aktueller Nachtrag 0.19.1 – Übergabe an Annette
 Bitte `docs/uebergabe-annette.md` lesen: Bestehende GitHub-, Supabase- und Postmark-Ressourcen werden nach Abnahme an Annette übergeben, Entwickler bleibt zusätzlicher Administrator. Der Google-Maps-Key gehört bereits Annette. Neue App-Domain sowie Mail-Absender/SMTP/Redirect-URLs müssen zur Übergabe geändert werden. Noch nichts übertragen oder produktiv umgestellt. Die Docs-Version 0.19.1 aktualisiert nur Doku und Admin-Demo. SQL 0.19 weiterhin **nicht nachgewiesen ausgeführt**. Nächste technische Arbeit: Migration kontrolliert installieren, RLS/Nicht-Exposition testen, dann Auth 0.20. ZIP unter `staffkeeping/`, nur neue/geänderte Dateien. Die Demo-Adminansicht ist öffentlich abrufbar, daher dort keine Geheimnisse.
+
+
+## Übergabe-Update 0.20
+Supabase-Schema 0.19 installiert und geprüft; erster DB-Administrator angelegt. Code 0.20 für Auth/RPC vorbereitet, aber Projekt-URL/Publishable Key fehlen noch; End-to-End-Tests ausstehend. Vor Produktivnutzung Nutzungsbedingungen, zuverlässiger SMTP-Versand, Registrierungsfortsetzung über Geräte, RLS- und Rollen-Negativtests. Keine Produktivfähigkeit behaupten.

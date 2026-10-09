@@ -1,0 +1,44 @@
+# Authentifizierung und Datenmodell · Entwurf 0.19
+
+**Status:** SQL-Datei vorbereitet, nicht ausgeführt. UI weiterhin Demo; reale Authentifizierung erfolgt erst im nächsten Release nach Tests.
+
+## Bezug zum ursprünglichen Migrationskonzept
+
+Kapitel 3–5 beschreiben Bubble Data Types, Tabellen, RLS und Supabase Auth. Die dortige Tabelle `businesses` nutzt die User-UUID zugleich als Business-ID. Wir **weichen bewusst davon ab**: Betriebe und Login-Benutzer werden getrennt; spätere mehrere Benutzer pro Betrieb sind damit möglich. Die endgültige Ausgestaltung von Mitarbeiterkonten (Einladung, Rechte, Entfernung) ist noch offen. Die ursprünglichen Statuswerte `Ausstehend`, `Freigeschaltet`, `Gesperrt` bleiben vorerst erhalten. **Ablehnung** als separater Status ist im Original nicht verbindlich spezifiziert und wird nicht erfunden.
+
+## Datenmodell
+
+- `auth.users`: E-Mail/Passwort und Identität, von Supabase verwaltet.
+- `public.sk_businesses`: Betriebsidentität, Land, Branche, Ansprechpartner, Zustimmungszeitpunkt, Freigabestatus.
+- `public.sk_business_members`: Bindung Benutzer↔Firma; ein Betrieb kann mehrere Mitglieder haben, aber die erste Migration gestattet einem Benutzer nur eine Firma.
+- `sk_internal.staff_admins`: ausdrücklich vom DB-Verantwortlichen vergebene globale Systemadministratorrolle.
+- `sk_internal.business_status_audit`: Statusänderungen inklusive handelndem Administrator.
+
+## Registrierungsfolge (geplant)
+
+1. Supabase `signUp` und E-Mail-Bestätigung.
+2. Authentifizierter, bestätigter Benutzer ruft `sk_register_business(...)` auf.
+3. DB erzeugt Firma mit Status `Ausstehend` und ordnet Benutzer als `owner` zu.
+4. Admin sieht Firma über geschützte Abfrage und ändert Status über `sk_admin_set_business_status`.
+5. Marktplatzberechtigung wird **künftig auf jedem Backend-Zugriff** über aktive Firmenmitgliedschaft, Status und Datenberechtigung geprüft. Derzeit gibt es noch keine Marktplatztabellen oder RLS dafür.
+
+## Sicherheitsgrenzen
+
+- Browser darf auf Business-/Mitgliedschaftstabellen lediglich lesend zugreifen und sieht nur eigene Zeilen; Systemadmin darf alle Businesses und Mitgliedschaften lesen.
+- Status und Zuordnungen sind nicht direkt via Data API schreibbar, sondern nur über definierte RPCs.
+- Normale Anwender können sich nicht zum Systemadministrator erklären.
+- Systemadmin-Rollenwechsel erfolgt ausschliesslich über privilegierten SQL-Zugriff.
+- Interne Tabellen liegen im nicht exponierten Schema `sk_internal`.
+- Keine eigenen Passworttabellen und keine Tokens/Secrets im Git.
+
+## Vorläufige offene Fachentscheidungen
+
+- Mehrere Nutzer pro Firma: Einladungen und Rechte noch nicht spezifiziert.
+- Ansprechpartner-E-Mail und Auth-E-Mail können abweichen; Verifikations-/Abuse-Regel vor Produktivbetrieb klären.
+- Betreiberfreigabe der Datenbankmigration und EU-Region durch Projektverantwortliche.
+- Mögliche abgelehnte Registrierung: eigener Status und Umgang mit erneuter Antragstellung.
+- Schreibrechte für eigene Firmendaten: separates, streng validiertes Update-RPC im späteren Profil-Release.
+
+
+## Nachtrag 0.20
+Backend 0.19 ist in Supabase installiert. Frontend 0.20 verwendet signInWithPassword, signUp, resetPasswordForEmail und sk_register_business / sk_is_admin / sk_is_approved_member / sk_admin_set_business_status. Keine Key-Werte in Doku speichern. Teststatus: noch nicht live geprüft.

@@ -28,3 +28,12 @@ Weitere offene Vorgaben laut Original: BusinessImage-Struktur, Bewertungsvalidie
 - **P1 – Offen:** Ziel-App-Domain, Supabase Auth Redirects, DNS/HTTPS, Mail-Absender und bestehende Google Maps Referrer-Beschränkungen klären.
 - **P0 – Vor Livegang:** finale Domain und vollständige Zugriffstests durchführen.
 - Referenzcheckliste: `docs/uebergabe-annette.md`. Die Providertransfers sind **geplant, nicht ausgeführt**.
+
+
+## Aktuell prioritär (0.20)
+1. Project URL und Publishable Key in scripts/config.js konfigurieren; keine Secrets eintragen.
+2. Auth Redirect URLs, Site URL und Postmark/SMTP prüfen.
+3. Signup/Testfirma inkl. E-Mail-Bestätigung, Pending, Adminfreigabe, Session und Passwort-Reset LIVE testen.
+4. Test über fremden Benutzer und direkte REST/RPC-Anfragen, keinen ungeprüften Marktplatz-Zugang.
+5. Registrierung über mehrere Geräte: noch kein langlebiger serverseitiger Registrierungsentwurf; lokale Entwurfsdaten nur im gleichen Browser. Für produktive Nutzung verbessern.
+6. Fehlende rechtsverbindliche Nutzungsbedingungen vor Produktivregistrierung ergänzen.
