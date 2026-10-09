@@ -1,4 +1,4 @@
-/* StaffKeeping 0.26 – App-Masken inkl. aktualisierter öffentlicher Projektübersicht */
+/* StaffKeeping 0.27.1 – zentrale Administration und Navigation */
 'use strict';
 const screens=['login','register','reset','pending','market','profile','my-listings','detail','messages','reviews','admin-businesses','admin-listings','admin-dashboard','admin-docs'];
 const navOnly=document.querySelectorAll('.nav-only'), guests=document.querySelectorAll('.guest-only');
@@ -33,6 +33,7 @@ function performShow(view,updateUrl=true){
   navOnly.forEach(n=>n.classList.toggle('hidden',!inApp));
   guests.forEach(n=>n.classList.toggle('hidden',inApp||skPending));
   document.querySelectorAll('.admin-nav, .admin-tabs').forEach(n=>n.classList.toggle('hidden',!skAdmin));
+  document.querySelectorAll('.admin-tabs [data-view]').forEach(b=>{const active=b.dataset.view===view;b.classList.toggle('active',active);b.setAttribute('aria-current',active?'page':'false');});
   document.querySelectorAll('.headnav [data-view]').forEach(n=>n.setAttribute('aria-current',n.dataset.view===view?'page':'false'));
   if(updateUrl && location.hash!=='#'+view)history.pushState({view},'', '#'+view);
   window.scrollTo(0,0);

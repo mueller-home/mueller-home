@@ -39,3 +39,9 @@
 
 /* 0.27 – admin-only zentrale Dokumentationsbearbeitung */
 #doc-chapter-list{display:flex;flex-direction:column;gap:5px}#doc-search{width:100%;padding:10px;border-radius:7px;border:1px solid #c8d3df;margin:9px 0 12px}.doc-menu label{font-weight:700;font-size:12px}.doc-toolbar{flex-wrap:wrap}#doc-editor label{display:block;font-weight:700;margin:15px 0 7px}#doc-edit-body{width:100%;min-height:370px;padding:14px;border:1px solid #c8d3df;border-radius:8px;font:13px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;resize:vertical}#doc-save-status{font-size:13px;color:var(--color-steel);margin:10px 0}#doc-body{white-space:pre-wrap!important}
+
+/* 0.27.1: echtes Datei-Input liegt vollständig ausserhalb von Klick- und Fokusebene. */
+.doc-file-input{display:none!important;position:static!important;width:0!important;height:0!important;pointer-events:none!important}
+#private-doc-upload,#private-doc-close,#private-doc-open{position:relative;isolation:isolate;flex:0 0 auto}
+.doc-actions button:hover{cursor:pointer}
+.doc-actions button:focus-visible,.admin-tabs button:focus-visible,.headnav button:focus-visible{outline:3px solid var(--color-brand-blue);outline-offset:2px}

@@ -1,4 +1,4 @@
-/* StaffKeeping 0.27 – EIN führender Datenbestand: sk_internal.project_doc_chapters. */
+/* StaffKeeping 0.27.1 – EIN führender Datenbestand: sk_internal.project_doc_chapters. */
 'use strict';
 (function(){
  const $=id=>document.getElementById(id);
@@ -59,6 +59,7 @@
      originalStatus('Historisches Original v2.2 – unveränderte Referenz, keine zweite Arbeitsdokumentation.');
    }catch(e){originalStatus('Nicht geladen: '+e.message+' – privaten Bucket und Upload prüfen.');}
  });
+ $('private-doc-upload').addEventListener('click',()=>{$('private-doc-file').click();});
  $('private-doc-file').addEventListener('change',async e=>{const file=e.target.files?.[0];if(!file)return;originalStatus('Lade Original geschützt hoch …');try{await window.SK_AUTH.uploadPrivateMigrationConcept(file);originalStatus('Original hochgeladen. Über «Originalkonzept anzeigen» öffnen.');}catch(e){originalStatus('Upload fehlgeschlagen: '+e.message);}finally{e.target.value='';}});
  window.SK_DOCS={load,close};
 })();
