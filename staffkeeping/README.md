@@ -1,20 +1,41 @@
-# StaffKeeping – App-Designprototyp 0.13
+# StaffKeeping – App-Designprototyp 0.16
 
-Korrektur der Version 0.12: CSS und JavaScript wieder in zentralen Dateien.
+## Inhalt
+Reiner Frontend-Designprototyp (kein Supabase, keine echten Login- oder Datenbankfunktionen):
+
+- Login, Passwort zurücksetzen, Unternehmensregistrierung und Freigabestatus
+- Marktplatz mit Demo-Inseraten, Suche, Merkliste und Kartenplatzhalter
+- Unternehmensprofil mit Feldern gemäss Migrationskonzept (Logo/Bilder als Platzhalter)
+- Meine Inserate mit Tabs, Erstellen-/Bearbeiten-Popup, Status und Demo-Vergabe/Bewertung
+- Inseratdetails mit Kontakt-Disclaimer
+- Nachrichten mit Konversationsliste und lokalen Demo-Nachrichten
+- Meine Bewertungen
+- Administration: Betriebe, Inserate, Impact-Dashboard
+
+**Wichtig:** Alle Handlungen sind ausschliesslich lokale Design-Demos und werden beim Neuladen verworfen. Die sichtbar gemachten Administrationsseiten haben noch keinerlei Sicherheitskontrolle! Erst nach Authentifizierung, RLS und Rollenprüfung produktiv verwenden. Die Admin-Navigation wird vor der produktiven Veröffentlichung nur für berechtigte Benutzer sichtbar gemacht.
 
 ## Dateien
-- `index.html`: Seitenstruktur und relative Dateiverweise, ohne Inline-CSS/JS
-- `styles/tokens.css`: CI-Farben, Schrift-Platzhalter und globale Designvariablen
-- `styles/main.css`: sämtliche Layout- und Komponentenstile
-- `scripts/app.js`: Demo-Navigation, Filter und Musteransichten
+- `index.html`: Alle Demo-Masken (ohne eingebettete Styles / Skripte)
+- `styles/tokens.css`: CI-Farbwerte und zentrale Variablen, unverändert aus Version 0.14
+- `styles/main.css`: gemeinsames Layout, responsive Komponenten, Version 0.16
+- `scripts/app.js`: Demo-Navigation, Muster-Daten und Interaktionen, Version 0.16
 
 ## Installation
-ZIP im Wurzelverzeichnis des Repositories entpacken, bestehende Dateien ersetzen. Alle Pfade beginnen mit `staffkeeping/`. Bei GitHub Pages die URL zur **App** (`.../staffkeeping/`) öffnen; nicht die separate Repository-Startseite.
+Das Update-ZIP im Wurzelverzeichnis des Git-Repositories entpacken. Alle Pfade beginnen mit `staffkeeping/`; nur die geänderten Dateien werden ausgeliefert. GitHub Pages: URL zu `/staffkeeping/` verwenden.
 
-## Prüfungen
-1. `staffkeeping/index.html` lokal öffnen: zweispaltige Login-Ansicht und formatierte Navigation.
-2. Zwischen Login, Registrierung, Freigabestatus und Marktplatz wechseln.
-3. Im Marktplatz Filter und Merkliste prüfen.
-4. Nach GitHub-Push Browser hart neu laden (Mac Safari: ⌥⌘R); im Netzwerk-Tab müssen `styles/tokens.css`, `styles/main.css` und `scripts/app.js` ohne 404 geladen werden.
+## Zu testen / Designabnahme mit Annette
+1. Anmeldung und Registrierung; nach Demo-Login die horizontale App-Navigation prüfen.
+2. Marktplatz: filtern, Merkliste markieren, „Details ansehen“ und Kontakt-Disclaimer öffnen.
+3. Unternehmensprofil: Formularlayout und Platzhalter für Unternehmensmedien beurteilen.
+4. Meine Inserate: Tabs, Neues Inserat, Bearbeiten, Aktiv/Inaktiv, Vergeben und Bewertungs-Popup.
+5. Nachrichten: zwischen Gesprächen wechseln und eine Testnachricht eingeben (nur lokal).
+6. Meine Bewertungen: Kennzahlen und Kommentare.
+7. Admin: Betriebe/Freigaben, Inseratmoderation und Impact-Karten (alle Daten erfunden).
+8. Desktop und Smartphone; lange Texte, Tabellen-Scrollen und Bedienbarkeit.
 
-**Hinweis:** Nur Designprototyp, keine Authentifizierung, Datenspeicherung oder echte Freigabe. Keine neuen geheimen Schlüssel oder API-Zugänge in die Dateien schreiben.
+## Fachlich offen (nicht als Produktivregeln interpretieren)
+- Endgültiges Original-Logo und Schriftart; CI-Blau `#159FD4` ist eine Annäherung.
+- Datenmodell und tatsächliche erlaubte Felder/Rollen; Statusdefinitionen und die Zuordnung der Gesprächspartner sind im Konzept teilweise widersprüchlich.
+- Technische Benachrichtigungen, Karten/Radius-Suche, Uploads, Zahlungen/Impact, echte Bewertungen sowie persistente Inserate und Nachrichten.
+
+Beim Übergang zu Supabase werden alle Demo-Daten und die simulierten Schreibvorgänge durch authentifizierte API-Zugriffe mit RLS und administrativen Rollenchecks ersetzt.
