@@ -67,3 +67,14 @@ Weitere offene Vorgaben laut Original: BusinessImage-Struktur, Bewertungsvalidie
 - Freigabe von Hotel chris.login erst nach Detailprüfung durchführen.
 - Spam-Einstufung von Supabase/Postmark-Mails untersuchen; künftig Statusanzeigen der Registrierungs-Warteseite präzisieren.
 - Altbetrieb ohne Benutzerzuordnung nach Bestätigung löschen (noch nicht als erledigt markieren).
+
+
+## Stand 0.25 – aktuelle Prioritäten
+- **P0:** SQL-Migration `20261009160500_business_profile_media.sql` im bestehenden Supabase-Projekt installieren, danach App 0.25 deployen.
+- **P0:** Profil-Lade-/Speichertest mit genehmigtem Testbetrieb; nach Browserneustart gespeicherte Beschreibung und Kontaktdaten prüfen. Land, USt-ID und Firmenfreigabe dürfen nicht eigenständig geändert werden.
+- **P0:** Logo hochladen/ersetzen/löschen, Bilder 1–5 hochladen/ersetzen/löschen; Admin-Detailansicht kontrollieren. Versuche ohne/mit fremdem Konto und direkte Storage-API-RLS-Negativtests durchführen.
+- **P0:** Prüfen, ob Admin-Notizen und Freigabehistorie nach Reload bleiben.
+- **P1:** Postmark-Zustellung beim iCloud-Testaccount im Spam analysieren (DMARC, Header und Postmark Activity).
+- **P1:** Verwaiste Testunternehmen kontrolliert bereinigen; Löschen eines Auth-Users darf produktive Unternehmen nicht automatisch entfernen.
+- **P1:** Registrierung und Freigabe mit zweitem unabhängigem Testbetrieb sowie anderem Browser/Gerät testen; Nutzungsbedingungen finalisieren.
+- **P2:** E-Mail-Benachrichtigungsvorliebe bei Implementierung von Nachrichten-/Inseratsmodulen für tatsächlichen Versand auswerten.

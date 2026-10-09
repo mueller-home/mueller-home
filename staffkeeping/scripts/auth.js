@@ -1,4 +1,4 @@
-/* StaffKeeping 0.23 – Supabase Auth, stabile Callback-URL und Passwort-Recovery */
+/* StaffKeeping 0.25 – Supabase Auth, stabile Callback-URL und Passwort-Recovery */
 'use strict';
 (function(){
  const cfg=window.SK_CONFIG||{};
@@ -78,6 +78,23 @@
    document.getElementById('new-password-form').reset();
  }
  if(recoveryMode)showRecovery();
+ function pendingStatus(business){
+   const confirmed=!!currentUser?.email_confirmed_at;
+   const mark=(id,yes,symbol,status)=>{
+     const el=document.getElementById('pending-'+id+'-step');if(el)el.classList.toggle('complete',yes);
+     const icon=document.getElementById('pending-'+id+'-symbol');if(icon)icon.textContent=yes?'✓':symbol;
+     const info=document.getElementById('pending-'+id+'-status');if(info)info.textContent=status;
+   };
+   mark('email',confirmed,'2',confirmed?'Bestätigt':'Noch nicht bestätigt');
+   mark('company',!!business,'3',business?'Unternehmen erfasst':'Noch nicht vollständig');
+   mark('approval',business?.status==='Freigeschaltet','4',business?.status==='Gesperrt'?'Gesperrt':business?.status==='Freigeschaltet'?'Freigegeben':'Warten auf die Freigabe');
+   const blocked=business?.status==='Gesperrt';
+   document.getElementById('pending-status-label').textContent=blocked?'Status · Gesperrt':'Status · Administratorfreigabe ausstehend';
+   document.getElementById('pending-title').textContent=blocked?'Zugang derzeit gesperrt.':'Vielen Dank für Ihre Registrierung.';
+   document.getElementById('pending-description').textContent=blocked?'Bitte wenden Sie sich an die StaffKeeping-Administration.':
+     business?'Ihre E-Mail-Adresse ist bestätigt und Ihr Betrieb «'+business.company_name+'» ist registriert. Sobald die Administration den Betrieb freigibt, können Sie den Marktplatz nutzen.':
+     'Bitte schliessen Sie zunächst die Unternehmensregistrierung ab.';
+ }
  async function evaluate(){
   if(recoveryMode){showRecovery();return;}
   const {data:{user},error}=await db.auth.getUser(); if(error&&error.status!==400)throw error;
@@ -90,7 +107,12 @@
   const {data:members,error:me}=await db.from('sk_business_members').select('business_id').eq('user_id',user.id).limit(1);if(me)throw me;
   if(!members?.length){setCompletionMode(user);return;}
   const {data:approved,error:pe}=await db.rpc('sk_is_approved_member',{p_business_id:members[0].business_id});if(pe)throw pe;
-  exitCompletionMode();ui().setAccess(!!approved,false);
+  exitCompletionMode();
+  if(!approved){
+    const {data:business,error:be}=await db.from('sk_businesses').select('company_name,status').eq('id',members[0].business_id).single();
+    if(be)throw be;pendingStatus(business);
+  }
+  ui().setAccess(!!approved,false);
  }
  async function safeEvaluate(){try{await evaluate();}catch(e){msg('auth-message','Prüfung fehlgeschlagen: '+e.message);if(!recoveryMode)ui().logoutView();else showRecovery();}}
  window.SK_AUTH={
@@ -99,6 +121,48 @@
   async getBusinessDetails(id){if(!isAdmin)throw Error('Nur Administratoren');const {data,error}=await db.rpc('sk_admin_get_business_details',{p_business_id:id});if(error)throw error;return data;},
   async addBusinessNote(id,note){if(!isAdmin)throw Error('Nur Administratoren');const {error}=await db.rpc('sk_admin_add_business_note',{p_business_id:id,p_note:note});if(error)throw error;},
   async setBusinessStatus(id,status){if(!isAdmin)throw Error('Nur Administratoren');const {error}=await db.rpc('sk_admin_set_business_status',{p_business_id:id,p_status:status});if(error)throw error;},
+  async getMyProfile(){
+    const {data,error}=await db.rpc('sk_get_my_business_profile');if(error)throw error;return data;
+  },
+  async saveMyProfile(payload){const {error}=await db.rpc('sk_update_my_business_profile',payload);if(error)throw error;},
+  async listBusinessMedia(businessId){
+    const result={logo:[],photos:[]};
+    for(const [kind,bucket] of [['logo','sk-business-logos'],['photos','sk-business-photos']]){
+      const {data,error}=await db.storage.from(bucket).list(businessId,{limit:20});if(error)throw error;
+      const allowed=kind==='logo'?/^logo\.(png|jpg|webp)$/:/^[1-5]\.(png|jpg|webp)$/;
+      for(const file of data||[]){if(!allowed.test(file.name))continue;
+        const path=businessId+'/'+file.name;
+        const {data:signed,error:se}=await db.storage.from(bucket).createSignedUrl(path,300);
+        if(se)throw se;
+        result[kind].push({name:file.name,path,url:signed.signedUrl});
+      }
+    }return result;
+  },
+  async uploadBusinessMedia(businessId,kind,slot,file){
+    if(!currentUser||isAdmin)throw Error('Bitte als freigeschalteter Betrieb anmelden.');
+    const types={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'};
+    const ext=types[file.type];if(!ext)throw Error('Nur JPG, PNG oder WebP erlaubt.');
+    const max=kind==='logo'?2097152:5242880;
+    if(file.size<=0||file.size>max)throw Error('Datei ist leer oder zu gross.');
+    if(kind!=='logo'&&kind!=='photos')throw Error('Unbekannter Medientyp');
+    const prefix=kind==='logo'?'logo':String(slot);
+    if(kind==='photos'&&!/^[1-5]$/.test(prefix))throw Error('Ungültiger Bildplatz');
+    const bucket=kind==='logo'?'sk-business-logos':'sk-business-photos';
+    const {data:existing,error:le}=await db.storage.from(bucket).list(businessId,{limit:20});if(le)throw le;
+    // Forbid duplicate formats in same slot: first remove prior file, then upload.
+    const matches=(existing||[]).filter(x=>x.name===prefix+'.jpg'||x.name===prefix+'.png'||x.name===prefix+'.webp');
+    if(matches.length){const {error:de}=await db.storage.from(bucket).remove(matches.map(x=>businessId+'/'+x.name));if(de)throw de;}
+    const {error}=await db.storage.from(bucket).upload(businessId+'/'+prefix+'.'+ext,file,{upsert:false,contentType:file.type});if(error)throw error;
+  },
+  async removeBusinessMedia(businessId,kind,slot){
+    const bucket=kind==='logo'?'sk-business-logos':'sk-business-photos';
+    const prefix=kind==='logo'?'logo':String(slot);
+    if(kind!=='logo'&&kind!=='photos')throw Error('Unbekannter Medientyp');
+    if(kind==='photos'&&!/^[1-5]$/.test(prefix))throw Error('Ungültiger Bildplatz');
+    const {data,error}=await db.storage.from(bucket).list(businessId,{limit:20});if(error)throw error;
+    const matches=(data||[]).filter(x=>x.name===prefix+'.jpg'||x.name===prefix+'.png'||x.name===prefix+'.webp');
+    if(matches.length){const {error:de}=await db.storage.from(bucket).remove(matches.map(x=>businessId+'/'+x.name));if(de)throw de;}
+  },
   refresh:safeEvaluate
  };
  document.getElementById('login-form').addEventListener('submit',async e=>{

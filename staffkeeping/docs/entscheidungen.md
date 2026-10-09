@@ -33,3 +33,11 @@ Ein bestätigtes Auth-Konto ohne Firmenmitgliedschaft ist **nicht** gleichbedeut
 
 ## 0.24 – Admin-Freigabe nach Detailprüfung
 Die Unternehmensfreigabe soll aus der Detailansicht erfolgen. Kontaktaufnahme per E-Mail/Telefon ausserhalb der App. Admin-Notizen sind ausschliesslich für StaffKeeping-Administratoren bestimmt und liegen in `sk_internal`; kein öffentlicher Tabellenzugriff. Statusänderungen bleiben in der bestehenden Audit-Tabelle dokumentiert.
+
+
+## 0.25 – Profil und Medien
+- Unternehmensprofil (Firma, Branche, PLZ/Ort, Ansprechpartner, Kontakt-E-Mail/Telefon, Beschreibung) ist nach Adminfreigabe durch den Firmeninhaber bearbeitbar. Land und UID/USt-ID sowie Freigabestatus bleiben admin-/backendkontrolliert.
+- Login-E-Mail gehört zu Supabase Auth; Kontakt-E-Mail darf abweichen und ist nicht gleichzeitig Login-Änderung.
+- Logo (2 MB) und fünf Betriebsbilder (je 5 MB), JPG/PNG/WebP, in zwei PRIVATEN Buckets mit RLS und signierten Lese-URLs; kein öffentliches Bucket.
+- System-Admin darf Beschreibung und private Medien im Betriebsprüfungsfenster einsehen.
+- E-Mail-Benachrichtigungen als gespeicherte Vorliebe, **ohne aktiven Versand**, bis Chat-/Inseratsmodul technisch angebunden ist.

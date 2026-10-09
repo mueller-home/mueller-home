@@ -51,3 +51,7 @@ Supabase Auth und Unternehmen sind getrennte Lebenszyklen. `auth.users` mit best
 
 ## Schema-Erweiterung 0.24
 Migration `20261009153000_admin_business_review.sql`: interne Tabelle `sk_internal.business_admin_notes` (PK, Unternehmen, Autor, Text 1–3000 Zeichen, Erstellzeit). Admin-only RPCs `sk_admin_get_business_details(uuid) -> jsonb` (Betrieb, Mitglieder, Notizen, Audit) und `sk_admin_add_business_note(uuid,text) -> void`. Prozedur und SQL-Sicherheit vor Live-Freigabe testen.
+
+
+## V0.25 (nur nach SQL-Installation)
+`sk_businesses.description` (Text, 0–1000 Zeichen) und `email_notifications_enabled` (Boolean). Backendfunktionen `sk_get_my_business_profile()` und `sk_update_my_business_profile(...)` mit serverseitiger Eigentümer-, Status- und Datenprüfung; Datenbankstatus und USt-ID durch normale Nutzer nicht änderbar. Medien in privaten Storage-Buckets; Auth-/RLS-Verifikation mit zweitem Konto erforderlich.

@@ -36,3 +36,9 @@ Nach Installation 0.22 bestätigte der Benutzer: Test-E-Mail bestätigt, SQL-Abf
 
 ## Aktueller Übergabestand 0.24
 Supabase Auth + Postmark laufen; Passwort-Reset und neuer Login live bestätigt. Testfirma `Hotel chris.login` (`chris.login@icloud.com`) ist als `Ausstehend` gespeichert. Der Admin sah zusätzlich eine verwaiste ältere Testfirma, gezielte Löschung empfohlen, Abschluss noch nicht bestätigt. 0.24 ergänzt Admin-Detailprüfung, Kontaktlinks, Notizen und Audit-Historie; **vor Frontend-Rollout muss** die SQL-Migration `20261009153000_admin_business_review.sql` installiert und geprüft werden. Danach Testbetrieb nach Detailprüfung freischalten, Benutzerzugriff prüfen. Offene Punkte: Mail im Spam, vollständige RLS-Negativtests, genaue Registrierungsstatusanzeige. ZIP nur geänderte Dateien unter `staffkeeping/`, CSS nur zentral.
+
+
+## Fortschreibung für nächsten Chat · 09.10.2026 · v0.25
+Version 0.25 ist als Update ausgearbeitet; SQL `staffkeeping/supabase/migrations/20261009160500_business_profile_media.sql` MUSS zuerst ausgeführt werden, DANN Frontend aktualisieren. Keine Live-Ausführung durch ChatGPT.
+Live bestätigt: Supabase-Login, Passwort-Recovery, Postmark Auth-E-Mails, Testfirma `Hotel chris.login` angelegt und genehmigt, Testnutzer kann sich anmelden. Vorheriger `Hotel Chris.login` war verwaister Testdatensatz (Löschung nicht durch SQL-Ergebnis bestätigt).
+0.25: Profil lädt/speichert echte Angaben; Admin sieht Beschreibung/Bilder; private Storage-Buckets; `email_notifications_enabled` als Preference, Fachmail-Versand noch nicht implementiert. Vollständiger 0.25-End-to-End- und RLS-Test offen. Nächste Arbeit: Migration + Profil-/Medien-Tests, dann Inserate/Chats.

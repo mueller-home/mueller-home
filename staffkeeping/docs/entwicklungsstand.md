@@ -50,3 +50,13 @@ SQL-Basismigration für Unternehmen, Firmenmitgliedschaften, Backend-Administrat
 ## Release 0.24 – Betriebsprüfung
 Implementiert (Live-Test ausstehend): Admin-Detailansicht mit Firmen-/Kontaktfeldern, Benutzerzuordnung, Nutzungsbedingungen, Notizen, Freigabehistorie. Abfrage und Notiz-Anlage per abgesicherten RPCs; SQL-Migration muss zuerst ausgeführt werden. Tabelle zeigt alle Betriebe, der Detailbereich ermöglicht Freischalten/Sperren nach Prüfung.
 Live festgestellt: Testunternehmen Hotel chris.login wurde am 09.10.2026 erfolgreich mit Status Ausstehend erstellt; ein verwaister Alt-Testbetrieb wurde identifiziert. Ob dieser entfernt wurde, ist nicht bestätigt.
+
+
+## Version 0.25 – Unternehmen, Profil und Medien (Implementiert; Live-Abnahme offen)
+- Auth-Login, Logout und Passwort-Recovery wurden vom Benutzer live erfolgreich geprüft; Bestätigungsmail, Firma `Hotel chris.login` und Freigabe ebenfalls. Unternehmensstatus `Freigeschaltet` und Marktplatzlogin mit Testnutzer bestätigt.
+- In Version 0.24 wurden Betriebsprüfung/Notizen implementiert; Admin-Freigabe funktionierte live.
+- Die Profilmaske war noch eine Demo und zeigte `Demo-Unternehmen`. 0.25 bindet Laden/Speichern an reale Supabase-Daten an, ergänzt Beschreibung (max. 1000 Zeichen), Kontakt-E-Mail, PLZ/Ort und Benachrichtigungsvorliebe.
+- Firmenlogo und fünf Bilder erhalten private Storage-Buckets mit RLS, limitierter Dateigrösse und signierten temporären URLs. Admin kann Medien und Beschreibung einsehen.
+- Noch erforderlich: SQL-Migration 20261009160500 ausführen, dann App veröffentlichen und mit Admin-/Testkonto testen. Bis dahin NICHT live einsatzbereit.
+- E-Mail-Benachrichtigungsschalter: Preference gespeichert, **kein Versand** für neue Nachrichten/Inserate, bis Fachmodule real angebunden sind.
+- Weitere Module Inserate, Chat, Bewertungen und Karten bleiben Demo. Spam-Einstufung iCloud separat offen.

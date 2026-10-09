@@ -32,3 +32,8 @@
 20. **Registrierungszustände strikt trennen:** nicht bestätigtes Auth-Konto, bestätigtes Konto ohne Firma, Firma `Ausstehend`, genehmigte Firma und gesperrte Firma sind fachlich verschieden. Nach bestätigtem Login ohne Firmenzuordnung darf kein erneutes `signUp` verlangt werden. Die Firmenanlage erfolgt über `sk_register_business`, nicht über Browserflags.
 
 21. **Admin-Betriebsprüfung:** Kein Freischalten ohne einsehbare Firmen-/Kontaktdetails. Interne Notizen nie in öffentlich ausgelieferten Dateien, LocalStorage oder direkt exponierten Tabellen ablegen; Zugriff ausschliesslich serverseitig als Admin verifizieren. Jede Schemaerweiterung als separate persistente Migration.
+
+
+22. **Unternehmensprofil:** Der User bearbeitet nur eigene Daten als freigeschalteter `owner`; Land, USt-ID und Status bleiben unveränderbar durch normale Nutzer. `contact_email` ist nicht die Auth-Login-E-Mail.
+23. **Medien:** Supabase Storage private Buckets und RLS nach Unternehmens-ID; keine public URLs; nur kurzlebige Signed URLs, Dateityp/Grösse und erlaubte Slots serverseitig durch Bucket und Policies einschränken. Keine Fotos/Anhänge in GitHub.
+24. **Mail-Einstellungen:** Schalter für Fachbenachrichtigungen darf nicht als aktiver Versand ausgegeben werden, solange kein sicherer serverseitiger Benachrichtigungsjob existiert. Auth-Mails sind davon unabhängig.

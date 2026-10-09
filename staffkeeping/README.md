@@ -32,3 +32,7 @@ Bereits bestätigte Supabase-Benutzer ohne Firmenmitgliedschaft sehen das Formul
 2. Erst danach Update-Dateien veröffentlichen.
 3. Admin → Betriebe → Details / Prüfen; Kontaktdaten, Notizen, Audit und Freigabe testen.
 4. Negativtests gegen die Admin-RPCs mit normalen Benutzerkonten durchführen.
+
+
+## Version 0.25 – Profil/Medien
+Vor Veröffentlichung die neue Supabase-Migration `supabase/migrations/20261009160500_business_profile_media.sql` einmal ausführen. Profilwerte sind danach echt und werden gespeichert, Fotos im privaten Storage. Admin sieht sie in der Betriebsprüfung. Die E-Mail-Benachrichtigungsvorliebe wird nur gespeichert; Versand von Fachmails ist noch nicht implementiert.

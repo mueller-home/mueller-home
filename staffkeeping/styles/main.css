@@ -12,3 +12,18 @@
 
 /* 0.24 – zentrale Admin-Detailansicht */
 .business-review{scroll-margin-top:125px}.business-review-heading{display:flex;justify-content:space-between;align-items:start;gap:18px;border-bottom:1px solid #e3e9ef;padding-bottom:15px;margin-bottom:18px}.business-review-heading h2{margin:7px 0 12px}.business-review-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-bottom:22px}.business-review-grid>section{min-width:0}.business-review-grid h3{font-size:17px;margin:7px 0 16px}.business-info{margin:0}.business-info-row{display:grid;grid-template-columns:145px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px solid #edf1f5;font-size:13px}.business-info-row dt{color:#6c7b8d}.business-info-row dd{margin:0;font-weight:600;overflow-wrap:anywhere}.business-contact-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}.business-contact-actions a{text-decoration:none;font-size:13px}.business-minor{font-size:13px;overflow-wrap:anywhere}.business-review textarea{width:100%;min-height:95px;padding:12px;border:1px solid #cdd5df;border-radius:8px;resize:vertical;font:inherit}.business-review label{display:block;font-weight:700;font-size:13px;margin-bottom:7px}.business-review form .btn{margin-top:10px}.business-events article{border-bottom:1px solid #e3e9ef;padding:12px 0}.business-events article small{color:#6d7c8c}.business-events article p{white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0}.business-review-actions{border-top:1px solid #e3e9ef;padding-top:18px;display:flex;align-items:center;flex-wrap:wrap;gap:12px}.form-feedback{overflow-wrap:anywhere}@media(max-width:760px){.business-review-grid{grid-template-columns:1fr}.business-info-row{grid-template-columns:120px minmax(0,1fr)}}
+
+/* 0.25 – private Betriebsmedien und Admin-Vorschau */
+#pr-logo-preview img{max-width:100%;max-height:160px;object-fit:contain;border-radius:8px}
+#pr-logo-file{width:100%;margin:9px 0 12px;font-size:13px}
+#pr-logo-delete{margin:4px 0 16px}
+#pr-photo-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+#pr-photo-grid .profile-photo-slot{aspect-ratio:auto;min-height:120px;padding:6px;display:flex;flex-direction:column;align-items:center;gap:5px;justify-content:center;overflow:hidden}
+.profile-photo-slot img{width:100%;height:77px;object-fit:cover;border-radius:5px}
+.profile-photo-slot label{font-size:11px;color:var(--color-steel);cursor:pointer;text-align:center}
+.profile-photo-slot input{max-width:100%;font-size:10px}
+.profile-photo-slot button{font-size:11px;padding:3px 5px}
+.business-review-media{padding:18px 0;border-top:1px solid #dde5ec}
+.admin-media-preview{display:flex;gap:10px;flex-wrap:wrap;color:#667589}
+.admin-media-preview img{width:125px;height:110px;object-fit:contain;border:1px solid #dde5ec;border-radius:8px;background:#f7f9fb}
+@media(max-width:780px){#pr-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}

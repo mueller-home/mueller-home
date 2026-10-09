@@ -37,3 +37,7 @@ Passwort-Recovery stabilisiert: Recovery-Modus gegenüber automatischer Sitzungs
 
 ## 0.24 – 09.10.2026
 Admin → Betriebe: Detailprüfung vor Freigabe, Kontaktdaten und Benutzerzuordnung; interne, nur administrativ abrufbare Notizen; vorhandenes Audit als Freigabehistorie. Neue versionierte Supabase-Migration. Umsetzung/statische Tests erfolgt, Live-Test offen.
+
+
+## 0.25 – Profilverwaltung und private Bilder (09.10.2026)
+Neue Migration für Beschreibung/Benachrichtigungsvorliebe, zwei private Storage-Buckets mit RLS und serverseitige Profil-RPCs. Profilmaske liest/speichert echte Unternehmensdaten; Admin-Details zeigen Profilbeschreibung und Medien. Freigabe-Warteseite weist bestätigte E-Mail und bereits erfasste Firma getrennt aus. Live-Test der 0.25-Migration und Funktionen steht aus.

@@ -85,3 +85,16 @@ Siehe `docs/uebergabe-annette.md`.
 6. Als normaler Benutzer RPC sk_admin_get_business_details und sk_admin_add_business_note direkt versuchen: muss scheitern.
 7. Direkter Zugriff auf sk_internal.business_admin_notes / business_status_audit für authenticated/anon: verweigert.
 8. Login, Registrierung, Reset und Navigation auf Regression prüfen.
+
+
+## Abnahme 0.25 – Unternehmensprofil und Freigabe
+- [x] Live bestätigt vom User: Administrator-Login, Passwort-Recovery, neu registriertes Unternehmen mit E-Mail-Bestätigung, Status Ausstehend; erster Testbetrieb freigeschaltet und Testnutzer kann sich anmelden.
+- [ ] SQL-Migration 0.25 erfolgreich ausgeführt (keine Live-Bestätigung).
+- [ ] Testnutzer öffnet Profil: Firma, Branche, Land, UID, PLZ/Ort, Ansprechpartner und Kontakt-E-Mail/Telefon entsprechen Supabase.
+- [ ] Beschreibung ändern, speichern, neu laden und in Admin-Betriebsdetails kontrollieren.
+- [ ] Präferenz E-Mail-Benachrichtigungen speichern und nach Neuanmeldung kontrollieren; kein Versand für Fachmeldungen behaupten.
+- [ ] Land und USt-ID nicht editierbar, direkter Änderungsversuch über Supabase scheitert.
+- [ ] Logo JPG/PNG/WebP bis 2 MB sowie Betriebsbilder in 5 Slots bis je 5 MB hochladen, ersetzen, entfernen, neu laden. Ungültiger Dateityp/Grösse wird abgewiesen.
+- [ ] Admin sieht Beschreibung und Medien, nicht angemeldeter/fremder Nutzer erhält bei Storage/RPC keinen Zugriff.
+- [ ] Nach Freigabe Testnutzer Marktplatz, nach Sperrung kein Marktplatz.
+- [ ] Auf Desktop/Mobile Layout prüfen; Registrierung, Reset und Admin-Notizen auf Regression testen.

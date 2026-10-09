@@ -40,3 +40,9 @@ Auth-Benutzer, Unternehmensdatensatz und dessen Freigabe sind verschiedene Zust�
 
 ## 0.24 – Betriebsprüfung und Administration
 Registrierungsfelder liegen in `public.sk_businesses`; Admin kann diese über die vorhandene SELECT-Policy lesen. Für Details inklusive Statushistorie (`sk_internal.business_status_audit`) und Notizen (`sk_internal.business_admin_notes`) stellt die DB zwei `SECURITY DEFINER`-RPCs mit `sk_is_admin()`-Prüfung bereit. Beide Funktionen verwenden `search_path=''`, `anon` hat kein EXECUTE, interne Tabellen bleiben nicht exponiert. Keine direkten Schreibrechte für normale Browserrollen. Das öffentlich ausgelieferte Frontend ist nie die Sicherheitsgrenze.
+
+
+## Erweiterung 0.25: Reales Unternehmensprofil und Medien
+`public.sk_businesses` erhält `description` (max. 1000) und `email_notifications_enabled` (Standard true). Profile lesen über `sk_get_my_business_profile`, Änderungen ausschliesslich über `sk_update_my_business_profile` (freigegebener owner, begrenzte Felder). Bestehende Fremddatenkontrollen über RLS; keine allgemeinen UPDATE-Rechte auf `sk_businesses`.
+Zwei private Storage-Buckets: `sk-business-logos` (2 MB), `sk-business-photos` (5 MB), nur JPG/PNG/WebP; UUID-Verzeichnis und jeweils `logo.*` bzw. 1–5.*. Admin/zugehörige Mitglieder können lesen, upload/delete nur freigegebener owner. Temporäre signierte URLs, keine öffentlichen Dateipfade. Admin-Details über bisherige admin-only-RPC plus private Mediensuche.
+`email_notifications_enabled` ist lediglich eine Präferenz, kein automatischer Versand.
