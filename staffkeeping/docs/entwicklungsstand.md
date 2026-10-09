@@ -46,3 +46,7 @@ SQL-Basismigration für Unternehmen, Firmenmitgliedschaften, Backend-Administrat
 - Ab 0.23 wird nach `getUser`/`sk_is_admin`/Mitgliedschaft geprüft: Ein bestätigter Benutzer ohne Unternehmenszuordnung sieht das Formular „Unternehmensregistrierung abschliessen“. Bereits vorhandene Daten aus dem lokalen Entwurf werden für die gleiche E-Mail vorgefüllt; sonst kann der Benutzer die Angaben neu erfassen. **Es erfolgt kein erneutes `signUp` und keine neue Bestätigungsmail.**
 - `sk_register_business` bleibt die einzige Anlagefunktion; Status `Ausstehend` wird in der Datenbank gesetzt. Bestehende bestätigte Test-Auth-Konten bleiben erhalten.
 - Live-Prüfung der Firma, Admin-Freigabe, Marktplatz-Sperre und RLS-Zugriffe stehen weiterhin aus. Ohne serverseitigen Registrierungsentwurf werden Daten bei Browser-/Gerätewechsel nur durch neue Formulareingabe ergänzt.
+
+## Release 0.24 – Betriebsprüfung
+Implementiert (Live-Test ausstehend): Admin-Detailansicht mit Firmen-/Kontaktfeldern, Benutzerzuordnung, Nutzungsbedingungen, Notizen, Freigabehistorie. Abfrage und Notiz-Anlage per abgesicherten RPCs; SQL-Migration muss zuerst ausgeführt werden. Tabelle zeigt alle Betriebe, der Detailbereich ermöglicht Freischalten/Sperren nach Prüfung.
+Live festgestellt: Testunternehmen Hotel chris.login wurde am 09.10.2026 erfolgreich mit Status Ausstehend erstellt; ein verwaister Alt-Testbetrieb wurde identifiziert. Ob dieser entfernt wurde, ist nicht bestätigt.

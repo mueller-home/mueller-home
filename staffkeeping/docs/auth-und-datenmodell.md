@@ -48,3 +48,6 @@ Recovery über `resetPasswordForEmail` und `PASSWORD_RECOVERY`-Ereignis. Der Rec
 
 ## 0.23 – Bestätigter Benutzer ohne Firma
 Supabase Auth und Unternehmen sind getrennte Lebenszyklen. `auth.users` mit bestätigter E-Mail, aber ohne `sk_business_members`, darf nicht als Firma im Freigabestatus behandelt werden. Die App zeigt die Firmenregistrierung mit gesperrter Login-E-Mail und ohne erneutes Passwortfeld. Nach erfolgreicher RPC `public.sk_register_business` entsteht der Datensatz in `sk_businesses` (Default `Ausstehend`) sowie die Mitgliedschaft als `owner`. Ein erneutes Auth-`signUp` wird in diesem Pfad nicht ausgeführt. Fachliche Rechte bleiben durch Datenbank-RLS und RPC zu sichern; der Anzeigestatus allein ist kein Sicherheitsbeweis. Live-Test offen.
+
+## Schema-Erweiterung 0.24
+Migration `20261009153000_admin_business_review.sql`: interne Tabelle `sk_internal.business_admin_notes` (PK, Unternehmen, Autor, Text 1–3000 Zeichen, Erstellzeit). Admin-only RPCs `sk_admin_get_business_details(uuid) -> jsonb` (Betrieb, Mitglieder, Notizen, Audit) und `sk_admin_add_business_note(uuid,text) -> void`. Prozedur und SQL-Sicherheit vor Live-Freigabe testen.

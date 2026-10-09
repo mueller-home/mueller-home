@@ -34,3 +34,6 @@ Passwort-Recovery stabilisiert: Recovery-Modus gegenüber automatischer Sitzungs
 - 0.23: Nach Login ohne Firmenzuordnung Formular zum Vervollständigen der Firma; keine zweite Auth-Registrierung/kein Mailversand.
 - Pending erst nach Anlage von `sk_businesses` und `sk_business_members`; SQL unverändert, Live-Test offen.
 - App-/Admin-Versionsanzeigen und Dokumentation aktualisiert.
+
+## 0.24 – 09.10.2026
+Admin → Betriebe: Detailprüfung vor Freigabe, Kontaktdaten und Benutzerzuordnung; interne, nur administrativ abrufbare Notizen; vorhandenes Audit als Freigabehistorie. Neue versionierte Supabase-Migration. Umsetzung/statische Tests erfolgt, Live-Test offen.

@@ -75,3 +75,13 @@ Siehe `docs/uebergabe-annette.md`.
 - [ ] Admin sieht neue Firma, gibt sie frei; Benutzer kann danach zugreifen.
 - [ ] Negativ: Benutzer mit vorhandener Firma darf keine zweite anlegen; falsche Session/E-Mail darf fremde Registrierungsdaten nicht nutzen.
 - [ ] Neue Registrierung inklusive Bestätigungslink sowie Login nach Browser-/Gerätewechsel separat testen.
+
+## Test 0.24 – Admin-Betriebsprüfung (noch ausstehend)
+1. SQL-Datei als eine Transaktion ausführen; danach Berechtigungen/RPCs prüfen.
+2. Admin → Betriebe → Details / Prüfen: Firmenname, UID, Branche, Adresse, Kontakt, E-Mail, Telefon, Registrierungs-/AGB-Zeitpunkt mit Supabase vergleichen.
+3. E-Mail-Link öffnet Mail-Programm, Telefon-Link entsprechend Client.
+4. Admin-Notiz speichern; neu laden, Notiz mit Zeit und Adminautor sichtbar.
+5. Erst danach Freischalten; Statuswechsel in Admin-Tabelle und Audit-Historie prüfen.
+6. Als normaler Benutzer RPC sk_admin_get_business_details und sk_admin_add_business_note direkt versuchen: muss scheitern.
+7. Direkter Zugriff auf sk_internal.business_admin_notes / business_status_audit für authenticated/anon: verweigert.
+8. Login, Registrierung, Reset und Navigation auf Regression prüfen.

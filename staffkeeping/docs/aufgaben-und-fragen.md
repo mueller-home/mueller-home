@@ -59,3 +59,11 @@ Weitere offene Vorgaben laut Original: BusinessImage-Struktur, Bewertungsvalidie
 - [ ] Benutzer ohne Freigabe sieht Marktplatz nicht; Administrator kann Firma freigeben; danach Login und Zugriff prüfen.
 - [ ] Negativtests mit zwei verschiedenen Unternehmen und direkten API-Anfragen; Spamzustellung separat behandeln.
 - [ ] Langfristig serverseitigen, geräteübergreifenden Registrierungsentwurf erwägen, nicht als bereits implementiert markieren.
+
+## Priorität 0 – 0.24 testen
+- SQL-Migration `20261009153000_admin_business_review.sql` in StaffKeeping einmalig ausführen und Rechte überprüfen.
+- Admin sieht vollständige Registrierungs-/Kontaktdaten, kann Notiz speichern, Freigabehistorie prüfen und Betrieb freischalten.
+- Negativtest: normales freigeschaltetes sowie ausstehendes Konto darf die Detail-/Notiz-RPCs nicht ausführen; direkte `sk_internal`-Tabellenabfragen müssen verweigert werden.
+- Freigabe von Hotel chris.login erst nach Detailprüfung durchführen.
+- Spam-Einstufung von Supabase/Postmark-Mails untersuchen; künftig Statusanzeigen der Registrierungs-Warteseite präzisieren.
+- Altbetrieb ohne Benutzerzuordnung nach Bestätigung löschen (noch nicht als erledigt markieren).

@@ -96,6 +96,8 @@
  window.SK_AUTH={
   async logout(){clearRecovery();exitCompletionMode();await db.auth.signOut();currentUser=null;isAdmin=false;ui().logoutView();},
   async loadBusinesses(){if(!isAdmin)throw Error('Nur Administratoren');const {data,error}=await db.from('sk_businesses').select('id,company_name,country,status').order('created_at',{ascending:false});if(error)throw error;return data||[];},
+  async getBusinessDetails(id){if(!isAdmin)throw Error('Nur Administratoren');const {data,error}=await db.rpc('sk_admin_get_business_details',{p_business_id:id});if(error)throw error;return data;},
+  async addBusinessNote(id,note){if(!isAdmin)throw Error('Nur Administratoren');const {error}=await db.rpc('sk_admin_add_business_note',{p_business_id:id,p_note:note});if(error)throw error;},
   async setBusinessStatus(id,status){if(!isAdmin)throw Error('Nur Administratoren');const {error}=await db.rpc('sk_admin_set_business_status',{p_business_id:id,p_status:status});if(error)throw error;},
   refresh:safeEvaluate
  };

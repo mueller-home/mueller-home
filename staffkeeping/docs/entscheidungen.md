@@ -30,3 +30,6 @@ Bei GitHub Pages liegt die App unter `/staffkeeping/`, die Marketing-Homepage au
 
 ## Ergänzung 0.23 – Registrierung unterbrechen und fortsetzen
 Ein bestätigtes Auth-Konto ohne Firmenmitgliedschaft ist **nicht** gleichbedeutend mit einem Unternehmen im Status `Ausstehend`. Die Anwendung muss das Formular zur Unternehmensregistrierung anbieten, ohne eine neue Auth-Registrierung/E-Mail anzustossen. Die tatsächliche Firmenanlage erfolgt ausschließlich über `public.sk_register_business`; erst dann gilt die Adminfreigabe als ausstehend.
+
+## 0.24 – Admin-Freigabe nach Detailprüfung
+Die Unternehmensfreigabe soll aus der Detailansicht erfolgen. Kontaktaufnahme per E-Mail/Telefon ausserhalb der App. Admin-Notizen sind ausschliesslich für StaffKeeping-Administratoren bestimmt und liegen in `sk_internal`; kein öffentlicher Tabellenzugriff. Statusänderungen bleiben in der bestehenden Audit-Tabelle dokumentiert.

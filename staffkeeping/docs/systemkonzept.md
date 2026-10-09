@@ -37,3 +37,6 @@ Supabase Auth E-Mail/Passwort; nach E-Mail-Bestätigung wird sk_register_busines
 
 ## Ergänzung 0.23 – Registrierung und getrennte Zustände
 Auth-Benutzer, Unternehmensdatensatz und dessen Freigabe sind verschiedene Zustände. Ein bestätigter Benutzer ohne Firmenmitgliedschaft muss vorhandene Test-Firmendaten nacherfassen können (über `sk_register_business`, kein zweites `signUp`). Nur für tatsächlich angelegte Unternehmen ist der Status `Ausstehend` im Sinne der Admin-Freigabe relevant. Bestätigte Test-Auth-Konten werden nicht gelöscht. Die Anwendung wird im Live-Test noch validiert.
+
+## 0.24 – Betriebsprüfung und Administration
+Registrierungsfelder liegen in `public.sk_businesses`; Admin kann diese über die vorhandene SELECT-Policy lesen. Für Details inklusive Statushistorie (`sk_internal.business_status_audit`) und Notizen (`sk_internal.business_admin_notes`) stellt die DB zwei `SECURITY DEFINER`-RPCs mit `sk_is_admin()`-Prüfung bereit. Beide Funktionen verwenden `search_path=''`, `anon` hat kein EXECUTE, interne Tabellen bleiben nicht exponiert. Keine direkten Schreibrechte für normale Browserrollen. Das öffentlich ausgelieferte Frontend ist nie die Sicherheitsgrenze.

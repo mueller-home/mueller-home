@@ -30,3 +30,5 @@
 19. **Auth-Redirects:** Für Signup und Passwort-Reset die kanonische StaffKeeping-App-URL verwenden, nicht die zufällige aktuelle Seite (`location.pathname`). Nach Domain-/Pfadwechsel die URL-Ermittlung, Supabase Site URL und Redirect-Allowlist gemeinsam testen. Niemals vollständige Bestätigungs- oder Recovery-Links mit Tokens protokollieren oder veröffentlichen.
 
 20. **Registrierungszustände strikt trennen:** nicht bestätigtes Auth-Konto, bestätigtes Konto ohne Firma, Firma `Ausstehend`, genehmigte Firma und gesperrte Firma sind fachlich verschieden. Nach bestätigtem Login ohne Firmenzuordnung darf kein erneutes `signUp` verlangt werden. Die Firmenanlage erfolgt über `sk_register_business`, nicht über Browserflags.
+
+21. **Admin-Betriebsprüfung:** Kein Freischalten ohne einsehbare Firmen-/Kontaktdetails. Interne Notizen nie in öffentlich ausgelieferten Dateien, LocalStorage oder direkt exponierten Tabellen ablegen; Zugriff ausschliesslich serverseitig als Admin verifizieren. Jede Schemaerweiterung als separate persistente Migration.

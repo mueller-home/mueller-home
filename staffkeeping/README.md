@@ -26,3 +26,9 @@ Postmark-SMTP für `mueller-home.me` ist laut Einrichtung bestätigt, Versand mu
 
 ## Update 0.23 – Firmenregistrierung fortsetzen
 Bereits bestätigte Supabase-Benutzer ohne Firmenmitgliedschaft sehen das Formular zum Abschluss der Registrierung ohne erneute Auth-E-Mail. Nach Anlage der Firma zeigt die Anwendung den Freigabestatus. Kein SQL-Update. Siehe docs/testplan.md.
+
+## 0.24 – Inbetriebnahme
+1. Zuerst `supabase/migrations/20261009153000_admin_business_review.sql` einmalig im richtigen Supabase-Projekt ausführen (SQL enthält eine Transaktion, keine SELECT-Resultsets).
+2. Erst danach Update-Dateien veröffentlichen.
+3. Admin → Betriebe → Details / Prüfen; Kontaktdaten, Notizen, Audit und Freigabe testen.
+4. Negativtests gegen die Admin-RPCs mit normalen Benutzerkonten durchführen.
