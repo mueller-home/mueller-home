@@ -33,3 +33,10 @@ SQL-Basismigration für Unternehmen, Firmenmitgliedschaften, Backend-Administrat
 - Bei erfolgreicher Passwortänderung wird die Sitzung beendet und der Nutzer zur normalen Anmeldung geführt.
 - Postmark: DKIM und Return-Path für `mueller-home.me` bestätigt; Postmark-Konto freigegeben; Supabase Custom SMTP nach Rückmeldung erfolgreich konfiguriert. Tatsächliche Zustellung und Reset-End-to-End **noch nicht getestet**.
 - Es werden keine neuen SQL-Migrationen benötigt. Inserate, Nachrichten und andere Fachmasken bleiben Demo.
+
+## Version 0.22 – Auth-Weiterleitungsadresse (Code erstellt, Live-Retest ausstehend)
+- **Live bestätigt durch Anwender:** Passwort-Recovery über Postmark, neues Passwort festlegen, abmelden und mit neuem Passwort anmelden funktionieren in Version 0.21.
+- **Fehler aus Signup-Test:** versendeter Bestätigungslink enthielt `redirect_to=https://www.mueller-home.me/` statt `/staffkeeping/`. Supabase Site URL und Redirect-Allowlist sowie Mail-Vorlage wurden im Dashboard kontrolliert und waren richtig.
+- **Korrektur 0.22:** `emailRedirectTo` und `redirectTo` werden aus der URL der tatsächlich geladenen Datei `scripts/auth.js` hergeleitet (`/staffkeeping/`), nicht mehr aus `location.pathname`. Kein Supabase-SQL, keine Änderung an der öffentlichen `scripts/config.js` nötig.
+- Die alte Bestätigungsmail bleibt unverändert; eine neue Mail und der komplette Firmen-Flow sind **noch zu testen**. Bereits geteilter Bestätigungslink enthält einen Auth-Token und sollte nicht wiederverwendet werden.
+- Postmark zugestellt, aber Bestätigungsmail im Spam: Zustellbarkeit separat prüfen. Weiterhin Demo: Inserate, Chats, Profiländerungen, Bewertungen.

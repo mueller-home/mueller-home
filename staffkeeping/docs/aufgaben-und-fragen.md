@@ -44,3 +44,10 @@ Weitere offene Vorgaben laut Original: BusinessImage-Struktur, Bewertungsvalidie
 3. Falsche Bestätigung, ungültige/verbrauchte Links, Browserreload und anderer Browser testen.
 4. Bereits angelegtes Administratorkonto behalten, keine neuen Admin-UUIDs erzeugen.
 5. Anmeldung, Registrierung, Adminfreigabe und negative RLS-Tests mit zwei Firmen nachholen.
+
+## Version 0.22 – Prioritäten
+- **P0 / Test ausstehend:** Nach Veröffentlichung von 0.22 neue Signup-Mail generieren und **nur** den `redirect_to`-Wert prüfen (`https://www.mueller-home.me/staffkeeping/`); vollständigen Link/Token niemals in Chat/Issues teilen.
+- **P0:** Mail bestätigen, Firmen-Eintrag und Status `Ausstehend` prüfen; Registrierung kann bei browserübergreifendem Bestätigen noch am lokal gehaltenen Registrierungsentwurf scheitern.
+- **P0:** Adminfreigabe, Firmenstatus und RLS-Negativtest mit zwei neuen Konten.
+- **P1:** Spam-Einstufung prüfen (Postmark-Berichte, SPF/DMARC, Vorlage); das SMTP-Setup ist bereits erfolgreich durchgeführt.
+- **Erledigt und live bestätigt:** Version 0.21 Passwort-Reset, Logout und anschliessender Login mit neuem Passwort.

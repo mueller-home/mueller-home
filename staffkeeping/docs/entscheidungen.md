@@ -24,3 +24,6 @@ Kein Magic-Link-Zwang beim Login, sondern E-Mail/Passwort. Registrierungen mit B
 ## Postmark und Recovery (09.10.2026)
 - Entwicklungs-Senderdomain `mueller-home.me` (Postmark DKIM und Return-Path verifiziert); bei Übergabe Umstellung auf Annettes Domain. Kein privater SMTP-Schlüssel in Git oder Dokumentation.
 - Normales Login erfolgt weiterhin per E-Mail/Passwort. Recovery-Link öffnet ausschliesslich die Passwortneuvergabe; erst nach erfolgreicher Änderung erfolgt neue Anmeldung.
+
+## 09.10.2026 – Auth-Callback-URL
+Bei GitHub Pages liegt die App unter `/staffkeeping/`, die Marketing-Homepage auf `/`. Signup- und Passwort-Reset-E-Mails müssen immer die App als Rücksprungadresse verwenden. Die App-Basis wird aus der geladenen Datei `scripts/auth.js` ermittelt; abweichende Domains/Pfade werden abgewiesen statt stillschweigend zur Homepage umzuleiten. Beim geplanten Wechsel zur Domain von Annette muss dieser harte Pfadtest überprüft bzw. bewusst angepasst werden. Supabase Site URL und Redirect-Allowlist zusätzlich auf die neue Domain umstellen.

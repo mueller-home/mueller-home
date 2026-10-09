@@ -26,3 +26,5 @@
 - Passwort-Recovery darf nicht durch Session-Initialisierung oder Rollenprüfung überschrieben werden.
 - Keine Recovery-/SMTP-Schlüssel, Zugangstokens oder Passwörter in Frontend-Konfiguration, Projektdateien oder Dokumentation.
 - Auth-Release erst nach echten Tests als funktionsfähig deklarieren.
+
+19. **Auth-Redirects:** Für Signup und Passwort-Reset die kanonische StaffKeeping-App-URL verwenden, nicht die zufällige aktuelle Seite (`location.pathname`). Nach Domain-/Pfadwechsel die URL-Ermittlung, Supabase Site URL und Redirect-Allowlist gemeinsam testen. Niemals vollständige Bestätigungs- oder Recovery-Links mit Tokens protokollieren oder veröffentlichen.

@@ -1,4 +1,4 @@
-/* StaffKeeping 0.21 – Supabase Auth und stabiler Passwort-Recovery-Ablauf */
+/* StaffKeeping 0.22 – Supabase Auth, stabile Callback-URL und Passwort-Recovery */
 'use strict';
 (function(){
  const cfg=window.SK_CONFIG||{};
@@ -9,6 +9,23 @@
    msg('registration-message','Die Registrierung ist erst nach Einrichtung der Supabase-Verbindung möglich.');return;
  }
  if(!window.supabase?.createClient){msg('auth-message','Supabase-Bibliothek konnte nicht geladen werden. Netzwerk/Content-Blocker prüfen.');return;}
+ // Die Auth-Callback-URL muss aus dem App-Verzeichnis stammen, niemals aus
+ // location.pathname: z.B. kann sonst die externe Homepage als Ziel übernommen werden.
+ // Der Speicherort dieses Skripts ist auch bei /staffkeeping/index.html stabil.
+ const authScript=Array.from(document.scripts).find(el=>{
+   try{return new URL(el.src,location.href).pathname.endsWith('/scripts/auth.js');}catch{return false;}
+ });
+ if(!authScript){
+   msg('auth-message','Auth-Skriptpfad fehlt: sichere Rücksprungadresse kann nicht bestimmt werden.');
+   msg('registration-message','Registrierung nicht möglich: App-Adresse konnte nicht ermittelt werden.');
+   return;
+ }
+ const callbackUrl=new URL('../',authScript.src).href;
+ if(new URL(callbackUrl).origin!==location.origin || !new URL(callbackUrl).pathname.endsWith('/staffkeeping/')){
+   msg('auth-message','Ungültige StaffKeeping-App-Adresse für Auth-Weiterleitung.');
+   msg('registration-message','Registrierung nicht möglich: App-Pfad ist ungültig.');
+   return;
+ }
  const db=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  let currentUser=null, isAdmin=false;
  // Recovery-Links erzeugen eine Supabase-Sitzung, dürfen aber NICHT als normale Anmeldung
@@ -66,7 +83,7 @@
   const email=document.getElementById('reg-email').value.trim();
   const password=document.getElementById('reg-password').value;
   const details={p_company_name:document.getElementById('company').value,p_vat_id:document.getElementById('vat').value,p_industry:document.getElementById('industry').value,p_country:document.getElementById('country').value,p_postal_code:document.getElementById('postal').value,p_city:document.getElementById('city').value,p_contact_name:document.getElementById('contact').value,p_contact_email:email,p_contact_phone:document.getElementById('phone').value,p_terms_accepted:true};
-  const {data,error}=await db.auth.signUp({email,password,emailRedirectTo:location.origin+location.pathname});
+  const {data,error}=await db.auth.signUp({email,password,emailRedirectTo:callbackUrl});
   document.getElementById('reg-password').value='';
   if(error){msg('registration-message','Registrierung fehlgeschlagen: '+error.message);return;}
   // Pending registration exists only in current browser. Require confirmed auth before RPC.
@@ -84,7 +101,7 @@
  }
  document.getElementById('reset-form').addEventListener('submit',async e=>{
   e.preventDefault();const email=document.getElementById('reset-email').value.trim();
-  const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+  const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:callbackUrl});
   const result=document.getElementById('reset-result');result.classList.remove('hidden');result.textContent=error?'Zurücksetzen fehlgeschlagen: '+error.message:'Wenn ein Konto existiert, wurde eine E-Mail angefordert.';
  });
  document.querySelector('#view-reset [data-view="login"]').addEventListener('click',async e=>{

@@ -57,3 +57,11 @@ Siehe `docs/uebergabe-annette.md`.
 - [ ] Ungültiger/abgelaufener Recovery-Link ergibt klare Fehlermeldung; kein unbeabsichtigter Zugang zum Marktplatz.
 - [ ] Nach explizitem Zurück zur Anmeldung wird der Recovery-Modus beendet.
 - [ ] Adminfreigabe und RLS-Negativtests bleiben ausstehend und sind separat durchzuführen.
+
+## Version 0.22 – Rücksprung-URLs / Regression
+- [x] 0.21: Recovery-Mail erhalten, Passwort gesetzt, Logout und erneuter Login mit neuem Passwort – vom Benutzer live bestätigt.
+- [ ] Signup in StaffKeeping unter `/staffkeeping/` beginnen; frisch empfangenen Link kontrollieren: `redirect_to` muss `/staffkeeping/` enthalten. **Nur Redirect-Parameter ansehen, niemals Token weitergeben.**
+- [ ] Link bestätigen; korrekter Aufruf der App statt Root-Homepage; Firma im richtigen Browser anlegen; Status `Ausstehend` prüfen.
+- [ ] Passwort-Reset-Link erneut auf `/staffkeeping/` überprüfen (nur falls nötig; keine unnötigen zusätzlichen Mails).
+- [ ] Adminfreigabe und Berechtigung mit zwei Firmen; Browserwechsel bei Signup als bekannter offener Fall.
+- [ ] Spam-Zustellung bei Postmark/Gmail prüfen; nicht als behoben markieren.

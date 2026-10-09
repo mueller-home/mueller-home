@@ -22,3 +22,9 @@ Echte Auth- und Freigabeaufrufe programmiert. scripts/config.js muss noch ergän
 
 ## 0.21 – 09.10.2026
 Passwort-Recovery stabilisiert: Recovery-Modus gegenüber automatischer Sitzungs-/Rollenbewertung priorisiert; doppelte Passworteingabe, Plausibilitätsprüfung, Statusmeldungen, Sign-out nach erfolgreicher Passwortänderung, Abbruchmöglichkeit. Admin-Doku auf aktuellen Supabase-/Postmark-Stand gebracht. **Statischer Code-Test; Live-Browsertest und Versandtest ausstehend.**
+
+## 0.22 – 09.10.2026
+- Signup- und Passwort-Reset-Redirect werden aus dem Pfad von `scripts/auth.js` abgeleitet; `/staffkeeping/` wird explizit validiert.
+- Versionsanzeige in Hinweisbalken, Footer und Admin-Projektdoku synchronisiert; öffentliche Dokumentation / Übergabetext aktualisiert.
+- Kein SQL- oder Secret-Wechsel; User-Konfiguration bleibt unverändert. Live-Bestätigung der neuen Registrierungslinks ausstehend.
+- Nachgetragen: Passwort-Reset 0.21 einschliesslich Logout und erneutem Login wurde live erfolgreich getestet.
