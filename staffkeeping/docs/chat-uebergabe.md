@@ -13,3 +13,9 @@ Es wird ausschließlich die App entwickelt; Marketing-Homepage existiert separat
 **Offene Punkte:** `docs/aufgaben-und-fragen.md`, Systemstand `docs/entwicklungsstand.md`, Entscheidungen `docs/entscheidungen.md`, Tests `docs/testplan.md`.
 
 **Erforderliche Referenz:** Original `staffkeeping_migrationskonzept.html` v2.2 im lokalen gitignorierten `_bubble`-Ordner (im nächsten Chat erneut bereitstellen, bis sichere Dokumentenanbindung existiert).
+
+## Nachtrag Version 0.19
+SQL-Fundament liegt in `supabase/migrations/20261009120000_auth_foundation.sql` (noch **nicht ausgeführt**, keine Live-Verifikation). Erklärung: `docs/auth-und-datenmodell.md` und `supabase/README.md`. Zuerst Migration mit Prüfplan installieren, Admin-UUID sicher bootstrappen und RLS-Negativtests; erst danach 0.20 Login/Registrierung. Alle Firmen/Benutzer komplett neue Testdaten, **keine Migration alter Bubble-Konten**.
+
+## Aktueller Nachtrag 0.19.1 – Übergabe an Annette
+Bitte `docs/uebergabe-annette.md` lesen: Bestehende GitHub-, Supabase- und Postmark-Ressourcen werden nach Abnahme an Annette übergeben, Entwickler bleibt zusätzlicher Administrator. Der Google-Maps-Key gehört bereits Annette. Neue App-Domain sowie Mail-Absender/SMTP/Redirect-URLs müssen zur Übergabe geändert werden. Noch nichts übertragen oder produktiv umgestellt. Die Docs-Version 0.19.1 aktualisiert nur Doku und Admin-Demo. SQL 0.19 weiterhin **nicht nachgewiesen ausgeführt**. Nächste technische Arbeit: Migration kontrolliert installieren, RLS/Nicht-Exposition testen, dann Auth 0.20. ZIP unter `staffkeeping/`, nur neue/geänderte Dateien. Die Demo-Adminansicht ist öffentlich abrufbar, daher dort keine Geheimnisse.

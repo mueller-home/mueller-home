@@ -13,3 +13,9 @@ Design und App-Navigation mit Annette abnehmen; Bubble-Daten-/Workflow-Audit; Da
 
 ## Zuletzt bekannte Einschränkungen
 Navigationskorrektur 0.17 statisch geprüft, Benutzer-Retest noch nicht bestätigt. In 0.18 ist die Projektdokumentation öffentlichkeitsfähig gekürzt, die vollständige Originaldatei bleibt lokal bis geschütztes Backend existiert.
+
+## Version 0.19 – vorbereitet, NICHT ausgeführt
+SQL-Basismigration für Unternehmen, Firmenmitgliedschaften, Backend-Administratoren, Auditlog, RLS und definierte RPCs erstellt. Kein Supabase-Deployment nachgewiesen; GitHub-Pages-Anwendung bleibt Demo. Installation und Sicherheitsprüfung stehen aus. Nächste Stufe 0.20: echte Auth-Verbindung und Registrierung erst nach erfolgreich verifiziertem Schema.
+
+## Version 0.19.1 – dokumentiert (09.10.2026)
+Übergabeplanung für Annette in `docs/uebergabe-annette.md` aufgenommen und in der Demo-Admin-Ansicht ergänzt. Keine Datenbankänderung, keine echte Auth-Anbindung, kein Infrastrukturtransfer. SQL-Stand 0.19 unverändert: **vorbereitet, nicht ausgeführt**. Nächster technischer Schritt: Supabase-Schema im richtigen Projekt kontrolliert installieren und RLS testen; danach echte Registrierung/Login.

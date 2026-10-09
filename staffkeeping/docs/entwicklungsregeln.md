@@ -12,3 +12,9 @@
 10. **Jedes Release:** Architektur/Stand, Aufgaben, Entscheidungen, Tests, Historie und Chat-Übergabe **mit der Implementierung** aktualisieren; keinen fertigen Status ohne Test behaupten.
 11. **Deployment:** bestehende Pfade beibehalten; CSS/JS-Cacheversionen und tatsächliche ZIP-Verzeichnisstruktur prüfen.
 12. **Datenschutz/Original:** vollständiges Migrationskonzept darf erst nach echtem Adminschutz online ausgeliefert werden. Eine Demo-Anmeldung ist keine Zugriffskontrolle.
+
+13. **Supabase-Migrationen:** Jede Schemaänderung als dauerhaft versionierte SQL-Migration. In `public` nur Tabellen mit begründetem Browserbedarf; interne Admin-/Audit-/Backendtabellen in nicht exponiertem Schema. Exposition, Grants und RLS explizit prüfen.
+14. **SQL-Bedienung:** Anzahl/Art separater Resultsets vor SQL-Ausführung erklären; mehrere SELECTs können im SQL-Editor nicht gleichzeitig sichtbar sein. Niemals Migrationserfolg ohne Test behaupten.
+15. **Testdaten:** Keine bestehenden Unternehmen/Benutzer aus Bubble übernehmen; neue Testkonten in StaffKeeping/Supabase registrieren.
+
+16. **Eigentümerschaft/Übergabe:** Bestehende GitHub-, Supabase- und Postmark-Ressourcen werden für die Übergabe an Annette vorbereitet; sie übernimmt Eigentum/Verwaltung/Billing, bisheriger Entwickler behält zusätzliche Adminrechte. Bestehenden Google Maps Key von Annette verwenden; Domain, Auth-Redirects und Mail-Domain umstellen. Transfermöglichkeiten je Provider vorab prüfen. Checkliste `docs/uebergabe-annette.md` bei relevanten Releases nachführen.
