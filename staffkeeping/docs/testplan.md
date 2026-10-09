@@ -98,3 +98,17 @@ Siehe `docs/uebergabe-annette.md`.
 - [ ] Admin sieht Beschreibung und Medien, nicht angemeldeter/fremder Nutzer erhält bei Storage/RPC keinen Zugriff.
 - [ ] Nach Freigabe Testnutzer Marktplatz, nach Sperrung kein Marktplatz.
 - [ ] Auf Desktop/Mobile Layout prüfen; Registrierung, Reset und Admin-Notizen auf Regression testen.
+
+
+## 0.26 – Tests zur Abnahme (noch nicht live durchgeführt)
+1. SQL-Installation erfolgreich, private Bucket-Einstellung und Policies prüfen.
+2. Admin lädt HTML-Original aus lokalem Archiv hoch; im isolierten Dokument-Viewer mit Screenshots vollständig lesbar.
+3. Als `anon` und gewöhnlicher freigeschalteter Nutzer: Download, List, Upload, URL-Zugriff auf `sk-project-docs` verweigert.
+4. Profil-Beschreibung ändern, 1 s warten: `Gespeichert`; Reload zeigt Wert.
+5. Profilfeld ändern und sofort Marktplatz anklicken: vorher erfolgreich speichern.
+6. Profilfeld ändern und Browser Zurück/Vorwärts: vorher speichern; bei Fehler Navigationsverlust verhindern.
+7. Netzfehler simulieren: `Nicht gespeichert`, Eingabe bleibt sichtbar, Retry kann wiederholen.
+8. Ungültiges Formular verhindert Navigation; Browser-Schliessen/Reload mit ungespeicherten Daten löst Warnung aus.
+9. Dropdown und Benachrichtigungs-Schalter speichern ohne Klick auf Save; Medienänderungen gesondert prüfen.
+10. Wiederholten Admin-Upload nur für Original-Datei prüfen; keine anderen Dateinamen/Buckets oder Nutzerrechte zulassen.
+11. Bestehenden Login/Recovery/Freigabe/Profil/Medien und alle übrigen Navigationen auf Regression prüfen.

@@ -27,3 +27,15 @@
 .admin-media-preview{display:flex;gap:10px;flex-wrap:wrap;color:#667589}
 .admin-media-preview img{width:125px;height:110px;object-fit:contain;border:1px solid #dde5ec;border-radius:8px;background:#f7f9fb}
 @media(max-width:780px){#pr-photo-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* 0.26: automatische Speicherung und geschützter Dokumentbetrachter */
+#profile-info.save-error{color:#a51f2c;font-weight:600}
+#pr-retry-save{margin-top:.6rem}
+.doc-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:12px 0}
+.doc-upload-label{position:relative;display:inline-flex;cursor:pointer}
+.doc-upload-label input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+#private-doc-viewer{margin-top:1rem;border:1px solid var(--color-silver);border-radius:8px;overflow:hidden}
+#private-doc-frame{display:block;border:0;width:100%;height:70vh;min-height:420px;background:white}
+
+/* 0.27 – admin-only zentrale Dokumentationsbearbeitung */
+#doc-chapter-list{display:flex;flex-direction:column;gap:5px}#doc-search{width:100%;padding:10px;border-radius:7px;border:1px solid #c8d3df;margin:9px 0 12px}.doc-menu label{font-weight:700;font-size:12px}.doc-toolbar{flex-wrap:wrap}#doc-editor label{display:block;font-weight:700;margin:15px 0 7px}#doc-edit-body{width:100%;min-height:370px;padding:14px;border:1px solid #c8d3df;border-radius:8px;font:13px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;resize:vertical}#doc-save-status{font-size:13px;color:var(--color-steel);margin:10px 0}#doc-body{white-space:pre-wrap!important}

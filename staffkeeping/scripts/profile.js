@@ -1,7 +1,44 @@
-/* StaffKeeping 0.25 · echte Unternehmensprofilpflege und private Medien */
+/* StaffKeeping 0.26 · echte Unternehmensprofilpflege und private Medien */
 'use strict';
 (function(){
- let profile=null, token=0;
+ let profile=null, token=0, writable=false;
+ let timer=null, changed=false, saving=null, savedJson=null, generation=0;
+ const dataIds=['pr-company','pr-industry','pr-postal','pr-city','pr-contact','pr-contact-email','pr-phone','pr-desc','pr-notifications'];
+ function payload(){return {
+   p_company_name:$('pr-company').value,p_industry:$('pr-industry').value,
+   p_postal_code:$('pr-postal').value,p_city:$('pr-city').value,
+   p_contact_name:$('pr-contact').value,p_contact_email:$('pr-contact-email').value,
+   p_contact_phone:$('pr-phone').value,p_description:$('pr-desc').value,
+   p_email_notifications_enabled:$('pr-notifications').checked
+ };}
+ function status(t,error=false){const el=$('profile-info');el.textContent=t;el.classList.remove('hidden');el.classList.toggle('save-error',error);$('pr-retry-save').classList.toggle('hidden',!error);}
+ function changedNow(){return writable && (changed || JSON.stringify(payload())!==savedJson || !!saving);}
+ function schedule(immediate=false){
+   if(!writable)return;
+   changed=true;status('Nicht gespeicherte Änderungen …');
+   clearTimeout(timer);timer=setTimeout(()=>{void flush();},immediate?0:1050);
+ }
+ async function flush(){
+   clearTimeout(timer);timer=null;
+   if(!writable||!profile)return true;
+   if(saving){try{await saving;}catch{} if(!changedNow())return true;}
+   const snapshot=JSON.stringify(payload());
+   if(snapshot===savedJson){changed=false;status('Gespeichert ✓');return true;}
+   if(!$('profile-form').reportValidity()){status('Bitte ungültige Angaben korrigieren, bevor du die Seite verlässt.',true);return false;}
+   const sequence=generation;
+   status('Speichert …');
+   saving=window.SK_AUTH.saveMyProfile(JSON.parse(snapshot));
+   try{
+     await saving;
+     if(sequence!==generation)return false;
+     savedJson=snapshot;changed=JSON.stringify(payload())!==snapshot;
+     status(changed?'Weitere Änderungen warten auf Speicherung …':'Gespeichert ✓');
+     if(changed){clearTimeout(timer);timer=setTimeout(()=>{void flush();},250);}
+     return true;
+   }catch(e){changed=true;status('Nicht gespeichert: '+e.message,true);return false;}
+   finally{saving=null;}
+ }
+ 
  const $=id=>document.getElementById(id);
  function info(id,message){const el=$(id);el.textContent=message;el.classList.remove('hidden');}
  function field(id,value){$(id).value=value??'';}
@@ -40,7 +77,7 @@
   catch(e){info('pr-media-info','Löschen fehlgeschlagen: '+e.message);}
  }
  async function load(){
-  $('profile-loading').textContent='Unternehmensprofil wird geladen …';$('profile-form').querySelector('button[type="submit"]').disabled=true;
+  writable=false;clearTimeout(timer);timer=null;$('profile-loading').textContent='Unternehmensprofil wird geladen …';
   try{
    const result=await window.SK_AUTH?.getMyProfile();
    if(!result?.business)throw Error('Kein zugeordnetes Unternehmen gefunden.');
@@ -52,29 +89,26 @@
    field('pr-contact',b.contact_name);field('pr-contact-email',b.contact_email);field('pr-phone',b.contact_phone);
    field('pr-desc',b.description);$('pr-notifications').checked=b.email_notifications_enabled;
    $('pr-login-email').textContent=result.login_email||'–';
-   const writable=b.status==='Freigeschaltet'&&result.role==='owner';
+   writable=b.status==='Freigeschaltet'&&result.role==='owner';
+   generation++;changed=false;savedJson=JSON.stringify(payload());clearTimeout(timer);timer=null;status(writable?'Gespeichert ✓':'Nur lesbar');
    for(const field of $('profile-form').querySelectorAll('input:not([disabled]),select,textarea,button'))field.disabled=!writable;
    $('pr-logo-file').disabled=!writable;$('pr-logo-delete').disabled=!writable;
    $('profile-loading').textContent=writable?'Angaben werden in Supabase gespeichert.':'Nur freigeschaltete Firmeninhaber können Änderungen speichern.';
    await renderMedia();
   }catch(e){$('profile-loading').textContent='Profil konnte nicht geladen werden: '+e.message;}
  }
- $('profile-form').addEventListener('submit',async ev=>{
-  ev.preventDefault();if(!profile)return;
-  const submit=$('pr-save');submit.disabled=true;
-  try{
-   await window.SK_AUTH.saveMyProfile({
-    p_company_name:$('pr-company').value,p_industry:$('pr-industry').value,
-    p_postal_code:$('pr-postal').value,p_city:$('pr-city').value,
-    p_contact_name:$('pr-contact').value,p_contact_email:$('pr-contact-email').value,
-    p_contact_phone:$('pr-phone').value,p_description:$('pr-desc').value,
-    p_email_notifications_enabled:$('pr-notifications').checked
-   });info('profile-info','Profil erfolgreich in Supabase gespeichert.');
-   profile.business.description=$('pr-desc').value;
-  }catch(e){info('profile-info','Speichern fehlgeschlagen: '+e.message);}
-  finally{submit.disabled=false;}
+ for(const id of dataIds){
+   const el=$(id);
+   el.addEventListener('input',()=>schedule());
+   el.addEventListener('change',()=>schedule(true));
+   el.addEventListener('blur',()=>{if(changedNow())void flush();});
+ }
+ $('profile-form').addEventListener('submit',ev=>{ev.preventDefault();void flush();});
+ $('pr-retry-save').addEventListener('click',()=>{void flush();});
+ window.addEventListener('beforeunload',ev=>{
+   if(changedNow()){ev.preventDefault();ev.returnValue='';}
  });
  $('pr-logo-file').addEventListener('change',e=>saveImage('logo','logo',e.target.files?.[0]));
  $('pr-logo-delete').addEventListener('click',()=>removeImage('logo','logo'));
- window.SK_PROFILE={load};
+ window.SK_PROFILE={load,async beforeLeave(){return await flush();},hasPending:changedNow};
 })();

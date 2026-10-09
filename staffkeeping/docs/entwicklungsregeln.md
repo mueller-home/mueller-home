@@ -37,3 +37,8 @@
 22. **Unternehmensprofil:** Der User bearbeitet nur eigene Daten als freigeschalteter `owner`; Land, USt-ID und Status bleiben unveränderbar durch normale Nutzer. `contact_email` ist nicht die Auth-Login-E-Mail.
 23. **Medien:** Supabase Storage private Buckets und RLS nach Unternehmens-ID; keine public URLs; nur kurzlebige Signed URLs, Dateityp/Grösse und erlaubte Slots serverseitig durch Bucket und Policies einschränken. Keine Fotos/Anhänge in GitHub.
 24. **Mail-Einstellungen:** Schalter für Fachbenachrichtigungen darf nicht als aktiver Versand ausgegeben werden, solange kein sicherer serverseitiger Benachrichtigungsjob existiert. Auth-Mails sind davon unabhängig.
+
+
+25. **Auto-Save:** Normale Eingaben ohne Speichern-Button, entprellt speichern; bei Navigation/Tabwechsel sowie Back/Forward vor Ansichtswechsel flushen; bei Fehler nicht navigieren, Wiederholen zeigen. Bevorstehendes Browser-Schliessen/Reload mit ungespeicherten Daten muss Warnung auslösen; Speichern beim Schliessen nicht garantieren. Kritische Freigaben/Löschungen weiterhin explizit bestätigen.
+26. **Vollständiges Originalkonzept:** nie unter GitHub Pages oder im ZIP ausserhalb des per `.gitignore` ausgeschlossenen `_bubble`-Archivs ausliefern. Nur privater Bucket `sk-project-docs` und serverseitige Admin-Security-Policies; HTML im Admin-Browser isoliert und ohne Skriptberechtigung rendern. Separate historische v2.2-Quelle und aktuelle versionierte Projektunterlagen halten.
+27. **Upload/Migration:** SQL erst kontrolliert installieren, dann bewusst Admin-Upload durchführen; keinen bereits durchgeführten Live-Test behaupten, bevor SQL, Storage-Zugriff und Browseranzeige verifiziert sind.

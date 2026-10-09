@@ -41,3 +41,9 @@ Die Unternehmensfreigabe soll aus der Detailansicht erfolgen. Kontaktaufnahme pe
 - Logo (2 MB) und fünf Betriebsbilder (je 5 MB), JPG/PNG/WebP, in zwei PRIVATEN Buckets mit RLS und signierten Lese-URLs; kein öffentliches Bucket.
 - System-Admin darf Beschreibung und private Medien im Betriebsprüfungsfenster einsehen.
 - E-Mail-Benachrichtigungen als gespeicherte Vorliebe, **ohne aktiven Versand**, bis Chat-/Inseratsmodul technisch angebunden ist.
+
+
+## Beschlüsse 0.26
+- Unternehmensprofil: Auto-Save statt Speichern-Button, auch vor interner Navigation/Browser-Historienwechsel; sichtbar gespeicherter/ungespeicherter Status. Browser-Reload kann nur warnen.
+- Vollständiges historisches Migrationskonzept v2.2 mit Screenshots zentral im Admin-Bereich, aber nicht öffentlich zugänglich; privater Supabase Storage und explizite Admin-only Policies.
+- Aktuelle Projektunterlagen getrennt vom unveränderten Original und bei jedem Release pflegen.

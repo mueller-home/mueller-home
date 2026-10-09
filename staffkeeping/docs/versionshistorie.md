@@ -41,3 +41,10 @@ Admin → Betriebe: Detailprüfung vor Freigabe, Kontaktdaten und Benutzerzuordn
 
 ## 0.25 – Profilverwaltung und private Bilder (09.10.2026)
 Neue Migration für Beschreibung/Benachrichtigungsvorliebe, zwei private Storage-Buckets mit RLS und serverseitige Profil-RPCs. Profilmaske liest/speichert echte Unternehmensdaten; Admin-Details zeigen Profilbeschreibung und Medien. Freigabe-Warteseite weist bestätigte E-Mail und bereits erfasste Firma getrennt aus. Live-Test der 0.25-Migration und Funktionen steht aus.
+
+
+## 0.26 – 09.10.2026
+- Auto-Save im Firmenprofil (Debounce, Blur, sofort bei Auswahländerung, Flush vor Navigation, Fehleranzeige/Retry und Browser-Unload-Warnung).
+- Geschützter Original-Migrationskonzept-Viewer und Upload auf private Supabase Storage; SQL-Migration 20261009163000. Originaldatei nicht im öffentlichen Update-ZIP.
+- Projektdokumentation, Testfälle und Chat-Übergabe überarbeitet.
+- Status: **implementiert / statisch geprüft**, Supabase-Migration und Live-Sicherheitsabnahme **noch offen**.

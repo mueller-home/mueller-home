@@ -46,3 +46,10 @@ Registrierungsfelder liegen in `public.sk_businesses`; Admin kann diese über di
 `public.sk_businesses` erhält `description` (max. 1000) und `email_notifications_enabled` (Standard true). Profile lesen über `sk_get_my_business_profile`, Änderungen ausschliesslich über `sk_update_my_business_profile` (freigegebener owner, begrenzte Felder). Bestehende Fremddatenkontrollen über RLS; keine allgemeinen UPDATE-Rechte auf `sk_businesses`.
 Zwei private Storage-Buckets: `sk-business-logos` (2 MB), `sk-business-photos` (5 MB), nur JPG/PNG/WebP; UUID-Verzeichnis und jeweils `logo.*` bzw. 1–5.*. Admin/zugehörige Mitglieder können lesen, upload/delete nur freigegebener owner. Temporäre signierte URLs, keine öffentlichen Dateipfade. Admin-Details über bisherige admin-only-RPC plus private Mediensuche.
 `email_notifications_enabled` ist lediglich eine Präferenz, kein automatischer Versand.
+
+
+## Dokumentenschutz und Auto-Save (Stand 0.26)
+- Öffentliche GitHub-Pages-App, private Originaldokumente ausschliesslich in `sk-project-docs`, Supabase Storage (`public=false`), serverseitige RLS-Policies prüfen `public.sk_is_admin()`.
+- Originalmigration 2.2 bleibt historische Quelle, aktuelle Beschlüsse stehen getrennt in den versionierten `.md`-Dokumenten und in der Projektübersicht. Kein stillschweigendes Umschreiben des Originals.
+- HTML-Original im Browser nur im isolierten, skriptlosen, fremd-originären iframe mit CSP angezeigt. Kein öffentliches Asset.
+- Auto-Save im Unternehmensprofil (debounce, Flush bei Navigation, Fehler blockiert interne Navigation, Browser-Unload-Warnung). Das Backend bietet derzeit einen **gesamten Profilupdate-RPC**: Feldgranulare Konfliktsicherheit bei zwei parallelen Sessions ist noch nicht gewährleistet und bleibt ein offener Punkt.

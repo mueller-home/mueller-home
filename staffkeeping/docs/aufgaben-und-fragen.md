@@ -78,3 +78,12 @@ Weitere offene Vorgaben laut Original: BusinessImage-Struktur, Bewertungsvalidie
 - **P1:** Verwaiste Testunternehmen kontrolliert bereinigen; Löschen eines Auth-Users darf produktive Unternehmen nicht automatisch entfernen.
 - **P1:** Registrierung und Freigabe mit zweitem unabhängigem Testbetrieb sowie anderem Browser/Gerät testen; Nutzungsbedingungen finalisieren.
 - **P2:** E-Mail-Benachrichtigungsvorliebe bei Implementierung von Nachrichten-/Inseratsmodulen für tatsächlichen Versand auswerten.
+
+
+## Priorisierte offenen Tests und Arbeiten 0.26
+- **P0:** Migration `20261009163000_private_project_docs.sql` ausführen; Bucket privat bestätigen; HTML-Original per Admin hochladen; Lesetest und **anonym/nicht-Admin Negativtest**.
+- **P0:** Profil 0.25-Migration/Medien live prüfen; anschließend 0.26 Auto-Save auf Texte, Auswahllisten, Benachrichtigung, Navigationswechsel, Back/Forward, Netzfehler, Reload/Tab-Schliessen testen.
+- **P1:** E-Mail-Postmark landet bei iCloud im Spam; Zustellbarkeit / Postmark-Aktivität und DMARC prüfen.
+- **P1:** Admin-Dokumentationsinhalte mit tatsächlichem Versionsstand konsistent halten; zukünftige Versionen nie ohne Docs aktualisieren.
+- **P1:** Mehrtab-/Mehrbenutzer-Konflikte: aktiver RPC überschreibt ein ganzes Profil, noch keine feldweise serverseitige Konfliktkontrolle.
+- **P2:** Inserate, Chat, Bewertungen aus Demo in echte Fachmodule überführen, Mailbenachrichtigungsversand erst mit Fachmodulen aktivieren.

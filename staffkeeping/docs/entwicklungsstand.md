@@ -60,3 +60,10 @@ Live festgestellt: Testunternehmen Hotel chris.login wurde am 09.10.2026 erfolgr
 - Noch erforderlich: SQL-Migration 20261009160500 ausführen, dann App veröffentlichen und mit Admin-/Testkonto testen. Bis dahin NICHT live einsatzbereit.
 - E-Mail-Benachrichtigungsschalter: Preference gespeichert, **kein Versand** für neue Nachrichten/Inserate, bis Fachmodule real angebunden sind.
 - Weitere Module Inserate, Chat, Bewertungen und Karten bleiben Demo. Spam-Einstufung iCloud separat offen.
+
+
+## 0.26 – Auto-Save + geschütztes Originalkonzept (implementiert, Live-Abnahme offen)
+- Im Unternehmensprofil kein Speichern-Button mehr: nach Eingabepause, Auswahländerung, Blur und vor interner Navigation speichern; bei Fehler Navigation stoppen und Retry anbieten. Vor Reload/Schliessen Browser-Warnung bei ungesicherten Änderungen; keine Garantie, dass ein Browser beim Schliessen noch einen Request abschliesst.
+- Privater Bucket `sk-project-docs` mit Admin-Storage-Policies; Originalkonzept wird nach einmaligem **manuellem Admin-Upload** über geschützten Download angezeigt. Keine Originaldatei in öffentliches GitHub Pages.
+- Das vollständige v2.2-Migrationskonzept ist dadurch **nicht automatisch bereits hochgeladen**. SQL-Ausführung, Upload und Negativtests noch ausstehend.
+- Profil 0.25 / Medienmigration und Live-Tests ebenfalls vor Abschluss kontrollieren. Inserate/Chats/Bewertungen weiterhin Demo.

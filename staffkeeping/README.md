@@ -36,3 +36,14 @@ Bereits bestätigte Supabase-Benutzer ohne Firmenmitgliedschaft sehen das Formul
 
 ## Version 0.25 – Profil/Medien
 Vor Veröffentlichung die neue Supabase-Migration `supabase/migrations/20261009160500_business_profile_media.sql` einmal ausführen. Profilwerte sind danach echt und werden gespeichert, Fotos im privaten Storage. Admin sieht sie in der Betriebsprüfung. Die E-Mail-Benachrichtigungsvorliebe wird nur gespeichert; Versand von Fachmails ist noch nicht implementiert.
+
+
+## Release 0.26
+- Auto-Save im Firmenprofil: verzögert bei Eingabe; Flush vor Navigation; Browser-Warnung bei ausstehenden Eingaben. Kritische Statusaktionen erfordern weiterhin bewusste Bestätigung.
+- Admin → Projektdoku → **Originalkonzept hochladen / anzeigen**: nur nach Migration `supabase/migrations/20261009163000_private_project_docs.sql`. HTML-Datei aus lokalem `_bubble`-Archiv wählen; **nicht** in das öffentliche Repo legen.
+- Die bestehenden `docs/*.md` bleiben bewusst öffentlich lesbar; nur das vollständige Originalkonzept mit Screenshots ist geschützt in Supabase Storage.
+- Kein Supabase-Livetest/Storage-Negativtest in dieser Entwicklungsumgebung erfolgt; Tests siehe `docs/testplan.md`.
+
+
+## Dokumentationsführung ab 0.27
+Die führende, bearbeitbare Projektbeschreibung befindet sich nach der SQL-Migration unter **Admin → Projektdoku** (Supabase). Die bisherigen Markdown-Dateien dienen ausschliesslich als einmaliger Initialimport/Archivstand. Die Original-Migrationsquelle v2.2 bleibt im privaten Storage, nicht in GitHub Pages.

@@ -1,4 +1,4 @@
-/* StaffKeeping 0.25 – Supabase Auth, stabile Callback-URL und Passwort-Recovery */
+/* StaffKeeping 0.26 – Supabase Auth, stabile Callback-URL und Passwort-Recovery */
 'use strict';
 (function(){
  const cfg=window.SK_CONFIG||{};
@@ -116,6 +116,8 @@
  }
  async function safeEvaluate(){try{await evaluate();}catch(e){msg('auth-message','Prüfung fehlgeschlagen: '+e.message);if(!recoveryMode)ui().logoutView();else showRecovery();}}
  window.SK_AUTH={
+  async listProjectDocs(){if(!isAdmin)throw Error('Nur Administratoren');const {data,error}=await db.rpc('sk_admin_list_project_docs');if(error)throw error;return data||[];},
+  async saveProjectDoc(slug,body){if(!isAdmin)throw Error('Nur Administratoren');const {error}=await db.rpc('sk_admin_save_project_doc',{p_slug:slug,p_body:body});if(error)throw error;},
   async logout(){clearRecovery();exitCompletionMode();await db.auth.signOut();currentUser=null;isAdmin=false;ui().logoutView();},
   async loadBusinesses(){if(!isAdmin)throw Error('Nur Administratoren');const {data,error}=await db.from('sk_businesses').select('id,company_name,country,status').order('created_at',{ascending:false});if(error)throw error;return data||[];},
   async getBusinessDetails(id){if(!isAdmin)throw Error('Nur Administratoren');const {data,error}=await db.rpc('sk_admin_get_business_details',{p_business_id:id});if(error)throw error;return data;},
@@ -162,6 +164,17 @@
     const {data,error}=await db.storage.from(bucket).list(businessId,{limit:20});if(error)throw error;
     const matches=(data||[]).filter(x=>x.name===prefix+'.jpg'||x.name===prefix+'.png'||x.name===prefix+'.webp');
     if(matches.length){const {error:de}=await db.storage.from(bucket).remove(matches.map(x=>businessId+'/'+x.name));if(de)throw de;}
+  },
+  async getPrivateMigrationConcept(){
+    if(!isAdmin)throw Error('Nur Administratoren');
+    const {data,error}=await db.storage.from('sk-project-docs').download('original/staffkeeping_migrationskonzept_v2.2.html');
+    if(error)throw error;return await data.text();
+  },
+  async uploadPrivateMigrationConcept(file){
+    if(!isAdmin)throw Error('Nur Administratoren');
+    if(!file||file.size>6*1024*1024||file.size===0||!file.name.toLowerCase().endsWith('.html'))throw Error('Nur HTML-Dateien bis 6 MB erlaubt.');
+    const {error}=await db.storage.from('sk-project-docs').upload('original/staffkeeping_migrationskonzept_v2.2.html',file,{upsert:true,contentType:'text/html'});
+    if(error)throw error;
   },
   refresh:safeEvaluate
  };
