@@ -1,14 +1,53 @@
-/* StaffKeeping 0.27.1 – EIN führender Datenbestand: sk_internal.project_doc_chapters. */
+/* StaffKeeping 0.27.2 – EIN führender Datenbestand: sk_internal.project_doc_chapters. */
 'use strict';
 (function(){
  const $=id=>document.getElementById(id);
  let chapters=[], selected=null, editing=false, originalUrl=null, loaded=false;
  const status=(msg)=>{$('doc-save-status').textContent=msg;};
+ // Untrusted Markdown: create DOM nodes and text nodes, never parse user HTML.
+ function renderMarkdown(raw){
+   const root=document.createDocumentFragment();
+   const lines=String(raw||'').replace(/\r\n?/g,'\n').split('\n');
+   const put=(parent,tag,value)=>{const n=document.createElement(tag);if(value!==undefined)n.textContent=value;parent.append(n);return n;};
+   function inline(parent,value){
+     const pattern=/(\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)|\*\*([^*\n]+)\*\*|`([^`\n]+)`|\*([^*\n]+)\*)/g;
+     let last=0,m;while((m=pattern.exec(value))){if(m.index>last)parent.append(document.createTextNode(value.slice(last,m.index)));
+       if(m[2]){try{const u=new URL(m[3]);if(!['https:','http:'].includes(u.protocol))throw Error('link');const a=put(parent,'a',m[2]);a.href=u.href;a.target='_blank';a.rel='noopener noreferrer';}catch{parent.append(document.createTextNode(m[0]));}}
+       else if(m[4])put(parent,'strong',m[4]);else if(m[5])put(parent,'code',m[5]);else if(m[6])put(parent,'em',m[6]);last=pattern.lastIndex;}
+     if(last<value.length)parent.append(document.createTextNode(value.slice(last)));
+   }
+   const isRule=x=>/^\s*(?:-{3,}|\*{3,}|_{3,})\s*$/.test(x);
+   const isHeading=x=>/^\s{0,3}#{1,6}\s+/.test(x);
+   const isBullet=x=>/^\s*[-*+]\s+/.test(x);
+   const isNumbered=x=>/^\s*\d+[.)]\s+/.test(x);
+   const isTableLine=x=>/^\s*\|.*\|\s*$/.test(x);
+   const isSpecial=x=>isRule(x)||isHeading(x)||isBullet(x)||isNumbered(x)||/^\s*```/.test(x)||isTableLine(x)||/^\s*>\s?/.test(x);
+   const cells=x=>x.trim().replace(/^\|/,'').replace(/\|$/,'').split('|').map(y=>y.trim());
+   let i=0;
+   while(i<lines.length){const line=lines[i];if(!line.trim()){i++;continue;}
+     if(/^\s*```/.test(line)){const code=[];i++;while(i<lines.length&&!/^\s*```/.test(lines[i]))code.push(lines[i++]);if(i<lines.length)i++;put(put(root,'pre'),'code',code.join('\n'));continue;}
+     if(isRule(line)){put(root,'hr');i++;continue;}
+     const hm=line.match(/^\s{0,3}(#{1,6})\s+(.+?)\s*#*\s*$/);
+     if(hm){inline(put(root,'h'+Math.min(6,hm[1].length+1)),hm[2]);i++;continue;}
+     if(isTableLine(line)&&i+1<lines.length&&/^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(lines[i+1])&&lines[i+1].includes('-')){
+       const table=put(root,'table'),thead=put(table,'thead'),tr=put(thead,'tr');cells(line).forEach(v=>inline(put(tr,'th'),v));i+=2;const tbody=put(table,'tbody');while(i<lines.length&&isTableLine(lines[i])){const row=put(tbody,'tr');cells(lines[i]).forEach(v=>inline(put(row,'td'),v));i++;}continue;
+     }
+     if(isBullet(line)||isNumbered(line)){
+       const numbered=isNumbered(line),list=put(root,numbered?'ol':'ul');
+       while(i<lines.length&&(numbered?isNumbered(lines[i]):isBullet(lines[i]))){const item=put(list,'li');const t=lines[i].replace(numbered?/^\s*\d+[.)]\s+/:/^\s*[-*+]\s+/,'');const check=t.match(/^\[([ xX])\]\s*(.*)$/);if(check){const checkbox=put(item,'span',check[1].toLowerCase()==='x'?'☑ ':'☐ ');checkbox.setAttribute('aria-hidden','true');inline(item,check[2]);}else inline(item,t);i++;}continue;
+     }
+     if(/^\s*>\s?/.test(line)){const quote=put(root,'blockquote');while(i<lines.length&&/^\s*>\s?/.test(lines[i])){inline(put(quote,'p'),lines[i].replace(/^\s*>\s?/,''));i++;}continue;}
+     const para=[];while(i<lines.length&&lines[i].trim()&&(!para.length||!isSpecial(lines[i]))){para.push(lines[i].trim());i++;}
+     if(para.length)inline(put(root,'p'),para.join(' '));else{inline(put(root,'p'),lines[i]);i++;}
+   }
+   return root;
+ }
+
  const update=()=>{
    const chapter=chapters.find(x=>x.slug===selected);
    if(!chapter)return;
    $('doc-heading').textContent=chapter.title;
-   $('doc-body').textContent=chapter.body;
+   $('doc-body').replaceChildren(renderMarkdown(chapter.body));
    $('doc-updated').textContent='Letzte Aktualisierung: '+new Date(chapter.updated_at).toLocaleString('de-CH');
    $('doc-editor').classList.toggle('hidden',!editing);
    $('doc-body').classList.toggle('hidden',editing);

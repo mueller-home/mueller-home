@@ -45,3 +45,14 @@
 #private-doc-upload,#private-doc-close,#private-doc-open{position:relative;isolation:isolate;flex:0 0 auto}
 .doc-actions button:hover{cursor:pointer}
 .doc-actions button:focus-visible,.admin-tabs button:focus-visible,.headnav button:focus-visible{outline:3px solid var(--color-brand-blue);outline-offset:2px}
+
+/* 0.27.2 – Lesefreundliche, sichere Markdown-Darstellung der zentralen Projektdoku. */
+.doc-content #doc-body{white-space:normal!important;font-size:15px;line-height:1.7;color:var(--color-navy);max-width:92ch}
+.doc-content #doc-body h2,.doc-content #doc-body h3,.doc-content #doc-body h4,.doc-content #doc-body h5,.doc-content #doc-body h6{color:var(--color-navy);line-height:1.3;letter-spacing:-.015em;margin:1.65em 0 .55em}
+.doc-content #doc-body h2{font-size:1.45rem;border-bottom:1px solid #dbe3ea;padding-bottom:.45em}.doc-content #doc-body h3{font-size:1.17rem}.doc-content #doc-body h4{font-size:1.02rem}
+.doc-content #doc-body p{margin:.55em 0 1.1em}.doc-content #doc-body ul,.doc-content #doc-body ol{margin:.6em 0 1.3em;padding-left:1.6rem}.doc-content #doc-body li{padding-left:.1em;margin:.42em 0}.doc-content #doc-body li::marker{color:var(--color-steel)}
+.doc-content #doc-body strong{font-weight:750;color:#182c44}.doc-content #doc-body a{color:#11688f;text-decoration:underline;text-underline-offset:3px}
+.doc-content #doc-body code{font: .87em/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;background:#edf2f6;color:#233d59;padding:.13em .33em;border-radius:4px;overflow-wrap:anywhere}
+.doc-content #doc-body pre{margin:1.1em 0;padding:1rem;background:#edf2f6;border:1px solid #dae4eb;border-radius:9px;white-space:pre;overflow:auto}.doc-content #doc-body pre code{padding:0;background:transparent;overflow-wrap:normal}
+.doc-content #doc-body table{display:block;max-width:100%;overflow-x:auto;border-collapse:collapse;margin:1.1em 0 1.5em;font-size:.94em}.doc-content #doc-body th,.doc-content #doc-body td{border-bottom:1px solid #d9e2eb;padding:.7em .85em;text-align:left;vertical-align:top}.doc-content #doc-body th{background:#edf2f6;color:var(--color-navy);font-weight:700}.doc-content #doc-body tr:nth-child(even) td{background:#f7f9fb}
+.doc-content #doc-body blockquote{margin:1.1em 0;padding:.45em 1.15em;border-left:4px solid var(--color-steel);background:#f1f5f8;border-radius:0 7px 7px 0}.doc-content #doc-body blockquote p{margin:.4em 0}.doc-content #doc-body hr{border:0;border-top:1px solid #d9e2eb;margin:1.7em 0}
