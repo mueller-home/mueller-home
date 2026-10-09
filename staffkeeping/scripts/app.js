@@ -1,3 +1,4 @@
+/* StaffKeeping – rein lokaler App-Designprototyp · 0.13 */
 'use strict';
 const screens=['login','register','reset','pending','market'];
 const navOnly=document.querySelectorAll('.nav-only'), guests=document.querySelectorAll('.guest-only');

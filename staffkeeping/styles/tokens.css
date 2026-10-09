@@ -1,1 +1,2 @@
+/* StaffKeeping – zentrale Design-Tokens · 0.13 */
 :root{--color-navy:#1B263B;--color-silver:#E0E1DD;--color-white:#FFFFFF;--color-steel:#415A77;--color-bg:var(--color-white);--color-bg-subtle:var(--color-silver);--color-text-heading:var(--color-navy);--color-text-body:var(--color-navy);--color-accent:var(--color-steel);--color-border:var(--color-silver);--font-family-base:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--max-width:1160px}
