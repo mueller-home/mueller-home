@@ -164,6 +164,14 @@
     if(!approved)throw Error('Der Betrieb ist nicht freigegeben.');
     return id;
   },
+  async listMarketplaceListings(){
+    const user=await verifiedCurrentUser();if(!user)throw Error('Bitte erneut anmelden.');
+    const {data,error}=await db.from('sk_listings')
+      .select('id,type,category,title,description,date_from,date_to,conditions,accommodation,languages,city,country')
+      .eq('status','Aktiv').gte('date_to',new Date().toISOString().slice(0,10))
+      .order('date_from',{ascending:true}).limit(200);
+    if(error)throw error;return data||[];
+  },
   async listMyListings(){
     const businessId=await this.myListingBusiness();
     const {data,error}=await db.from('sk_listings').select('id,business_id,type,category,title,description,date_from,date_to,conditions,accommodation,languages,city,country,status,created_at').eq('business_id',businessId).order('created_at',{ascending:false});

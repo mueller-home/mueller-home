@@ -1,0 +1,11 @@
+-- StaffKeeping 0.32.2 – laufende Doku + integriertes Handbuch.
+-- Zwei UPDATEs in einer Transaktion; abschliessend ein Kontroll-SELECT.
+BEGIN;
+UPDATE sk_internal.project_doc_chapters SET body=body || E'\n\n' || $d$## Marktplatzsuche 0.32.2
+Ist-Zustand: Der Marktplatz lädt echte aktive, nicht abgelaufene Inserate aus public.sk_listings statt der vier fiktiven Beispieldatensätze. Die Anzeige und Detailansicht verwenden echte gespeicherte Felder (Typ Suche/Biete, Kategorie, Ort/Land, Von/Bis, Beschreibung, Bedingungen, Sprachen, Unterkunft). Filter: Stichwort/Ort, Typ, Kategorie, Startzeitraum über Überschneidung ab Stichtag und Unterkunft. Suche im Browser für max. 200 Datensätze; serverseitig mittels RLS eingeschränkte Sichtbarkeit. Betriebe behalten Leserechte auf eigene inaktive Inserate im Bereich Meine Inserate. Fremde Betriebe sehen nur aktive, nicht abgelaufene Inserate freigegebener Betriebe; nur freigegebene Betriebsmitglieder können sie lesen. Merkliste nur temporär. Karte/Radius und Kontaktanfrage/Chat noch nicht produktiv und als nicht verfügbar gekennzeichnet. Kein Demo-Chat aus echten Inseraten erreichbar. Alle Datumsanzeigen dd.mm.yyyy. Prüfung: Supabase-Migration, Zwei-Betriebe-Suche, deaktiviertes Inserat, abgelaufenes Inserat, filter und Detailansicht. Offener Punkt: Paginiertes Laden ab 200 Treffern, Geosuche, Kontakt 0.32.3.
+$d$,updated_at=now() WHERE slug='concept' AND position('## Marktplatzsuche 0.32.2' in body)=0;
+UPDATE sk_internal.help_chapters SET body=body || E'\n\n' || $h$## Echte Inserate suchen (0.32.2)
+Im Marktplatz erscheinen aktive Inserate freigegebener Betriebe mit noch nicht abgelaufenem Enddatum. Suche per Text/Ort, Typ (Personal gesucht/Personal verfügbar), Kategorie, Datum ab und Unterkunft. Unter Details ansehen stehen die echten Inseratsangaben. Die Merkliste ist noch nicht dauerhaft gespeichert. Die Karten-/Umkreissuche und Kontaktaufnahme sind derzeit nicht verfügbar; die Chat-Anbindung folgt mit 0.32.3. Datumsformat TT.MM.JJJJ. Screenshot-Platzhalter: ![Marktplatz Filter und Liste](screenshot:marktplatz-suche-0322) ![Inseratdetails](screenshot:marktplatz-details-0322)
+$h$,updated_at=now() WHERE page_key='market' AND position('## Echte Inserate suchen (0.32.2)' in body)=0;
+COMMIT;
+SELECT '0.32.2 Dokumentation aktualisiert' AS status;

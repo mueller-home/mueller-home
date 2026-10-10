@@ -1,4 +1,4 @@
-/* StaffKeeping 0.32.1.1 – date display dd.mm.yyyy */
+/* StaffKeeping 0.32.2 – real marketplace search and details */
 'use strict';
 const screens=['login','register','reset','pending','market','profile','my-listings','detail','messages','reviews','admin-businesses','admin-listings','admin-dashboard','admin-docs','admin-home','admin-activity','admin-deletions','help'];
 const navOnly=document.querySelectorAll('.nav-only'), guests=document.querySelectorAll('.guest-only');
@@ -48,7 +48,7 @@ function performShow(view,updateUrl=true){
   if(updateUrl && location.hash!=='#'+view)history.pushState({view},'', '#'+view);
   window.scrollTo(0,0);
   if(view==='profile'){window.SK_PROFILE?.load();window.SK_DELETION?.refreshMy();}
-  if(view==='market')render();
+  if(view==='market')loadMarketplace();
   if(view==='my-listings')loadMyListings();
   if(view==='messages')renderChats();
   if(view==='admin-businesses')renderBusinesses();
@@ -78,17 +78,53 @@ const listings=[
 {id:4,title:'Küchenteam für Übergangszeit',type:'Personal verfügbar',branch:'Camping',city:'Freiburg',country:'Deutschland',date:'2026-11-01',period:'November – Januar',stay:false,languages:['DE'],desc:'Ein eingespieltes Team für eine befristete Zusammenarbeit.'}
 ];
 const starred=new Set();let favoritesOnly=false,viewMap=false;
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function render(){const q=document.getElementById('filter-search').value.toLocaleLowerCase('de'),type=document.getElementById('filter-type').value,branch=document.getElementById('filter-branch').value,stay=document.getElementById('filter-accommodation').checked,date=document.getElementById('filter-date').value;
-const items=listings.filter(l=>(!q||[l.title,l.city,l.branch,l.desc].join(' ').toLocaleLowerCase('de').includes(q))&&(!type||l.type===type)&&(!branch||l.branch===branch)&&(!stay||l.stay)&&(!date||l.date>=date)&&(!favoritesOnly||starred.has(l.id)));
-document.getElementById('result-count').textContent=items.length+' '+(items.length===1?'Inserat':'Inserate');document.getElementById('bookmark-count').textContent=starred.size;
-document.getElementById('listing-grid').innerHTML=items.map(l=>`<article class="listing-card"><div class="listing-top"><span class="type-pill ${l.type==='Personal verfügbar'?'available':''}">${esc(l.type)}</span><button class="star" type="button" data-star="${l.id}" aria-label="${starred.has(l.id)?'Aus Merkliste entfernen':'Zur Merkliste hinzufügen'}" aria-pressed="${starred.has(l.id)}">${starred.has(l.id)?'★':'☆'}</button></div><h3>${esc(l.title)}</h3><div class="listing-location">⌖ ${esc(l.city)} · ${esc(l.country)}</div><p>${esc(l.desc)}</p><div class="listing-meta"><span>◷ ${esc(l.period)}</span>${l.stay?'<span>⌂ Unterkunft</span>':''}</div><div class="listing-footer"><div class="languages">${l.languages.map(s=>`<span>${esc(s)}</span>`).join('')}</div><button class="detail-link" type="button" data-detail="${l.id}">Details ansehen →</button></div></article>`).join('');
-document.querySelectorAll('[data-star]').forEach(b=>b.addEventListener('click',()=>{const id=Number(b.dataset.star);starred.has(id)?starred.delete(id):starred.add(id);render()}));document.querySelectorAll('[data-detail]').forEach(b=>b.addEventListener('click',()=>openDetail(Number(b.dataset.detail))));
-document.getElementById('no-results').classList.toggle('hidden',items.length>0||viewMap);document.getElementById('listing-grid').classList.toggle('hidden',viewMap);document.getElementById('map-placeholder').classList.toggle('hidden',!viewMap);}
+let marketplaceListings=[], marketplaceLoadError='', marketplaceLoading=false;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const marketplaceType=t=>t==='Suche'?'Personal gesucht':'Personal verfügbar';
+const marketplaceDate=d=>/^\d{4}-\d{2}-\d{2}$/.test(String(d||''))?`${d.slice(8,10)}.${d.slice(5,7)}.${d.slice(0,4)}`:'–';
+async function loadMarketplace(){
+  if(marketplaceLoading)return;
+  marketplaceLoading=true;marketplaceLoadError='';
+  document.getElementById('listing-grid').innerHTML='<p class="muted" role="status">Inserate werden geladen …</p>';
+  try{marketplaceListings=await window.SK_AUTH.listMarketplaceListings();}
+  catch(error){marketplaceListings=[];marketplaceLoadError=error?.message||'Unbekannter Fehler';}
+  finally{marketplaceLoading=false;render();}
+}
+function render(){
+  const q=document.getElementById('filter-search').value.trim().toLocaleLowerCase('de');
+  const type=document.getElementById('filter-type').value;
+  const category=document.getElementById('filter-branch').value;
+  const stay=document.getElementById('filter-accommodation').checked;
+  const date=document.getElementById('filter-date').value;
+  const items=marketplaceListings.filter(l=>(!q||[l.title,l.city,l.country,l.category,l.description,l.conditions].join(' ').toLocaleLowerCase('de').includes(q))&&(!type||marketplaceType(l.type)===type)&&(!category||l.category===category)&&(!stay||l.accommodation)&&(!date||l.date_to>=date)&&(!favoritesOnly||starred.has(l.id)));
+  document.getElementById('result-count').textContent=items.length+' '+(items.length===1?'Inserat':'Inserate');
+  document.getElementById('bookmark-count').textContent=marketplaceListings.filter(l=>starred.has(l.id)).length;
+  const grid=document.getElementById('listing-grid');
+  if(marketplaceLoadError){grid.innerHTML=`<p role="alert">Inserate konnten nicht geladen werden: ${esc(marketplaceLoadError)}</p><button type="button" class="btn" id="retry-market">Erneut versuchen</button>`;document.getElementById('retry-market').addEventListener('click',loadMarketplace);}
+  else grid.innerHTML=items.map(l=>`<article class="listing-card"><div class="listing-top"><span class="type-pill ${l.type==='Biete'?'available':''}">${esc(marketplaceType(l.type))}</span><button class="star" type="button" data-star="${esc(l.id)}" title="${starred.has(l.id)?'Aus Merkliste entfernen':'In Merkliste aufnehmen'}" aria-label="${starred.has(l.id)?'Aus Merkliste entfernen':'In Merkliste aufnehmen'}" aria-pressed="${starred.has(l.id)}">${starred.has(l.id)?'★':'☆'}</button></div><h3>${esc(l.title)}</h3><div class="listing-location">⌖ ${esc(l.city)} · ${esc(l.country)}</div><p>${esc(l.description)}</p><div class="listing-meta"><span>◷ ${esc(marketplaceDate(l.date_from))} – ${esc(marketplaceDate(l.date_to))}</span>${l.accommodation?'<span>⌂ Unterkunft</span>':''}</div><div class="listing-footer"><div class="languages">${(l.languages||[]).map(x=>`<span>${esc(x)}</span>`).join('')}</div><button class="detail-link" type="button" data-detail="${esc(l.id)}">Details ansehen →</button></div></article>`).join('');
+  grid.querySelectorAll('[data-star]').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.star;starred.has(id)?starred.delete(id):starred.add(id);render()}));
+  grid.querySelectorAll('[data-detail]').forEach(b=>b.addEventListener('click',()=>openDetail(b.dataset.detail)));
+  document.getElementById('no-results').classList.toggle('hidden',marketplaceLoadError||items.length>0);
+  grid.classList.remove('hidden');document.getElementById('map-placeholder').classList.add('hidden');
+}
+function openDetail(id){
+  const l=marketplaceListings.find(x=>x.id===id);if(!l)return;
+  document.getElementById('detail-title').textContent=l.title;
+  document.getElementById('detail-subtitle').textContent=`${l.city} · ${l.country} · ${marketplaceDate(l.date_from)} – ${marketplaceDate(l.date_to)}`;
+  document.getElementById('detail-meta').innerHTML=`<span class="status-tag">${esc(marketplaceType(l.type))}</span> <span class="status-tag">${esc(l.category)}</span>`;
+  document.getElementById('detail-description').textContent=l.description;
+  document.getElementById('detail-conditions').textContent=l.conditions||'Keine zusätzlichen Rahmenbedingungen angegeben.';
+  document.getElementById('detail-features').innerHTML=`${l.accommodation?'<span class="status-tag">Unterkunft vorhanden</span>':'<span class="status-tag">Keine Unterkunft angegeben</span>'} ${(l.languages||[]).map(x=>`<span class="status-tag">${esc(x)}</span>`).join(' ')}`;
+  document.getElementById('detail-company').textContent='Betrieb in '+l.city;
+  document.getElementById('detail-contact').disabled=true;
+  document.getElementById('detail-contact').textContent='Kontaktaufnahme ab 0.32.3';
+  show('detail');
+}
 ['filter-search','filter-type','filter-branch','filter-date','filter-accommodation'].forEach(id=>document.getElementById(id).addEventListener('input',render));
 document.getElementById('filter-reset').addEventListener('click',()=>{['filter-search','filter-type','filter-branch','filter-date'].forEach(id=>document.getElementById(id).value='');document.getElementById('filter-radius').selectedIndex=0;document.getElementById('filter-accommodation').checked=false;favoritesOnly=false;document.getElementById('bookmarks-only').classList.remove('selected');render()});
 document.getElementById('bookmarks-only').addEventListener('click',e=>{favoritesOnly=!favoritesOnly;e.currentTarget.classList.toggle('selected',favoritesOnly);render()});
-function setView(map){viewMap=map;document.getElementById('list-btn').classList.toggle('active',!map);document.getElementById('map-btn').classList.toggle('active',map);render()};document.getElementById('list-btn').addEventListener('click',()=>setView(false));document.getElementById('map-btn').addEventListener('click',()=>setView(true));
+function setView(map){if(map)return;viewMap=false;document.getElementById('list-btn').classList.add('active');render();}
+document.getElementById('list-btn').addEventListener('click',()=>setView(false));
 /* Zusätzliche UI-Demoseiten, ohne Backend und ohne dauerhafte Speicherung */
 const dialog=document.getElementById('app-dialog');
 function modal(title,html){document.getElementById('dialog-title').textContent=title;document.getElementById('dialog-body').innerHTML=html;dialog.showModal();}
