@@ -134,7 +134,7 @@ function renderBusinesses(){
  root.textContent='Unternehmen werden geladen …';
  window.SK_AUTH.loadBusinesses().then(rows=>{
   skBusinessList=rows;
-  root.innerHTML=`<div class="sk-business-tools"><label for="admin-business-search">Betriebe suchen</label><input id="admin-business-search" type="search" placeholder="Name, PLZ, Ort, Land oder Status …" autocomplete="off"><span id="admin-business-count" class="muted" role="status"></span></div><div class="table-wrap"><table class="data-table sk-business-table"><thead><tr><th>Betrieb</th><th>Land</th><th>PLZ / Ort</th><th>Status</th><th>Prüfstatus</th><th>Letzte Änderung</th><th>Prüfung</th></tr></thead><tbody id="admin-business-rows"></tbody></table></div>`;
+  root.innerHTML=`<div class="sk-business-tools"><label for="admin-business-search">Betriebe suchen</label><input id="admin-business-search" type="search" placeholder="Name, PLZ, Ort, Land oder Status …" autocomplete="off"><span id="admin-business-count" class="muted" role="status"></span></div><div class="table-wrap"><table class="data-table sk-business-table"><thead><tr><th>Betrieb</th><th>Land</th><th>PLZ / Ort</th><th>Zugangsstatus</th><th>Registrierungsprüfung</th><th>Letzte Änderung</th><th>Prüfung</th></tr></thead><tbody id="admin-business-rows"></tbody></table></div>`;
   root.querySelector('#admin-business-search').addEventListener('input',drawBusinessRows);
   drawBusinessRows();
  }).catch(e=>root.textContent='Laden fehlgeschlagen: '+e.message);
