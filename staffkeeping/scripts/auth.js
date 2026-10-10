@@ -1,4 +1,4 @@
-/* StaffKeeping 0.26 – Supabase Auth, stabile Callback-URL und Passwort-Recovery */
+/* StaffKeeping 0.31.6 – Supabase Auth mit gezielter Bereinigung verwaister Sitzungen */
 'use strict';
 (function(){
  const cfg=window.SK_CONFIG||{};
@@ -28,6 +28,40 @@
  }
  const db=window.supabase.createClient(cfg.supabaseUrl,cfg.supabasePublishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  let currentUser=null, isAdmin=false;
+ // Only a conclusive "user does not exist" response authorizes a stale-session reset.
+ // Network errors, 401/403 from unrelated services, rate limits and expired recovery
+ // links must NOT silently discard a still-valid account's local state.
+ function missingAuthUser(error){
+   if(!error)return false;
+   const code=String(error.code||'').toLowerCase();
+   const detail=String(error.message||'').toLowerCase();
+   return code==='user_not_found' ||
+     detail.includes('user from sub claim in jwt does not exist');
+ }
+ const authStorageKey='sb-'+new URL(cfg.supabaseUrl).hostname.split('.')[0]+'-auth-token';
+ async function clearOrphanedSession(){
+   // Prefer Supabase's public API; when a deleted user makes signOut fail,
+   // remove ONLY the project-specific local session, never unrelated app data.
+   try{await db.auth.signOut({scope:'local'});}catch(e){console.warn('Lokaler Session-Abschluss:',e.message);}
+   try{localStorage.removeItem(authStorageKey);}catch{}
+   currentUser=null;isAdmin=false;
+   exitCompletionMode();
+   ui()?.logoutView();
+ }
+ async function verifiedCurrentUser(){
+   const {data,error}=await db.auth.getUser();
+   if(missingAuthUser(error)){
+     await clearOrphanedSession();
+     return null;
+   }
+   if(error){
+     // Supabase returns auth-session-missing when there is no signed-in user.
+     if(error.name==='AuthSessionMissingError')return null;
+     throw error;
+   }
+   return data?.user||null;
+ }
+
  // A confirmed auth account can exist without a company (e.g. redirected to homepage).
  // Such users must resume the COMPANY form, never sign up a second auth account.
  let completionMode=false;
@@ -101,7 +135,7 @@
  }
  async function evaluate(){
   if(recoveryMode){showRecovery();return;}
-  const {data:{user},error}=await db.auth.getUser(); if(error&&error.status!==400)throw error;
+  const user=await verifiedCurrentUser();
   if(recoveryMode){showRecovery();return;}
   currentUser=user||null;isAdmin=false;
   if(!user){exitCompletionMode();ui().logoutView();return;}
@@ -123,7 +157,7 @@
  window.SK_AUTH={
   async listProjectDocs(){if(!isAdmin)throw Error('Nur Administratoren');const {data,error}=await db.rpc('sk_admin_list_project_docs');if(error)throw error;return data||[];},
   async saveProjectDoc(slug,body){if(!isAdmin)throw Error('Nur Administratoren');const {error}=await db.rpc('sk_admin_save_project_doc',{p_slug:slug,p_body:body});if(error)throw error;},
-  async logout(){clearRecovery();exitCompletionMode();await db.auth.signOut();currentUser=null;isAdmin=false;ui().logoutView();},
+  async logout(){clearRecovery();exitCompletionMode();try{const {error}=await db.auth.signOut({scope:'local'});if(error&&!missingAuthUser(error))throw error;}finally{try{localStorage.removeItem(authStorageKey);}catch{}currentUser=null;isAdmin=false;ui().logoutView();}},
   async loadBusinesses(){if(!isAdmin)throw Error('Nur Administratoren');const {data,error}=await db.from('sk_businesses').select('id,company_name,country,postal_code,city,status,review_state,submitted_at,reviewed_at,updated_at').order('created_at',{ascending:false});if(error)throw error;return data||[];},
   async getBusinessDetails(id){if(!isAdmin)throw Error('Nur Administratoren');const {data,error}=await db.rpc('sk_admin_get_business_details',{p_business_id:id});if(error)throw error;return data;},
   async addBusinessNote(id,note){if(!isAdmin)throw Error('Nur Administratoren');const {error}=await db.rpc('sk_admin_add_business_note',{p_business_id:id,p_note:note});if(error)throw error;},
@@ -230,8 +264,7 @@
    const details=registrationDetails(email);
    try{
      // Already authenticated/verified: NEVER call signUp again and NEVER send email.
-     const {data:{user},error:ue}=await db.auth.getUser();
-     if(ue && ue.status!==400)throw ue;
+     const user=await verifiedCurrentUser();
      if(user){
        if(!user.email_confirmed_at)throw Error('Bitte zuerst Ihre E-Mail bestätigen.');
        if(user.email?.toLowerCase()!==email.toLowerCase())throw Error('Bitte die E-Mail-Adresse des angemeldeten Kontos verwenden.');
@@ -252,7 +285,7 @@
  async function finishRegistration(){
    const raw=localStorage.getItem('sk-registration-draft');if(!raw)return false;
    let draft;try{draft=JSON.parse(raw);}catch{localStorage.removeItem('sk-registration-draft');return false;}
-   const {data:{user}}=await db.auth.getUser();
+   const user=await verifiedCurrentUser();
    if(!user||user.email?.toLowerCase()!==draft.email?.toLowerCase()||!user.email_confirmed_at)return false;
    // A draft may outlive a successful registration (refresh / different tab).
    const {data:members,error:me}=await db.from('sk_business_members').select('business_id').eq('user_id',user.id).limit(1);
@@ -310,7 +343,7 @@
    // Supabase verarbeitet den Callback asynchron; niemals voreilig evaluate() starten.
    showRecovery();return;
   }
-  try{await finishRegistration();}catch(e){msg('registration-message','Registrierung konnte nicht abgeschlossen werden: '+e.message);}
+  try{await verifiedCurrentUser();await finishRegistration();}catch(e){msg('registration-message','Anmeldesitzung konnte nicht geprüft werden: '+e.message);}
   if(!recoveryMode)await safeEvaluate();
  })();
 })();
