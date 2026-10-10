@@ -128,7 +128,7 @@
    document.getElementById('pending-profile-button').classList.toggle('hidden',!edit);
    document.getElementById('pending-title').textContent=blocked?'Zugang derzeit gesperrt.':'Vielen Dank für Ihre Registrierung.';
    document.getElementById('pending-description').textContent=blocked?'Bitte wenden Sie sich an die StaffKeeping-Administration.':
-     business?(business.review_state==='changes_requested'?'Nachbesserung: '+(business.review_message||'Bitte Profil korrigieren.'):
+     business?(business.review_state==='rejected'?'Antrag abgelehnt: '+(business.review_message||'Bitte kontaktiere die Administration.'):business.review_state==='changes_requested'?'Nachbesserung: '+(business.review_message||'Bitte Profil korrigieren.'):
     submitted?'Ihr Betrieb «'+business.company_name+'» ist eingereicht. Das Profil ist bis zur Entscheidung gesperrt.':
     'Vervollständige das Profil deines Betriebs «'+business.company_name+'» und reiche es anschliessend zur Prüfung ein.'):
      'Bitte schliessen Sie zunächst die Unternehmensregistrierung ab.';

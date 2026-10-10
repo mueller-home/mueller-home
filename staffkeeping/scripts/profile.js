@@ -46,6 +46,8 @@
  }
  
  const $=id=>document.getElementById(id);
+ function updateDescCounter(){const count=$('pr-desc').value.trim().length;const el=$('pr-desc-counter');if(el){el.textContent=count+' / 30 Zeichen';el.classList.toggle('save-error',count>0&&count<30);}}
+ $('pr-desc').addEventListener('input',updateDescCounter);
  function info(id,message){const el=$(id);el.textContent=message;el.classList.remove('hidden');}
  function field(id,value){$(id).value=value??'';}
  function mediaButton(text,fn){const b=document.createElement('button');b.type='button';b.className='subtle-btn';b.textContent=text;b.addEventListener('click',fn);return b;}
@@ -93,14 +95,14 @@
    field('pr-country',b.country);
    field('pr-vat',b.vat_id);field('pr-postal',b.postal_code);field('pr-city',b.city);
    field('pr-contact',b.contact_name);field('pr-contact-email',b.contact_email);field('pr-phone',b.contact_phone);
-   field('pr-desc',b.description);$('pr-notifications').checked=b.email_notifications_enabled;
+   field('pr-desc',b.description);updateDescCounter();$('pr-notifications').checked=b.email_notifications_enabled;
    field('pr-street',b.street);field('pr-number',b.house_number);field('pr-address-extra',b.address_extra);$('pr-public-address').checked=!!b.show_street_address;
    $('pr-login-email').textContent=result.login_email||'–';
    writable=result.role==='owner' && (b.status==='Freigeschaltet'||(b.status==='Ausstehend'&&['draft','changes_requested'].includes(b.review_state)));
    const pending=b.status==='Ausstehend';const locked=pending&&b.review_state==='submitted';
    $('profile-review-bar').classList.toggle('hidden',!pending);
-   $('profile-review-title').textContent=locked?'Zur Prüfung eingereicht – Profil gesperrt':b.review_state==='changes_requested'?'Nachbesserung erforderlich':'Profil vervollständigen';
-   $('profile-review-message').textContent=locked?'Die Administration prüft deinen eingereichten Profilstand.':b.review_state==='changes_requested'?(b.review_message||'Bitte Angaben korrigieren und neu einreichen.'):'Ergänze die Profilangaben, Logo und Bilder. Danach zur Prüfung einreichen.';
+   $('profile-review-title').textContent=locked?'Zur Prüfung eingereicht – Profil gesperrt':b.review_state==='rejected'?'Antrag abgelehnt':b.review_state==='changes_requested'?'Nachbesserung erforderlich':'Profil vervollständigen';
+   $('profile-review-message').textContent=locked?'Die Administration prüft deinen eingereichten Profilstand.':b.review_state==='rejected'?(b.review_message||'Bitte wende dich an die Administration.'):b.review_state==='changes_requested'?(b.review_message||'Bitte Angaben korrigieren und neu einreichen.'):'Ergänze die Profilangaben, Logo und Bilder. Danach zur Prüfung einreichen.';
    $('profile-submit').classList.toggle('hidden',!writable||!pending);
    $('sensitive-change-panel').classList.toggle('hidden',b.status!=='Freigeschaltet');
    generation++;changed=false;savedJson=JSON.stringify(payload());savedLegal=JSON.stringify(legalPayload());clearTimeout(timer);timer=null;status(writable?'Gespeichert ✓':'Nur lesbar');
@@ -128,6 +130,8 @@
  $('pr-logo-delete').addEventListener('click',()=>removeImage('logo','logo'));
  $('profile-submit').addEventListener('click',async()=>{
   if(!writable||profile?.business?.status!=='Ausstehend')return;
+  updateDescCounter();
+  if($('pr-desc').value.trim().length<30){$('profile-submit-status').textContent='Bitte eine Betriebsbeschreibung mit mindestens 30 Zeichen eingeben.';$('pr-desc').focus();return;}
   $('profile-submit-status').textContent='Prüfe und speichere das Profil …';
   if(!(await flush()))return void ($('profile-submit-status').textContent='Bitte Speicherfehler zuerst korrigieren.');
   if(!confirm('Profil verbindlich zur Prüfung einreichen? Bis zur Entscheidung wird die Bearbeitung gesperrt.'))return;

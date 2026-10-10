@@ -104,7 +104,7 @@ let skBusinessList=[];
 let skSelectedBusiness=null;
 const dateTimeDisplay=d=>d?new Intl.DateTimeFormat('de-CH',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d)):'–';
 const valueOrDash=v=>v===null||v===undefined||v===''?'–':String(v);
-const businessReviewLabel={draft:'Entwurf',submitted:'Eingereicht',changes_requested:'Nachbesserung',approved:'Freigegeben'};
+const businessReviewLabel={draft:'Entwurf',submitted:'Eingereicht',changes_requested:'Nachbesserung',approved:'Freigegeben',rejected:'Abgelehnt'};
 function businessStatusBadge(value){
  const kind=value==='Freigeschaltet'?'good':value==='Gesperrt'?'bad':'wait';
  const symbol=kind==='good'?'✓':kind==='bad'?'✕':'◷';
@@ -157,7 +157,7 @@ async function openBusinessReview(id){
    <section class="business-review-media"><h3>Standort des Betriebs</h3><div id="business-admin-map" class="business-map" role="region" aria-label="Standortkarte des Betriebs"></div><p id="business-admin-map-status" class="muted"></p></section><section class="business-review-media"><h3>Firmenlogo und Betriebsbilder</h3><div id="business-admin-media" class="admin-media-preview">Medien werden geladen …</div></section>
    <div class="business-review-grid"><section><h3>Interne Admin-Notizen</h3><p class="muted">Nur für Administratoren. Einträge werden mit Datum und Autor protokolliert.</p><form id="business-note-form"><label for="business-note">Neue Notiz</label><textarea id="business-note" rows="3" maxlength="3000" required placeholder="Rückfrage, Gesprächsnotiz, Prüfergebnis …"></textarea><button class="btn btn-small" type="submit">Notiz speichern</button><p class="form-feedback" id="business-note-status" role="status"></p></form><div class="business-events">${notes.length?notes.map(n=>`<article><small>${esc(dateTimeDisplay(n.created_at))} · ${esc(n.author)}</small><p>${esc(n.note)}</p></article>`).join(''):'<p class="muted">Noch keine Notizen.</p>'}</div></section>
    <section><h3>Freigabehistorie</h3><div class="business-events">${audit.length?audit.map(a=>`<article><small>${esc(dateTimeDisplay(a.changed_at))} · ${esc(a.changed_by)}</small><p>${esc(a.old_status)} → ${esc(a.new_status)}</p></article>`).join(''):'<p class="muted">Noch keine Statusänderungen.</p>'}</div></section></div>
-   <div class="business-review-actions">${b.status==='Ausstehend'&&b.review_state==='submitted'?'<button type="button" class="btn" data-review-action="approve">Eingereichten Betrieb freigeben</button><button type="button" class="subtle-btn" data-review-action="changes">Nachbesserung verlangen</button>':''}<button type="button" class="subtle-btn" data-review-status="Gesperrt">Betrieb sperren</button><p class="form-feedback" role="status" id="business-review-status"></p></div>`;
+   <div class="business-review-actions">${b.status==='Ausstehend'&&b.review_state==='submitted'?'<button type="button" class="btn" data-review-action="approve">Eingereichten Betrieb freigeben</button><button type="button" class="subtle-btn" data-review-action="changes">Nachbesserung verlangen</button><button type="button" class="subtle-btn" data-review-action="reject">Antrag ablehnen</button>':''}<button type="button" class="subtle-btn" data-review-status="Gesperrt">Betrieb sperren</button><p class="form-feedback" role="status" id="business-review-status"></p></div>`;
    loadAdminBusinessMedia(id);
    void window.SK_LOCATION?.showAdmin(b);
    document.getElementById('business-review-close').addEventListener('click',()=>{skSelectedBusiness=null;panel.classList.add('hidden');});
@@ -183,9 +183,10 @@ async function loadAdminBusinessMedia(id){
 document.getElementById('business-review-panel').addEventListener('click',async e=>{
  const button=e.target.closest('[data-review-action]');if(!button||!skSelectedBusiness)return;
  const action=button.dataset.reviewAction;
- const message=action==='changes'?prompt('Welche Angaben soll der Betrieb nachbessern?'):null;
- if(action==='changes'&&(message===null||message.trim().length<5))return;
+ const message=['changes','reject'].includes(action)?prompt(action==='changes'?'Welche Angaben soll der Betrieb nachbessern?':'Begründung der Ablehnung (mindestens 5 Zeichen):'):null;
+ if(['changes','reject'].includes(action)&&(message===null||message.trim().length<5))return;
  if(action==='approve'&&!confirm('Vollständigen Betriebsantrag verbindlich freigeben?'))return;
+ if(action==='reject'&&!confirm('Den Antrag wirklich ablehnen? Der Betrieb erhält eine E-Mail mit der Begründung.'))return;
  button.disabled=true;
  try{await window.SK_AUTH.reviewBusiness(skSelectedBusiness,action,message);renderBusinesses();await openBusinessReview(skSelectedBusiness);window.SK_ADMIN_HOME?.refresh();}
  catch(err){document.getElementById('business-review-status').textContent='Prüfung fehlgeschlagen: '+err.message;button.disabled=false;}
