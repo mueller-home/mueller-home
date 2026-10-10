@@ -1,4 +1,4 @@
-/* StaffKeeping 0.31.6 – Supabase Auth mit gezielter Bereinigung verwaister Sitzungen */
+/* StaffKeeping 0.32.1 – Supabase Auth + eigene Inserate */
 'use strict';
 (function(){
  const cfg=window.SK_CONFIG||{};
@@ -155,6 +155,33 @@
  }
  async function safeEvaluate(){try{await evaluate();}catch(e){msg('auth-message','Prüfung fehlgeschlagen: '+e.message);if(!recoveryMode)ui().logoutView();else showRecovery();}}
  window.SK_AUTH={
+  async myListingBusiness(){
+    const user=await verifiedCurrentUser();if(!user)throw Error('Bitte erneut anmelden.');
+    const {data:members,error:me}=await db.from('sk_business_members').select('business_id').eq('user_id',user.id).limit(1);if(me)throw me;
+    if(!members?.length)throw Error('Kein Betrieb zugeordnet.');
+    const id=members[0].business_id;
+    const {data:approved,error:ae}=await db.rpc('sk_is_approved_member',{p_business_id:id});if(ae)throw ae;
+    if(!approved)throw Error('Der Betrieb ist nicht freigegeben.');
+    return id;
+  },
+  async listMyListings(){
+    const businessId=await this.myListingBusiness();
+    const {data,error}=await db.from('sk_listings').select('id,business_id,type,category,title,description,date_from,date_to,conditions,accommodation,languages,city,country,status,created_at').eq('business_id',businessId).order('created_at',{ascending:false});
+    if(error)throw error;return data||[];
+  },
+  async saveMyListing(payload,id=null){
+    const businessId=await this.myListingBusiness();
+    if(id){const {data,error}=await db.from('sk_listings').update(payload).eq('id',id).eq('business_id',businessId).select('id').single();if(error)throw error;return data;}
+    const {data,error}=await db.from('sk_listings').insert({...payload,business_id:businessId}).select('id').single();if(error)throw error;return data;
+  },
+  async setMyListingStatus(id,status){
+    const businessId=await this.myListingBusiness();
+    const {error}=await db.from('sk_listings').update({status}).eq('id',id).eq('business_id',businessId).select('id').single();if(error)throw error;
+  },
+  async deleteMyListing(id){
+    const businessId=await this.myListingBusiness();
+    const {error}=await db.from('sk_listings').delete().eq('id',id).eq('business_id',businessId).select('id').single();if(error)throw error;
+  },
   // Re-check account on protected navigation; revoked/deleted auth users must not
   // continue browsing a previously rendered authenticated SPA after admin deletion.
   async validateActiveSession(){
