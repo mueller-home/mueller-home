@@ -1,4 +1,4 @@
-/* StaffKeeping 0.32.1 – Supabase Auth + eigene Inserate */
+/* StaffKeeping 0.32.2.1 – Auth, Rollen, echte Inserate und Radius */
 'use strict';
 (function(){
  const cfg=window.SK_CONFIG||{};
@@ -141,7 +141,19 @@
   if(!user){exitCompletionMode();ui().logoutView();return;}
   const {data:admin,error:ae}=await db.rpc('sk_is_admin');if(ae)throw ae;
   isAdmin=!!admin;
-  if(isAdmin){exitCompletionMode();ui().setAccess(true,true);return;}
+  if(isAdmin){
+    // An admin may inspect the marketplace, but business actions require
+    // an independently verified, approved membership.
+    const {data:adminMemberships,error:ame}=await db.from('sk_business_members').select('business_id').eq('user_id',user.id);
+    if(ame)throw ame;
+    let eligible=false;
+    for(const member of adminMemberships||[]){
+      const {data:approved,error:ae2}=await db.rpc('sk_is_approved_member',{p_business_id:member.business_id});
+      if(ae2)throw ae2;
+      if(approved){eligible=true;break;}
+    }
+    exitCompletionMode();ui().setAccess(true,true,'approved',eligible);return;
+  }
   const {data:members,error:me}=await db.from('sk_business_members').select('business_id').eq('user_id',user.id).limit(1);if(me)throw me;
   if(!members?.length){setCompletionMode(user);return;}
   const {data:approved,error:pe}=await db.rpc('sk_is_approved_member',{p_business_id:members[0].business_id});if(pe)throw pe;
@@ -151,7 +163,7 @@
     const {data:record,error:be}=await db.from('sk_businesses').select('company_name,status,review_state,review_message').eq('id',members[0].business_id).single();
     if(be)throw be;business=record;pendingStatus(business);
   }
-  ui().setAccess(!!approved,false,approved?'approved':business.review_state||'draft');
+  ui().setAccess(!!approved,false,approved?'approved':business.review_state||'draft',!!approved);
  }
  async function safeEvaluate(){try{await evaluate();}catch(e){msg('auth-message','Prüfung fehlgeschlagen: '+e.message);if(!recoveryMode)ui().logoutView();else showRecovery();}}
  window.SK_AUTH={
@@ -166,11 +178,36 @@
   },
   async listMarketplaceListings(){
     const user=await verifiedCurrentUser();if(!user)throw Error('Bitte erneut anmelden.');
-    const {data,error}=await db.from('sk_listings')
-      .select('id,type,category,title,description,date_from,date_to,conditions,accommodation,languages,city,country')
+    // Admins may read for moderation; regular participants must have an
+    // approved business. Own listings never belong in the marketplace.
+    const {data:admin,error:adminError}=await db.rpc('sk_is_admin');
+    if(adminError)throw adminError;
+    const {data:members,error:membersError}=await db.from('sk_business_members').select('business_id').eq('user_id',user.id);
+    if(membersError)throw membersError;
+    const ownIds=(members||[]).map(m=>m.business_id);
+    if(!admin){
+      let eligible=false;
+      for(const id of ownIds){
+        const {data:approved,error:approvalError}=await db.rpc('sk_is_approved_member',{p_business_id:id});
+        if(approvalError)throw approvalError;
+        if(approved){eligible=true;break;}
+      }
+      if(!eligible)throw Error('Marktplatz nur für freigegebene Betriebe.');
+    }
+    let query=db.from('sk_listings')
+      .select('id,business_id,type,category,title,description,date_from,date_to,conditions,accommodation,languages,city,country')
       .eq('status','Aktiv').gte('date_to',new Date().toISOString().slice(0,10))
       .order('date_from',{ascending:true}).limit(200);
-    if(error)throw error;return data||[];
+    if(ownIds.length===1)query=query.neq('business_id',ownIds[0]);
+    const {data,error}=await query;
+    if(error)throw error;
+    return (data||[]).filter(row=>!ownIds.includes(row.business_id));
+  },
+  async listMarketplaceDistances(){
+    const user=await verifiedCurrentUser();if(!user)throw Error('Bitte erneut anmelden.');
+    const {data,error}=await db.rpc('sk_marketplace_distances');
+    if(error)throw error;
+    return data||[];
   },
   async listMyListings(){
     const businessId=await this.myListingBusiness();

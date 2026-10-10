@@ -1,12 +1,12 @@
-/* StaffKeeping 0.32.2 – real marketplace search and details */
+/* StaffKeeping 0.32.2.1 – admin viewing versus business participation */
 'use strict';
 const screens=['login','register','reset','pending','market','profile','my-listings','detail','messages','reviews','admin-businesses','admin-listings','admin-dashboard','admin-docs','admin-home','admin-activity','admin-deletions','help'];
 const navOnly=document.querySelectorAll('.nav-only'), guests=document.querySelectorAll('.guest-only');
 const publicViews=new Set(['login','register','reset','pending','help']);
 let demoSignedIn=false;
 let skAdmin=false;
-let skPending=false;let skCanProfile=false;
-window.SK_UI={setAccess(isApproved,isAdmin,reviewState){demoSignedIn=!!isApproved;skAdmin=!!isAdmin;skPending=!isApproved;skCanProfile=!!reviewState;performShow(isAdmin?'admin-home':isApproved?'market':(reviewState==='draft'||reviewState==='changes_requested')?'profile':'pending',false);},show,logoutView(){demoSignedIn=false;skAdmin=false;skPending=false;skCanProfile=false;performShow('login',false);}};
+let skPending=false;let skCanProfile=false;let skCanTrade=false;
+window.SK_UI={setAccess(isApproved,isAdmin,reviewState,canTrade=false){demoSignedIn=!!isApproved;skAdmin=!!isAdmin;skCanTrade=!!canTrade;skPending=!isApproved;skCanProfile=!!reviewState;performShow(isAdmin?'admin-home':isApproved?'market':(reviewState==='draft'||reviewState==='changes_requested')?'profile':'pending',false);},show,logoutView(){demoSignedIn=false;skAdmin=false;skPending=false;skCanProfile=false;skCanTrade=false;performShow('login',false);}};
 let currentScreen='login', navigationBusy=false;
 async function show(view,updateUrl=true){
   if(navigationBusy)return;
@@ -34,13 +34,14 @@ function performShow(view,updateUrl=true){
   // Demo-Ansicht: Nur ein explizit gestarteter Demo-Zugang darf interne Seiten sehen.
   if(!demoSignedIn && !publicViews.has(view) && !(view==='profile'&&skCanProfile))view=skPending?'pending':'login';
   if(!skAdmin && view.startsWith('admin-'))view=demoSignedIn?'market':skCanProfile?'profile':'login';
+  if(!skCanTrade && ['my-listings','messages','profile','reviews'].includes(view))view=skAdmin?'market':skCanProfile?'profile':'login';
   if(demoSignedIn && view==='login')view='market';
   if(currentScreen==='admin-docs'&&view!=='admin-docs')window.SK_DOCS?.close();
   currentScreen=view;
   screens.forEach(v=>document.getElementById('view-'+v).classList.toggle('hidden',v!==view));
   // The help screen is public, but opening it must not discard the current session navigation.
   const hasSession=demoSignedIn||skCanProfile||skAdmin;
-  navOnly.forEach(n=>n.classList.toggle('hidden',!hasSession || (skCanProfile&&!demoSignedIn&&!skAdmin&&!['profile','login'].includes(n.dataset.view))));
+  navOnly.forEach(n=>n.classList.toggle('hidden',!hasSession || (skCanProfile&&!demoSignedIn&&!skAdmin&&!['profile','login'].includes(n.dataset.view)) || (!skCanTrade && ['my-listings','messages','profile','reviews'].includes(n.dataset.view))));
   guests.forEach(n=>n.classList.toggle('hidden',hasSession||skPending));
   document.querySelectorAll('.admin-nav, .admin-tabs').forEach(n=>n.classList.toggle('hidden',!skAdmin));
   document.querySelectorAll('.admin-tabs [data-view]').forEach(b=>{const active=b.dataset.view===view;b.classList.toggle('active',active);b.setAttribute('aria-current',active?'page':'false');});
@@ -78,7 +79,7 @@ const listings=[
 {id:4,title:'Küchenteam für Übergangszeit',type:'Personal verfügbar',branch:'Camping',city:'Freiburg',country:'Deutschland',date:'2026-11-01',period:'November – Januar',stay:false,languages:['DE'],desc:'Ein eingespieltes Team für eine befristete Zusammenarbeit.'}
 ];
 const starred=new Set();let favoritesOnly=false,viewMap=false;
-let marketplaceListings=[], marketplaceLoadError='', marketplaceLoading=false;
+let marketplaceListings=[], marketplaceLoadError='', marketplaceLoading=false, marketplaceDistances=new Map(), marketplaceOriginAvailable=false;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const marketplaceType=t=>t==='Suche'?'Personal gesucht':'Personal verfügbar';
 const marketplaceDate=d=>/^\d{4}-\d{2}-\d{2}$/.test(String(d||''))?`${d.slice(8,10)}.${d.slice(5,7)}.${d.slice(0,4)}`:'–';
@@ -86,8 +87,13 @@ async function loadMarketplace(){
   if(marketplaceLoading)return;
   marketplaceLoading=true;marketplaceLoadError='';
   document.getElementById('listing-grid').innerHTML='<p class="muted" role="status">Inserate werden geladen …</p>';
-  try{marketplaceListings=await window.SK_AUTH.listMarketplaceListings();}
-  catch(error){marketplaceListings=[];marketplaceLoadError=error?.message||'Unbekannter Fehler';}
+  try{
+    marketplaceListings=await window.SK_AUTH.listMarketplaceListings();
+    const distanceRows=await window.SK_AUTH.listMarketplaceDistances();
+    marketplaceDistances=new Map(distanceRows.map(row=>[row.listing_id,row.distance_km]));
+    marketplaceOriginAvailable=distanceRows.some(row=>row.origin_available);
+  }
+  catch(error){marketplaceListings=[];marketplaceDistances=new Map();marketplaceLoadError=error?.message||'Unbekannter Fehler';}
   finally{marketplaceLoading=false;render();}
 }
 function render(){
@@ -96,12 +102,24 @@ function render(){
   const category=document.getElementById('filter-branch').value;
   const stay=document.getElementById('filter-accommodation').checked;
   const date=document.getElementById('filter-date').value;
-  const items=marketplaceListings.filter(l=>(!q||[l.title,l.city,l.country,l.category,l.description,l.conditions].join(' ').toLocaleLowerCase('de').includes(q))&&(!type||marketplaceType(l.type)===type)&&(!category||l.category===category)&&(!stay||l.accommodation)&&(!date||l.date_to>=date)&&(!favoritesOnly||starred.has(l.id)));
+  const radiusRaw=document.getElementById('filter-radius').value;
+  const radius=Number.parseInt(radiusRaw,10);
+  const activeRadius=Number.isFinite(radius)&&radius>0;
+  const baseItems=marketplaceListings.filter(l=>(!q||[l.title,l.city,l.country,l.category,l.description,l.conditions].join(' ').toLocaleLowerCase('de').includes(q))&&(!type||marketplaceType(l.type)===type)&&(!category||l.category===category)&&(!stay||l.accommodation)&&(!date||l.date_to>=date)&&(!favoritesOnly||starred.has(l.id)));
+  let items=baseItems;
+  let knownCount=0, unknownCount=0;
+  if(activeRadius && marketplaceOriginAvailable){
+    const known=baseItems.filter(l=>Number.isFinite(marketplaceDistances.get(l.id))&&marketplaceDistances.get(l.id)<=radius)
+      .sort((a,b)=>marketplaceDistances.get(a.id)-marketplaceDistances.get(b.id));
+    const unknown=baseItems.filter(l=>!Number.isFinite(marketplaceDistances.get(l.id)));
+    knownCount=known.length;unknownCount=unknown.length;
+    items=[...known,...unknown];
+  }
   document.getElementById('result-count').textContent=items.length+' '+(items.length===1?'Inserat':'Inserate');
   document.getElementById('bookmark-count').textContent=marketplaceListings.filter(l=>starred.has(l.id)).length;
   const grid=document.getElementById('listing-grid');
   if(marketplaceLoadError){grid.innerHTML=`<p role="alert">Inserate konnten nicht geladen werden: ${esc(marketplaceLoadError)}</p><button type="button" class="btn" id="retry-market">Erneut versuchen</button>`;document.getElementById('retry-market').addEventListener('click',loadMarketplace);}
-  else grid.innerHTML=items.map(l=>`<article class="listing-card"><div class="listing-top"><span class="type-pill ${l.type==='Biete'?'available':''}">${esc(marketplaceType(l.type))}</span><button class="star" type="button" data-star="${esc(l.id)}" title="${starred.has(l.id)?'Aus Merkliste entfernen':'In Merkliste aufnehmen'}" aria-label="${starred.has(l.id)?'Aus Merkliste entfernen':'In Merkliste aufnehmen'}" aria-pressed="${starred.has(l.id)}">${starred.has(l.id)?'★':'☆'}</button></div><h3>${esc(l.title)}</h3><div class="listing-location">⌖ ${esc(l.city)} · ${esc(l.country)}</div><p>${esc(l.description)}</p><div class="listing-meta"><span>◷ ${esc(marketplaceDate(l.date_from))} – ${esc(marketplaceDate(l.date_to))}</span>${l.accommodation?'<span>⌂ Unterkunft</span>':''}</div><div class="listing-footer"><div class="languages">${(l.languages||[]).map(x=>`<span>${esc(x)}</span>`).join('')}</div><button class="detail-link" type="button" data-detail="${esc(l.id)}">Details ansehen →</button></div></article>`).join('');
+  else grid.innerHTML=(activeRadius&&!marketplaceOriginAvailable?'<p class="muted" role="status">Für diese Anmeldung ist kein freigegebener Betriebsstandort mit gültigen Koordinaten verfügbar. Der Radiusfilter wird nicht angewandt; alle übrigen Suchfilter bleiben aktiv.</p>':'')+items.map((l,i)=>`${activeRadius&&marketplaceOriginAvailable&&unknownCount>0&&i===knownCount?'<h3 class="sk-unknown-distance-title">Weitere Inserate – Entfernung unbekannt</h3>':''}<article class="listing-card"><div class="listing-top"><span class="type-pill ${l.type==='Biete'?'available':''}">${esc(marketplaceType(l.type))}</span><button class="star" type="button" data-star="${esc(l.id)}" title="${starred.has(l.id)?'Aus Merkliste entfernen':'In Merkliste aufnehmen'}" aria-label="${starred.has(l.id)?'Aus Merkliste entfernen':'In Merkliste aufnehmen'}" aria-pressed="${starred.has(l.id)}">${starred.has(l.id)?'★':'☆'}</button></div><h3>${esc(l.title)}</h3><div class="listing-location">⌖ ${esc(l.city)} · ${esc(l.country)}${activeRadius&&marketplaceOriginAvailable?(Number.isFinite(marketplaceDistances.get(l.id))?` · ${Math.round(marketplaceDistances.get(l.id))} km entfernt`:' · Entfernung nicht berechenbar / Standort nicht verifiziert'):''}</div><p>${esc(l.description)}</p><div class="listing-meta"><span>◷ ${esc(marketplaceDate(l.date_from))} – ${esc(marketplaceDate(l.date_to))}</span>${l.accommodation?'<span>⌂ Unterkunft</span>':''}</div><div class="listing-footer"><div class="languages">${(l.languages||[]).map(x=>`<span>${esc(x)}</span>`).join('')}</div><button class="detail-link" type="button" data-detail="${esc(l.id)}">Details ansehen →</button></div></article>`).join('');
   grid.querySelectorAll('[data-star]').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.star;starred.has(id)?starred.delete(id):starred.add(id);render()}));
   grid.querySelectorAll('[data-detail]').forEach(b=>b.addEventListener('click',()=>openDetail(b.dataset.detail)));
   document.getElementById('no-results').classList.toggle('hidden',marketplaceLoadError||items.length>0);
@@ -120,7 +138,7 @@ function openDetail(id){
   document.getElementById('detail-contact').textContent='Kontaktaufnahme ab 0.32.3';
   show('detail');
 }
-['filter-search','filter-type','filter-branch','filter-date','filter-accommodation'].forEach(id=>document.getElementById(id).addEventListener('input',render));
+['filter-search','filter-type','filter-branch','filter-date','filter-accommodation','filter-radius'].forEach(id=>document.getElementById(id).addEventListener('input',render));
 document.getElementById('filter-reset').addEventListener('click',()=>{['filter-search','filter-type','filter-branch','filter-date'].forEach(id=>document.getElementById(id).value='');document.getElementById('filter-radius').selectedIndex=0;document.getElementById('filter-accommodation').checked=false;favoritesOnly=false;document.getElementById('bookmarks-only').classList.remove('selected');render()});
 document.getElementById('bookmarks-only').addEventListener('click',e=>{favoritesOnly=!favoritesOnly;e.currentTarget.classList.toggle('selected',favoritesOnly);render()});
 function setView(map){if(map)return;viewMap=false;document.getElementById('list-btn').classList.add('active');render();}
