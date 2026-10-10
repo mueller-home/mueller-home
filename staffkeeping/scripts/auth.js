@@ -1,4 +1,4 @@
-/* StaffKeeping 0.32.2.1 – Auth, Rollen, echte Inserate und Radius */
+/* StaffKeeping 0.32.2.2 – Auth, Rollen, echte Inserate und Radius */
 'use strict';
 (function(){
  const cfg=window.SK_CONFIG||{};
@@ -196,7 +196,7 @@
     }
     let query=db.from('sk_listings')
       .select('id,business_id,type,category,title,description,date_from,date_to,conditions,accommodation,languages,city,country')
-      .eq('status','Aktiv').gte('date_to',new Date().toISOString().slice(0,10))
+      .eq('status','Aktiv').gte('date_to',new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Zurich',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()))
       .order('date_from',{ascending:true}).limit(200);
     if(ownIds.length===1)query=query.neq('business_id',ownIds[0]);
     const {data,error}=await query;
