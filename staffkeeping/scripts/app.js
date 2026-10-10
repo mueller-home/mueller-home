@@ -103,6 +103,30 @@ let skBusinessList=[];
 let skSelectedBusiness=null;
 const dateTimeDisplay=d=>d?new Intl.DateTimeFormat('de-CH',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d)):'–';
 const valueOrDash=v=>v===null||v===undefined||v===''?'–':String(v);
+const businessReviewLabel={draft:'Entwurf',submitted:'Eingereicht',changes_requested:'Nachbesserung',approved:'Freigegeben'};
+function businessStatusBadge(value){
+ const kind=value==='Freigeschaltet'?'good':value==='Gesperrt'?'bad':'wait';
+ const symbol=kind==='good'?'✓':kind==='bad'?'✕':'◷';
+ return `<span class="sk-business-badge sk-business-badge--${kind}"><span aria-hidden="true">${symbol}</span>${esc(value||'Unbekannt')}</span>`;
+}
+function businessReviewBadge(c){
+ const key=c.review_state||'';
+ const kind=key==='approved'?'good':key==='changes_requested'?'bad':key==='submitted'?'wait':'neutral';
+ const label=businessReviewLabel[key]||'Nicht erfasst';
+ const date=key==='approved'?c.reviewed_at:key==='submitted'?c.submitted_at:null;
+ const dateLabel=key==='approved'?'Freigegeben am':key==='submitted'?'Eingereicht am':null;
+ return `<div class="sk-review-status"><span class="sk-business-badge sk-business-badge--${kind}"><span aria-hidden="true">${kind==='good'?'✓':kind==='bad'?'!':'◷'}</span>${esc(label)}</span>${dateLabel?`<small>${dateLabel}: ${date?esc(dateTimeDisplay(date)):'Datum nicht erfasst'}</small>`:''}</div>`;
+}
+function drawBusinessRows(){
+ const table=document.getElementById('admin-business-rows');
+ const counter=document.getElementById('admin-business-count');
+ if(!table)return;
+ const input=document.getElementById('admin-business-search');
+ const query=(input?.value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('de-CH').trim();
+ const visible=skBusinessList.filter(c=>[c.company_name,c.country,c.postal_code,c.city,c.status,businessReviewLabel[c.review_state]||c.review_state].join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('de-CH').includes(query));
+ counter.textContent=`${visible.length} von ${skBusinessList.length} Betrieben`;
+ table.innerHTML=visible.length?visible.map(c=>`<tr><td><strong>${esc(c.company_name||'–')}</strong></td><td>${esc(c.country||'–')}</td><td>${esc([c.postal_code,c.city].filter(Boolean).join(' ')||'–')}</td><td>${businessStatusBadge(c.status)}</td><td>${businessReviewBadge(c)}</td><td class="sk-table-date">${esc(dateTimeDisplay(c.updated_at))}</td><td><button class="subtle-btn" type="button" data-review-business="${esc(c.id)}">Details / Prüfen</button></td></tr>`).join(''):'<tr><td colspan="7" class="sk-business-empty">Keine passenden Betriebe gefunden.</td></tr>';
+}
 function renderBusinesses(){
  const root=document.getElementById('admin-business-table');
  if(!skAdmin){root.textContent='Nur für Administratoren.';return;}
@@ -110,10 +134,9 @@ function renderBusinesses(){
  root.textContent='Unternehmen werden geladen …';
  window.SK_AUTH.loadBusinesses().then(rows=>{
   skBusinessList=rows;
-  root.innerHTML='<div class="table-wrap"><table class="data-table"><thead><tr><th>Betrieb</th><th>Land</th><th>Status</th><th>Prüfstatus</th><th>Prüfung</th></tr></thead><tbody>'+
-   rows.map(c=>`<tr><td>${esc(c.company_name)}</td><td>${esc(c.country)}</td><td>${esc(c.status)}</td><td>${esc(c.review_state||'–')}</td><td><button class="subtle-btn" type="button" data-review-business="${esc(c.id)}">Details / Prüfen</button></td></tr>`).join('')+
-   '</tbody></table></div>';
-  if(!rows.length)root.textContent='Noch keine registrierten Betriebe.';
+  root.innerHTML=`<div class="sk-business-tools"><label for="admin-business-search">Betriebe suchen</label><input id="admin-business-search" type="search" placeholder="Name, PLZ, Ort, Land oder Status …" autocomplete="off"><span id="admin-business-count" class="muted" role="status"></span></div><div class="table-wrap"><table class="data-table sk-business-table"><thead><tr><th>Betrieb</th><th>Land</th><th>PLZ / Ort</th><th>Status</th><th>Prüfstatus</th><th>Letzte Änderung</th><th>Prüfung</th></tr></thead><tbody id="admin-business-rows"></tbody></table></div>`;
+  root.querySelector('#admin-business-search').addEventListener('input',drawBusinessRows);
+  drawBusinessRows();
  }).catch(e=>root.textContent='Laden fehlgeschlagen: '+e.message);
 }
 function detailsRow(label,value){return `<div class="business-info-row"><dt>${esc(label)}</dt><dd>${esc(valueOrDash(value))}</dd></div>`;}

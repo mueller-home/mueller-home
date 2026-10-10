@@ -124,7 +124,7 @@
   async listProjectDocs(){if(!isAdmin)throw Error('Nur Administratoren');const {data,error}=await db.rpc('sk_admin_list_project_docs');if(error)throw error;return data||[];},
   async saveProjectDoc(slug,body){if(!isAdmin)throw Error('Nur Administratoren');const {error}=await db.rpc('sk_admin_save_project_doc',{p_slug:slug,p_body:body});if(error)throw error;},
   async logout(){clearRecovery();exitCompletionMode();await db.auth.signOut();currentUser=null;isAdmin=false;ui().logoutView();},
-  async loadBusinesses(){if(!isAdmin)throw Error('Nur Administratoren');const {data,error}=await db.from('sk_businesses').select('id,company_name,country,status,review_state').order('created_at',{ascending:false});if(error)throw error;return data||[];},
+  async loadBusinesses(){if(!isAdmin)throw Error('Nur Administratoren');const {data,error}=await db.from('sk_businesses').select('id,company_name,country,postal_code,city,status,review_state,submitted_at,reviewed_at,updated_at').order('created_at',{ascending:false});if(error)throw error;return data||[];},
   async getBusinessDetails(id){if(!isAdmin)throw Error('Nur Administratoren');const {data,error}=await db.rpc('sk_admin_get_business_details',{p_business_id:id});if(error)throw error;return data;},
   async addBusinessNote(id,note){if(!isAdmin)throw Error('Nur Administratoren');const {error}=await db.rpc('sk_admin_add_business_note',{p_business_id:id,p_note:note});if(error)throw error;},
   async setBusinessStatus(id,status){if(!isAdmin)throw Error('Nur Administratoren');const {error}=await db.rpc('sk_admin_set_business_status',{p_business_id:id,p_status:status});if(error)throw error;},
