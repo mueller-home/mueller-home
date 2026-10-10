@@ -10,6 +10,15 @@ window.SK_UI={setAccess(isApproved,isAdmin,reviewState){demoSignedIn=!!isApprove
 let currentScreen='login', navigationBusy=false;
 async function show(view,updateUrl=true){
   if(navigationBusy)return;
+  // Validate the real user with Supabase before changing between protected views.
+  // A deleted account may otherwise keep navigating with stale in-memory UI state.
+  if(!publicViews.has(view) && (demoSignedIn||skAdmin||skCanProfile)){
+    navigationBusy=true;
+    let valid=false;
+    try{valid=await window.SK_AUTH?.validateActiveSession?.()===true;}
+    finally{navigationBusy=false;}
+    if(!valid){if(!updateUrl)history.replaceState({view:'login'},'','#login');return;}
+  }
   if(currentScreen==='profile'&&view!=='profile'&&window.SK_PROFILE?.hasPending()){
     navigationBusy=true;
     try{if(!(await window.SK_PROFILE.beforeLeave())){

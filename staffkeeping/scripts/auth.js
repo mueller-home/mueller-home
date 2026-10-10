@@ -155,6 +155,22 @@
  }
  async function safeEvaluate(){try{await evaluate();}catch(e){msg('auth-message','Prüfung fehlgeschlagen: '+e.message);if(!recoveryMode)ui().logoutView();else showRecovery();}}
  window.SK_AUTH={
+  // Re-check account on protected navigation; revoked/deleted auth users must not
+  // continue browsing a previously rendered authenticated SPA after admin deletion.
+  async validateActiveSession(){
+   if(recoveryMode)return true;
+   try{
+    const user=await verifiedCurrentUser();
+    if(!user){currentUser=null;isAdmin=false;ui().logoutView();return false;}
+    // Keep the active identity tied to this browser's original signed-in user.
+    if(currentUser && user.id!==currentUser.id){await clearOrphanedSession();return false;}
+    return true;
+   }catch(error){
+    console.warn('StaffKeeping: Sitzungsprüfung nicht verfügbar',error?.message||error);
+    msg('auth-message','Die Sitzung kann derzeit nicht geprüft werden. Bitte Verbindung prüfen und erneut versuchen.');
+    return false; // Fail closed for navigation, without destroying valid sessions.
+   }
+  },
   async listProjectDocs(){if(!isAdmin)throw Error('Nur Administratoren');const {data,error}=await db.rpc('sk_admin_list_project_docs');if(error)throw error;return data||[];},
   async saveProjectDoc(slug,body){if(!isAdmin)throw Error('Nur Administratoren');const {error}=await db.rpc('sk_admin_save_project_doc',{p_slug:slug,p_body:body});if(error)throw error;},
   async logout(){clearRecovery();exitCompletionMode();try{const {error}=await db.auth.signOut({scope:'local'});if(error&&!missingAuthUser(error))throw error;}finally{try{localStorage.removeItem(authStorageKey);}catch{}currentUser=null;isAdmin=false;ui().logoutView();}},

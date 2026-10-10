@@ -1,4 +1,4 @@
-// StaffKeeping 0.31.8 – Supabase scheduled dispatch. Never expose Postmark token in browser.
+// StaffKeeping 0.31.9 – Supabase scheduled dispatch. Never expose Postmark token in browser.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 const env=(name:string)=>Deno.env.get(name)||'';
 const htmlEscape=(value:string)=>String(value).replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]||c));
@@ -15,7 +15,13 @@ Deno.serve(async req=>{
  const actualHash=await sha256(receivedCronToken);
  let delta=0;
  for(let i=0;i<expectedHash.length;i++)delta|=expectedHash[i]^actualHash[i];
- if(!receivedCronToken||delta!==0)return new Response('Forbidden',{status:403});
+ if(!receivedCronToken||delta!==0){
+  // Diagnostics contain only a categorical reason. Never log headers, tokens, hashes or JWTs.
+  const reason=!receivedCronToken?'missing_header':'token_mismatch';
+  console.warn(JSON.stringify({component:'sk-registration-mails',version:'0.31.9',event:'cron_auth_rejected',reason}));
+  return new Response('Forbidden',{status:403,headers:{'X-SK-Cron-Diagnostic':reason,'Cache-Control':'no-store'}});
+ }
+ console.info(JSON.stringify({component:'sk-registration-mails',version:'0.31.9',event:'cron_auth_accepted'}));
  const url=env('SUPABASE_URL'),postmark=env('POSTMARK_SERVER_TOKEN'),from=env('SK_MAIL_FROM')||'noreply@mueller-home.me';
  if(!url||!postmark)return new Response('Missing server configuration',{status:503});
  const db=createClient(url,secret,{auth:{persistSession:false}});
@@ -43,5 +49,5 @@ Deno.serve(async req=>{
   const {error:finishError}=await db.rpc('sk_mail_finish',{p_id:item.id,p_ok:ok,p_message_id:messageId,p_error:failure});
   results.push({id:item.id,ok,recorded:!finishError});
  }
- return new Response(JSON.stringify({processed:results.length,results}),{headers:{'Content-Type':'application/json'}});
+ return new Response(JSON.stringify({processed:results.length,results,version:'0.31.9'}),{headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
 });
