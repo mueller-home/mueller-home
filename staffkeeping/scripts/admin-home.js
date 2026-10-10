@@ -1,4 +1,4 @@
-/* StaffKeeping 0.31.3 – action queue separate from informational events */
+/* StaffKeeping 0.31.5 – action queue separate from informational events */
 'use strict';
 (function(){
  const $=id=>document.getElementById(id);
@@ -26,11 +26,25 @@
   row.append(actions);return row;
  }
  function grouped(items){
-  // UI-only grouping of notifications within 5 minutes; underlying events remain intact.
-  const buckets=[];for(const e of items){const last=buckets[buckets.length-1];
-   if(last&&last[0].business_id===e.business_id&&last[0].kind===e.kind&&Math.abs(new Date(last[last.length-1].created_at)-new Date(e.created_at))<=300000)last.push(e);
+  // Merge adjacent normal changes within five minutes for the same business,
+  // including mixed profile/location/media types. Keep all audit rows unchanged.
+  const buckets=[];
+  for(const e of items){
+   const last=buckets[buckets.length-1];
+   if(last&&last[0].business_id===e.business_id&&
+     Math.abs(new Date(last[last.length-1].created_at)-new Date(e.created_at))<=300000)last.push(e);
    else buckets.push([e]);
-  }return buckets;
+  }
+  return buckets;
+ }
+ function batchSummary(batch){
+  const kinds=new Set(batch.map(e=>e.kind));
+  if(kinds.size>1)return 'Profil und Standort aktualisiert';
+  return kinds.has('location_changed')?'Standortdaten aktualisiert':kinds.has('media_changed')?'Betriebsmedien aktualisiert':'Profildaten aktualisiert';
+ }
+ function batchFields(batch){
+  const fields=[...new Set(batch.flatMap(e=>String(e.detail||'').split(',').map(v=>v.trim()).filter(Boolean)))];
+  return fields.length?fields.join(', '):'Keine Felddetails protokolliert';
  }
  function draw(){if(!model)return;
   const events=model.events||[];const normal=events.filter(e=>classify(e)==='normal'&&!e.resolved_at);
@@ -68,8 +82,11 @@
    for(const batch of grouped(normal)){
     if(batch.length===1){root.append(displayRow(batch[0],{normal:true}));continue}
     const e=batch[0];const row=document.createElement('div');row.className='activity-row';const info=document.createElement('div');
-    const t=document.createElement('strong');t.textContent=name(e)+' – '+batch.length+' '+(e.kind==='location_changed'?'Standortmeldungen':e.kind==='media_changed'?'Medienmeldungen':'Profiländerungen');
-    const p=document.createElement('p');p.className='muted';p.textContent=date(e.created_at)+' · '+batch.length+' Einträge im Aktivitätsprotokoll';info.append(t,p);row.append(info);
+    const t=document.createElement('strong');t.textContent=name(e)+' – '+batchSummary(batch);
+    const p=document.createElement('p');p.className='muted';p.textContent=date(e.created_at)+' · '+batch.length+' Meldungen zusammengefasst';
+    const detail=document.createElement('details');const summary=document.createElement('summary');summary.textContent='Protokollierte Änderungen anzeigen';
+    const note=document.createElement('p');note.className='muted';note.textContent=batchFields(batch)+' · Historische Ereignisse enthalten möglicherweise keine einzelnen Feldnamen.';
+    detail.append(summary,note);info.append(t,p,detail);row.append(info);
     const actions=document.createElement('div');actions.className='activity-actions';if(e.business_exists&&e.business_id)actions.append(button('Betrieb ansehen',()=>goBusiness(e.business_id)));
     row.append(actions);root.append(row);
    }
