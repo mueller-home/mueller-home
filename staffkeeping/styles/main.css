@@ -81,3 +81,10 @@
 
 /* StaffKeeping 0.31.2 – Admin-Betriebsliste */
 .sk-business-tools{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin:18px 0}.sk-business-tools label{margin:0!important;white-space:nowrap}.sk-business-tools input{max-width:440px;flex:1 1 240px}.sk-business-tools .muted{margin-left:auto;font-size:12px}.sk-business-table{min-width:1010px}.sk-business-table td{vertical-align:middle}.sk-business-table td strong{font-weight:700}.sk-business-badge{display:inline-flex;align-items:center;gap:7px;border-radius:99px;padding:6px 10px;font-size:12px;font-weight:700;white-space:nowrap}.sk-business-badge>span{font-size:14px}.sk-business-badge--good{color:#216044;background:#e4f5ec}.sk-business-badge--bad{color:#942e39;background:#fce8e9}.sk-business-badge--wait{color:#845b0e;background:#fff4d9}.sk-business-badge--neutral{color:#53677d;background:#edf1f5}.sk-review-status{display:flex;flex-direction:column;align-items:flex-start;gap:6px}.sk-review-status small{color:#6e7d8f;white-space:nowrap;font-size:11px}.sk-table-date{white-space:nowrap;font-variant-numeric:tabular-nums}.sk-business-empty{text-align:center;color:#738395;padding:25px!important}
+
+/* 0.31.4 – unified, wrap-safe main navigation. No line wraps inside buttons. */
+.app-header .header-row{flex-wrap:wrap;column-gap:22px;row-gap:8px;padding-top:12px;padding-bottom:12px}
+.app-header .identity{flex:0 0 auto;min-width:0}
+.app-header .headnav{display:flex;flex:1 1 620px;min-width:0;flex-wrap:wrap;align-items:center;justify-content:flex-end;column-gap:8px;row-gap:8px;overflow:visible;padding-bottom:0}
+.app-header .headnav > button{flex:0 0 auto;white-space:nowrap;word-break:normal;overflow-wrap:normal;line-height:1.35}
+@media(max-width:780px){.app-header .headnav{flex:1 1 100%;width:100%;justify-content:flex-start;overflow:visible;padding-bottom:0}}

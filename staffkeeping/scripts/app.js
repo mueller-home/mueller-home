@@ -29,9 +29,10 @@ function performShow(view,updateUrl=true){
   if(currentScreen==='admin-docs'&&view!=='admin-docs')window.SK_DOCS?.close();
   currentScreen=view;
   screens.forEach(v=>document.getElementById('view-'+v).classList.toggle('hidden',v!==view));
-  const inApp=(demoSignedIn||skCanProfile) && !publicViews.has(view);
-  navOnly.forEach(n=>n.classList.toggle('hidden',!inApp || (skCanProfile&&!demoSignedIn&&!['profile','login'].includes(n.dataset.view))));
-  guests.forEach(n=>n.classList.toggle('hidden',inApp||skPending));
+  // The help screen is public, but opening it must not discard the current session navigation.
+  const hasSession=demoSignedIn||skCanProfile||skAdmin;
+  navOnly.forEach(n=>n.classList.toggle('hidden',!hasSession || (skCanProfile&&!demoSignedIn&&!skAdmin&&!['profile','login'].includes(n.dataset.view))));
+  guests.forEach(n=>n.classList.toggle('hidden',hasSession||skPending));
   document.querySelectorAll('.admin-nav, .admin-tabs').forEach(n=>n.classList.toggle('hidden',!skAdmin));
   document.querySelectorAll('.admin-tabs [data-view]').forEach(b=>{const active=b.dataset.view===view;b.classList.toggle('active',active);b.setAttribute('aria-current',active?'page':'false');});
   document.querySelectorAll('.headnav [data-view]').forEach(n=>n.setAttribute('aria-current',n.dataset.view===view?'page':'false'));
