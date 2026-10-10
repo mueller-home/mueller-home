@@ -1,4 +1,4 @@
-/* StaffKeeping 0.32.1 – echte eigene Inserate mit RLS */
+/* StaffKeeping 0.32.1.1 – date display dd.mm.yyyy */
 'use strict';
 const screens=['login','register','reset','pending','market','profile','my-listings','detail','messages','reviews','admin-businesses','admin-listings','admin-dashboard','admin-docs','admin-home','admin-activity','admin-deletions','help'];
 const navOnly=document.querySelectorAll('.nav-only'), guests=document.querySelectorAll('.guest-only');
@@ -128,7 +128,7 @@ function renderMyListings(){
   const root=document.getElementById('my-list-table');
   if(listTab==='partner'){root.innerHTML='<h2>Als Partner</h2><p class="muted">Partnerschaften werden in einer späteren Marktplatzphase angebunden.</p>';return;}
   const rows=listTab==='inserate'?ownListings.filter(x=>!['Vergeben','Abgeschlossen'].includes(x.status)):ownListings.filter(x=>['Vergeben','Abgeschlossen'].includes(x.status));
-  root.innerHTML='<h2>'+(listTab==='inserate'?'Eigene Inserate':'Vergebene Inserate')+'</h2><div class="table-wrap"><table class="data-table"><thead><tr><th>Inserat / Ort</th><th>Typ / Kategorie</th><th>Zeitraum</th><th>Status</th><th>Aktionen</th></tr></thead><tbody>'+rows.map(l=>`<tr><td><strong>${esc(l.title)}</strong><small>${esc(l.city)} · ${esc(l.country)}</small></td><td>${esc(l.type)} · ${esc(l.category)}</td><td>${esc(l.date_from)} – ${esc(l.date_to)}</td><td><span class="status-tag">${esc(l.status)}</span></td><td class="table-actions"><button type="button" data-own="edit" data-id="${esc(l.id)}" aria-label="Inserat bearbeiten">✎</button><button type="button" data-own="toggle" data-id="${esc(l.id)}" aria-label="Inserat aktivieren oder deaktivieren">↻</button><button type="button" data-own="delete" data-id="${esc(l.id)}" aria-label="Inserat löschen">✕</button></td></tr>`).join('')+'</tbody></table></div>'+(rows.length?'':'<p class="muted">Keine Inserate in dieser Ansicht.</p>');
+  root.innerHTML='<h2>'+(listTab==='inserate'?'Eigene Inserate':'Vergebene Inserate')+'</h2><div class="table-wrap"><table class="data-table"><thead><tr><th>Inserat / Ort</th><th>Typ / Kategorie</th><th>Zeitraum</th><th>Status</th><th>Aktionen</th></tr></thead><tbody>'+rows.map(l=>`<tr><td><strong>${esc(l.title)}</strong><small>${esc(l.city)} · ${esc(l.country)}</small></td><td>${esc(l.type)} · ${esc(l.category)}</td><td>${esc(dateDisplay(l.date_from))} – ${esc(dateDisplay(l.date_to))}</td><td><span class="status-tag sk-list-status ${l.status==='Aktiv'?'sk-list-status-active':l.status==='Inaktiv'?'sk-list-status-inactive':''}">${esc(l.status)}</span></td><td class="table-actions sk-own-actions"><button type="button" class="sk-action-edit" data-own="edit" data-id="${esc(l.id)}" aria-label="Inserat bearbeiten" title="Inserat bearbeiten">✎</button><button type="button" class="sk-action-toggle" data-own="toggle" data-id="${esc(l.id)}" aria-label="${l.status==='Aktiv'?'Inserat deaktivieren':'Inserat aktivieren'}" title="${l.status==='Aktiv'?'Inserat deaktivieren':'Inserat aktivieren'}">↻</button><button type="button" class="sk-action-delete" data-own="delete" data-id="${esc(l.id)}" aria-label="Inserat dauerhaft löschen" title="Inserat dauerhaft löschen">✕</button></td></tr>`).join('')+'</tbody></table></div>'+(rows.length?'':'<p class="muted">Keine Inserate in dieser Ansicht.</p>');
 }
 document.getElementById('dialog-body').addEventListener('click',e=>{if(e.target.closest('#save-real-listing'))saveListing();});
 document.getElementById('my-list-table').addEventListener('click',async e=>{
@@ -150,7 +150,14 @@ document.getElementById('conversation-buttons').addEventListener('click',e=>{con
 const companies=[{name:'Alpenhotel Panorama',land:'Schweiz',status:'Ausstehend'},{name:'Restaurant Seeblick',land:'Schweiz',status:'Ausstehend'},{name:'Camping am Park',land:'Deutschland',status:'Aktiv'},{name:'Hotel Tirol',land:'Österreich',status:'Aktiv'}];
 let skBusinessList=[];
 let skSelectedBusiness=null;
-const dateTimeDisplay=d=>d?new Intl.DateTimeFormat('de-CH',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d)):'–';
+// Dates are stored as YYYY-MM-DD; presentation is always dd.mm.yyyy.
+// Do not parse date-only values using Date(): timezone shifts can change the day.
+const dateDisplay=d=>{
+  const raw=String(d||'');
+  const match=/^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+  return match?`${match[3]}.${match[2]}.${match[1]}`:(raw||'–');
+};
+const dateTimeDisplay=d=>d?new Intl.DateTimeFormat('de-CH',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(d)):'–';
 const valueOrDash=v=>v===null||v===undefined||v===''?'–':String(v);
 const businessReviewLabel={draft:'Entwurf',submitted:'Eingereicht',changes_requested:'Nachbesserung',approved:'Freigegeben',rejected:'Abgelehnt'};
 function businessStatusBadge(value){
