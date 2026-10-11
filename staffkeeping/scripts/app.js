@@ -1,4 +1,4 @@
-/* StaffKeeping 0.33.1.1 – profile subnavigation and protected business views */
+/* StaffKeeping 0.33.1.2 – explicit business profile navigation */
 'use strict';
 const screens=['login','register','reset','pending','market','profile','account','my-listings','my-businesses','detail','messages','reviews','admin-businesses','admin-listings','admin-dashboard','admin-docs','admin-home','admin-activity','admin-deletions','help'];
 const navOnly=document.querySelectorAll('.nav-only'), guests=document.querySelectorAll('.guest-only');
@@ -170,10 +170,27 @@ function modal(title,html){document.getElementById('dialog-title').textContent=t
 
 async function loadMyBusinesses(){
  const root=document.getElementById('my-businesses-list');root.textContent='Betriebe werden geladen …';
- try{const rows=await window.SK_AUTH.listMyBusinesses();root.innerHTML=rows.length?rows.map(b=>`<div class="panel" style="margin:0 0 12px"><strong>${esc(b.company_name)}</strong><p>${esc(b.city)} · ${esc(b.country)} · ${esc(b.status)} / ${esc(b.review_state||'–')}</p><small>${b.status==='Freigeschaltet'?'Für Marktplatz freigegeben':'Annette muss diesen Betrieb separat freigeben; keine automatische Abo-Zuordnung.'}</small>${rows.length===1?'<p><button class="subtle-btn" data-view="profile">Betriebsprofil bearbeiten</button></p>':'<p><small>Einzelne Betriebsprofile bearbeiten: folgt nach der eindeutigen Betriebs-ID-Anbindung.</small></p>'}${b.review_state==='changes_requested'?`<p role="alert">Nachbesserung: ${esc(b.review_message||'Bitte Angaben ergänzen')}</p><button class="subtle-btn" data-rework-business="${esc(b.id)}">Nachbessern und erneut einreichen</button>`:''}</div>`).join(''):'<p>Keine Betriebe zugeordnet.</p>';}
+ try{const rows=await window.SK_AUTH.listMyBusinesses();root.innerHTML=rows.length?rows.map(b=>`<div class="panel" style="margin:0 0 12px"><strong>${esc(b.company_name)}</strong><p>${esc(b.city)} · ${esc(b.country)} · ${esc(b.status)} / ${esc(b.review_state||'–')}</p><small>${b.status==='Freigeschaltet'?'Für Marktplatz freigegeben':'Annette muss diesen Betrieb separat freigeben; keine automatische Abo-Zuordnung.'}</small>${rows.length===1?`<p><button type="button" class="subtle-btn" data-edit-business="${esc(b.id)}">Betriebsprofil bearbeiten</button></p>`:'<p><small>Einzelne Betriebsprofile bearbeiten: folgt nach der eindeutigen Betriebs-ID-Anbindung.</small></p>'}${b.review_state==='changes_requested'?`<p role="alert">Nachbesserung: ${esc(b.review_message||'Bitte Angaben ergänzen')}</p><button class="subtle-btn" data-rework-business="${esc(b.id)}">Nachbessern und erneut einreichen</button>`:''}</div>`).join(''):'<p>Keine Betriebe zugeordnet.</p>';}
  catch(e){root.textContent='Betriebe konnten nicht geladen werden: '+e.message;}
 }
 document.getElementById('my-businesses-list').addEventListener('click',async e=>{
+ const editBtn=e.target.closest('[data-edit-business]');
+ if(editBtn){
+   e.preventDefault();e.stopPropagation();
+   const panel=editBtn.closest('.panel');
+   const feedback=document.createElement('p');feedback.className='form-feedback';feedback.setAttribute('role','status');
+   panel.querySelector('[data-edit-feedback]')?.remove();feedback.dataset.editFeedback='';panel.append(feedback);
+   editBtn.disabled=true;feedback.textContent='Betriebsprofil wird geöffnet …';
+   try{
+     const businesses=await window.SK_AUTH.listMyBusinesses();
+     if(businesses.length!==1 || businesses[0].id!==editBtn.dataset.editBusiness)throw Error('Dieses Profil benötigt eine eindeutige Betriebsauswahl. Bitte noch keine Stammdaten für mehrere Betriebe bearbeiten.');
+     await show('profile');
+     if(currentScreen!=='profile')throw Error('Navigation wurde von der Sitzungsprüfung verhindert. Bitte Sitzung prüfen oder neu anmelden.');
+     feedback.textContent='';
+   }catch(err){feedback.textContent='Betriebsprofil konnte nicht geöffnet werden: '+(err?.message||String(err));}
+   finally{editBtn.disabled=false;}
+   return;
+ }
  const btn=e.target.closest('[data-rework-business]');if(!btn)return;
  const businesses=await window.SK_AUTH.listMyBusinesses();const b=businesses.find(x=>x.id===btn.dataset.reworkBusiness);
  if(!b||b.review_state!=='changes_requested')return;
