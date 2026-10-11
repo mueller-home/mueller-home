@@ -174,7 +174,7 @@
     const user=await verifiedCurrentUser();if(!user)throw Error('Bitte anmelden.');
     const {data:members,error:me}=await db.from('sk_business_members').select('business_id').eq('user_id',user.id);if(me)throw me;
     const ids=[...new Set((members||[]).map(m=>m.business_id))];if(!ids.length)return [];
-    const {data:businesses,error:be}=await db.from('sk_businesses').select('id,company_name,city,country,status,review_state,review_message,description,contact_name,contact_phone').in('id',ids);if(be)throw be;
+    const {data:businesses,error:be}=await db.from('sk_businesses').select('id,company_name,vat_id,industry,postal_code,city,country,status,review_state,review_message,description,contact_name,contact_email,contact_phone,street,house_number,address_extra').in('id',ids);if(be)throw be;
     return (businesses||[]).sort((a,b)=>a.company_name.localeCompare(b.company_name,'de'));
   },
   async listApprovedBusinesses(){
@@ -194,6 +194,7 @@
     const {data,error}=await db.rpc('sk_add_business',{...payload,p_contact_email:user.email,p_terms_accepted:true});if(error)throw error;return data;
   },
   async resubmitAdditionalBusiness(id,description,phone,name){const {error}=await db.rpc('sk_resubmit_additional_business',{p_business_id:id,p_description:description,p_contact_phone:phone,p_contact_name:name});if(error)throw error;},
+  async saveBusinessById(payload){const {error}=await db.rpc('sk_update_business_by_id',payload);if(error)throw error;},
   async adminManualAccounts(){const {data,error}=await db.rpc('sk_admin_manual_access_overview');if(error)throw error;return data||[];},
   async adminSetManualAccess(accountId,enable,reason,until){const {error}=await db.rpc('sk_admin_set_manual_access',{p_account_id:accountId,p_enable:enable,p_reason:enable?reason:null,p_valid_until:enable?(until||null):null});if(error)throw error;},
   async listMarketplaceListings(){

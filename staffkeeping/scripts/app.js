@@ -1,4 +1,4 @@
-/* StaffKeeping 0.33.1.2 – explicit business profile navigation */
+/* StaffKeeping 0.33.1.3 – separate business profiles, consistent administration */
 'use strict';
 const screens=['login','register','reset','pending','market','profile','account','my-listings','my-businesses','detail','messages','reviews','admin-businesses','admin-listings','admin-dashboard','admin-docs','admin-home','admin-activity','admin-deletions','help'];
 const navOnly=document.querySelectorAll('.nav-only'), guests=document.querySelectorAll('.guest-only');
@@ -168,38 +168,47 @@ document.getElementById('list-btn').addEventListener('click',()=>setView(false))
 const dialog=document.getElementById('app-dialog');
 function modal(title,html){document.getElementById('dialog-title').textContent=title;document.getElementById('dialog-body').innerHTML=html;dialog.showModal();}
 
+const skBusinessStatusLabels={Freigeschaltet:'Freigeschaltet',Ausstehend:'Freigabe ausstehend',Gesperrt:'Gesperrt',approved:'Genehmigt',submitted:'Zur Prüfung eingereicht',draft:'Entwurf',changes_requested:'Nachbesserung erforderlich',rejected:'Abgelehnt',suspended:'Gesperrt'};
+const skBusinessStatus=s=>skBusinessStatusLabels[s]||'Unbekannter Status';
 async function loadMyBusinesses(){
  const root=document.getElementById('my-businesses-list');root.textContent='Betriebe werden geladen …';
- try{const rows=await window.SK_AUTH.listMyBusinesses();root.innerHTML=rows.length?rows.map(b=>`<div class="panel" style="margin:0 0 12px"><strong>${esc(b.company_name)}</strong><p>${esc(b.city)} · ${esc(b.country)} · ${esc(b.status)} / ${esc(b.review_state||'–')}</p><small>${b.status==='Freigeschaltet'?'Für Marktplatz freigegeben':'Annette muss diesen Betrieb separat freigeben; keine automatische Abo-Zuordnung.'}</small>${rows.length===1?`<p><button type="button" class="subtle-btn" data-edit-business="${esc(b.id)}">Betriebsprofil bearbeiten</button></p>`:'<p><small>Einzelne Betriebsprofile bearbeiten: folgt nach der eindeutigen Betriebs-ID-Anbindung.</small></p>'}${b.review_state==='changes_requested'?`<p role="alert">Nachbesserung: ${esc(b.review_message||'Bitte Angaben ergänzen')}</p><button class="subtle-btn" data-rework-business="${esc(b.id)}">Nachbessern und erneut einreichen</button>`:''}</div>`).join(''):'<p>Keine Betriebe zugeordnet.</p>';}
+ try{const rows=await window.SK_AUTH.listMyBusinesses();
+ root.innerHTML=rows.length?rows.map(b=>`<article class="panel sk-business-item"><div><strong>${esc(b.company_name)}</strong><p class="muted">${esc(b.postal_code||'')} ${esc(b.city||'')} · ${esc(b.country||'')}</p><p><span class="status-tag ${b.status==='Freigeschaltet'?'sk-list-status-active':''}">${esc(skBusinessStatus(b.status))}</span> <span class="status-tag">${esc(skBusinessStatus(b.review_state))}</span></p>${b.review_state==='changes_requested'?`<p role="alert">Nachbesserung: ${esc(b.review_message||'Bitte Angaben korrigieren')}</p>`:''}</div><div class="sk-business-actions"><button type="button" class="subtle-btn" data-edit-business="${esc(b.id)}">${b.review_state==='changes_requested'?'Nachbessern':'Betriebsprofil bearbeiten'}</button></div></article>`).join(''):'<p>Keine Betriebe zugeordnet.</p>';}
  catch(e){root.textContent='Betriebe konnten nicht geladen werden: '+e.message;}
 }
+function skBusinessForm(b){
+ const pending=b.status!=='Freigeschaltet';const editLegal=pending&&b.review_state==='changes_requested';
+ const readOnly=b.review_state==='submitted'||b.review_state==='rejected'||b.status==='Gesperrt';
+ const legalLock=editLegal?'':'disabled';
+ return `<form id="sk-edit-business-form" data-business="${esc(b.id)}"><p class="muted">${esc(skBusinessStatus(b.status))} · ${esc(skBusinessStatus(b.review_state))}</p>${b.review_state==='changes_requested'?`<p role="alert"><strong>Hinweis von Annette:</strong> ${esc(b.review_message||'Bitte Angaben ergänzen')}</p>`:''}${readOnly?'<p role="status">Dieser Betrieb ist derzeit nur lesbar. Während der Prüfung sind Änderungen gesperrt.</p>':''}
+ <label>Betriebsname *</label><input name="company_name" required minlength="2" maxlength="160" value="${esc(b.company_name)}" ${pending?'':'disabled'}>
+ <label>UID / USt-ID *</label><input name="vat_id" required minlength="2" maxlength="64" value="${esc(b.vat_id||'')}" ${legalLock}>
+ <label>Branche *</label><select name="industry" required>${[['Hotel','Hotellerie'],['Gastro','Gastronomie'],['Camping','Camping']].map(([v,t])=>`<option value="${v}" ${b.industry===v?'selected':''}>${t}</option>`).join('')}</select>
+ <label>Land *</label><select name="country" required ${legalLock}>${[['CH','Schweiz'],['DE','Deutschland'],['AT','Österreich']].map(([v,t])=>`<option value="${v}" ${b.country===v?'selected':''}>${t}</option>`).join('')}</select>
+ <div class="field-grid"><div><label>PLZ *</label><input name="postal_code" required minlength="2" maxlength="16" value="${esc(b.postal_code||'')}"></div><div><label>Ort *</label><input name="city" required minlength="2" maxlength="120" value="${esc(b.city||'')}"></div></div>
+ <div class="field-grid"><div><label>Strasse</label><input name="street" maxlength="180" value="${esc(b.street||'')}"></div><div><label>Hausnummer</label><input name="house_number" maxlength="24" value="${esc(b.house_number||'')}"></div></div>
+ <label>Adresszusatz</label><input name="address_extra" maxlength="180" value="${esc(b.address_extra||'')}">
+ <label>Kontaktperson *</label><input name="contact_name" required minlength="2" maxlength="160" value="${esc(b.contact_name||'')}">
+ <label>Kontakt-E-Mail *</label><input name="contact_email" type="email" required maxlength="254" value="${esc(b.contact_email||'')}">
+ <label>Telefon *</label><input name="contact_phone" required minlength="5" maxlength="60" value="${esc(b.contact_phone||'')}">
+ <label>Beschreibung *</label><textarea name="description" required minlength="30" maxlength="1000">${esc(b.description||'')}</textarea>
+ <p class="muted">Änderungen an Standortangaben setzen die bisherige Koordinatenprüfung zurück. Bei Nachbesserungen prüft Annette die erneute Einreichung.</p>
+ <p class="form-feedback" id="sk-business-edit-feedback" role="alert"></p>
+ ${readOnly?'':`<button type="submit" class="btn">${b.review_state==='changes_requested'?'Korrigieren und erneut einreichen':'Änderungen speichern'}</button>`}
+ </form>`;
+}
 document.getElementById('my-businesses-list').addEventListener('click',async e=>{
- const editBtn=e.target.closest('[data-edit-business]');
- if(editBtn){
-   e.preventDefault();e.stopPropagation();
-   const panel=editBtn.closest('.panel');
-   const feedback=document.createElement('p');feedback.className='form-feedback';feedback.setAttribute('role','status');
-   panel.querySelector('[data-edit-feedback]')?.remove();feedback.dataset.editFeedback='';panel.append(feedback);
-   editBtn.disabled=true;feedback.textContent='Betriebsprofil wird geöffnet …';
-   try{
-     const businesses=await window.SK_AUTH.listMyBusinesses();
-     if(businesses.length!==1 || businesses[0].id!==editBtn.dataset.editBusiness)throw Error('Dieses Profil benötigt eine eindeutige Betriebsauswahl. Bitte noch keine Stammdaten für mehrere Betriebe bearbeiten.');
-     await show('profile');
-     if(currentScreen!=='profile')throw Error('Navigation wurde von der Sitzungsprüfung verhindert. Bitte Sitzung prüfen oder neu anmelden.');
-     feedback.textContent='';
-   }catch(err){feedback.textContent='Betriebsprofil konnte nicht geöffnet werden: '+(err?.message||String(err));}
-   finally{editBtn.disabled=false;}
-   return;
- }
- const btn=e.target.closest('[data-rework-business]');if(!btn)return;
- const businesses=await window.SK_AUTH.listMyBusinesses();const b=businesses.find(x=>x.id===btn.dataset.reworkBusiness);
- if(!b||b.review_state!=='changes_requested')return;
- modal('Nachbesserung für '+b.company_name,`<form id="sk-rework-business-form" data-business="${esc(b.id)}"><p>Änderungsgrund von Annette: ${esc(b.review_message||'Keine Details')}</p><label>Kontaktperson *</label><input name="contact_name" required minlength="2" value="${esc(b.contact_name||'')}"><label>Telefon *</label><input name="contact_phone" required minlength="5" value="${esc(b.contact_phone||'')}"><label>Beschreibung *</label><textarea name="description" required minlength="30" maxlength="1000">${esc(b.description||'')}</textarea><p id="sk-rework-error" role="alert"></p><button class="btn" type="submit">Erneut einreichen</button></form>`);
+ const btn=e.target.closest('[data-edit-business]');if(!btn)return;
+ btn.disabled=true;
+ try{const all=await window.SK_AUTH.listMyBusinesses(),b=all.find(x=>x.id===btn.dataset.editBusiness);if(!b)throw Error('Betrieb nicht mehr zugeordnet.');modal('Betriebsprofil · '+b.company_name,skBusinessForm(b));}
+ catch(err){alert('Betriebsprofil konnte nicht geöffnet werden: '+err.message);}finally{btn.disabled=false;}
 });
 document.getElementById('dialog-body').addEventListener('submit',async e=>{
- const form=e.target;if(form.id!=='sk-rework-business-form')return;e.preventDefault();if(!form.reportValidity())return;const btn=form.querySelector('[type="submit"]');btn.disabled=true;
- try{await window.SK_AUTH.resubmitAdditionalBusiness(form.dataset.business,form.elements.namedItem('description').value,form.elements.namedItem('contact_phone').value,form.elements.namedItem('contact_name').value);dialog.close();await loadMyBusinesses();}
- catch(err){document.getElementById('sk-rework-error').textContent=err.message;btn.disabled=false;}
+ const form=e.target;if(form.id!=='sk-edit-business-form')return;e.preventDefault();if(!form.reportValidity())return;
+ const button=form.querySelector('[type="submit"]');button.disabled=true;
+ const val=n=>form.elements.namedItem(n).value.trim();
+ try{await window.SK_AUTH.saveBusinessById({p_business_id:form.dataset.business,p_company_name:val('company_name'),p_vat_id:val('vat_id'),p_industry:val('industry'),p_country:val('country'),p_postal_code:val('postal_code'),p_city:val('city'),p_street:val('street'),p_house_number:val('house_number'),p_address_extra:val('address_extra'),p_contact_name:val('contact_name'),p_contact_email:val('contact_email'),p_contact_phone:val('contact_phone'),p_description:val('description')});dialog.close();await loadMyBusinesses();}
+ catch(err){document.getElementById('sk-business-edit-feedback').textContent='Nicht gespeichert: '+err.message;button.disabled=false;}
 });
 document.getElementById('add-business-button').addEventListener('click',()=>{
  modal('Weiteren Betrieb beantragen',`<form id="sk-extra-business-form">
@@ -225,7 +234,7 @@ async function loadManualAccessAdmin(){
  const root=document.getElementById('sk-admin-manual-access');if(!root)return;
  root.textContent='Kundenkonten werden geladen …';
  try{const rows=await window.SK_AUTH.adminManualAccounts();
- root.innerHTML=rows.length?rows.map(c=>`<article class="panel" style="margin-bottom:12px"><strong>${esc(c.account_label)}</strong><p>${c.manual_active?'<span class="status-tag sk-list-status-active">Manuell freigegeben</span>':'<span class="status-tag">Keine aktive manuelle Freigabe</span>'}${c.valid_until?' · bis '+esc(dateDisplay(c.valid_until)):''}</p>${c.reason?`<p class="muted">Grund: ${esc(c.reason)}</p>`:''}<div class="dialog-actions"><button type="button" class="subtle-btn" data-sk-grant="${esc(c.account_id)}">Freigabe erteilen / ändern</button><button type="button" class="subtle-btn" data-sk-revoke="${esc(c.account_id)}" ${!c.manual_active?'disabled':''}>Manuelle Freigabe widerrufen</button></div></article>`).join(''):'<p>Keine Kundenkonten vorhanden.</p>';
+ root.innerHTML=rows.length?`<div class="sk-admin-table-wrap"><table class="sk-admin-table"><thead><tr><th scope="col">Kundenkonto</th><th scope="col">Manuelle Freigabe</th><th scope="col">Gültig bis</th><th scope="col">Grund</th><th scope="col">Aktionen</th></tr></thead><tbody>${rows.map(c=>`<tr><td><strong>${esc(c.account_label)}</strong></td><td><span class="status-tag ${c.manual_active?'sk-list-status-active':''}">${c.manual_active?'Aktiv':'Keine gültige Freigabe'}</span></td><td>${c.valid_until?esc(dateDisplay(c.valid_until)):'–'}</td><td>${esc(c.reason||'–')}</td><td><div class="sk-table-actions"><button type="button" class="subtle-btn sk-action-edit" title="Manuelle Freigabe erteilen oder bearbeiten" aria-label="Freigabe für ${esc(c.account_label)} bearbeiten" data-sk-grant="${esc(c.account_id)}">✎</button><button type="button" class="subtle-btn sk-action-delete" title="Manuelle Freigabe widerrufen" aria-label="Freigabe für ${esc(c.account_label)} widerrufen" data-sk-revoke="${esc(c.account_id)}" ${!c.manual_active?'disabled':''}>✕</button></div></td></tr>`).join('')}</tbody></table></div>`:'<p>Keine Kundenkonten vorhanden.</p>';
  }catch(e){root.textContent='Freigaben konnten nicht geladen werden: '+e.message;}
 }
 document.getElementById('sk-admin-manual-access').addEventListener('click',async e=>{
