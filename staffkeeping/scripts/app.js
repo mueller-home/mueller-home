@@ -218,16 +218,19 @@ document.getElementById('add-business-button').addEventListener('click',()=>{
  <label>Branche *</label><select name="industry" required><option value="">Bitte wählen</option><option value="Hotel">Hotellerie</option><option value="Gastro">Gastronomie</option><option value="Camping">Camping</option></select>
  <label>Land *</label><select name="country" required><option value="">Bitte wählen</option><option value="CH">Schweiz</option><option value="DE">Deutschland</option><option value="AT">Österreich</option></select>
  <div class="field-grid"><div><label>PLZ *</label><input name="postal_code" required minlength="2" maxlength="16"></div><div><label>Ort *</label><input name="city" required minlength="2" maxlength="120"></div></div>
+ <div class="field-grid"><div><label>Strasse</label><input name="street" maxlength="180"></div><div><label>Hausnummer</label><input name="house_number" maxlength="24"></div></div>
+ <section class="sk-business-location-panel"><h3>Standort des neuen Betriebs</h3><p class="muted">Der Standort wird automatisch aus der vollständigen Adresse ermittelt. Du kannst den Marker korrigieren.</p><div class="business-map" id="sk-edit-business-map" role="region" aria-label="Karte des neuen Betriebs"></div><p id="sk-edit-location-status" role="status">Bitte Adresse eingeben.</p><button type="button" class="subtle-btn" id="sk-edit-location-search">Standort aus Adresse ermitteln</button><button type="button" class="subtle-btn" id="sk-edit-location-correct">Marker verschieben</button></section>
  <label>Kontaktperson *</label><input name="contact_name" required minlength="2" maxlength="160">
  <label>Telefon *</label><input name="contact_phone" required minlength="5" maxlength="60"><label>Beschreibung des Betriebs *</label><textarea name="description" required minlength="30" maxlength="1000"></textarea>
  <label class="check"><input type="checkbox" name="terms" required><span>Ich akzeptiere die geltenden Nutzungsbedingungen auch für diesen Betrieb.</span></label>
  <p id="sk-extra-business-error" role="alert"></p><button class="btn" type="submit">Betrieb zur Prüfung erfassen</button></form>`);
+ void window.SK_LOCATION?.editBusiness(document.getElementById('sk-extra-business-form'),{});
 });
 document.getElementById('dialog-body').addEventListener('submit',async e=>{
  const form=e.target;if(form.id!=='sk-extra-business-form')return;e.preventDefault();
  if(!form.reportValidity())return;
  const get=k=>form.elements.namedItem(k).value.trim(),btn=form.querySelector('[type="submit"]');btn.disabled=true;
- try{await window.SK_AUTH.addAdditionalBusiness({p_company_name:get('company_name'),p_vat_id:get('vat_id'),p_industry:get('industry'),p_country:get('country'),p_postal_code:get('postal_code'),p_city:get('city'),p_contact_name:get('contact_name'),p_contact_phone:get('contact_phone'),p_description:get('description')});dialog.close();await loadMyBusinesses();alert('Betrieb zur Prüfung durch Annette eingereicht. Er ist noch nicht für den Marktplatz freigegeben.');}
+ try{const coords=window.SK_LOCATION?.editorPosition(form);await window.SK_AUTH.addAdditionalBusinessWithLocation({p_company_name:get('company_name'),p_vat_id:get('vat_id'),p_industry:get('industry'),p_country:get('country'),p_postal_code:get('postal_code'),p_city:get('city'),p_street:get('street'),p_house_number:get('house_number'),p_contact_name:get('contact_name'),p_contact_phone:get('contact_phone'),p_description:get('description'),p_latitude:coords?.lat??null,p_longitude:coords?.lng??null,p_source:coords?.source??null,p_address_key:coords?.addressKey??null});dialog.close();await loadMyBusinesses();alert('Betrieb zur Prüfung durch Annette eingereicht. Er ist noch nicht für den Marktplatz freigegeben.');}
  catch(err){document.getElementById('sk-extra-business-error').textContent=err.message;btn.disabled=false;}
 });
 async function loadManualAccessAdmin(){

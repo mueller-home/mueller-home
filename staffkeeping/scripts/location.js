@@ -164,52 +164,88 @@
     });
     return window.__skMapPromise;
   }
-  async function editBusiness(form,b){
+  async function editBusiness(form,b={}){
     if(!form)return;
     const root=form.querySelector('#sk-edit-business-map'),status=form.querySelector('#sk-edit-location-status');
+    if(!root||!status)return;
     const disabled=!form.querySelector('[type=submit]');
-    const state={form,root,status,map:null,marker:null,position:null,addressKey:null,source:null,businessId:b.id,initialKey:addressKey(b)};
+    const valid=(lat,lng)=>lat!==null&&lat!==undefined&&lng!==null&&lng!==undefined&&
+      Number.isFinite(Number(lat))&&Number.isFinite(Number(lng))&&Math.abs(Number(lat))<=90&&Math.abs(Number(lng))<=180;
+    const sameAddress=addressKey(fields(form))===addressKey(b);
+    const state={form,root,status,map:null,marker:null,position:null,addressKey:null,source:null,businessId:b.id||null,
+      initialKey:addressKey(b),serial:0,timer:null,manual:false,loading:false};
+    if(editor?.timer)clearTimeout(editor.timer);
     editor=state;
-    const say=msg=>{if(root.isConnected)status.textContent=msg;};
     const live=()=>editor===state&&root.isConnected;
-    const clear=()=>{state.position=null;state.addressKey=null;state.source=null;if(state.marker)state.marker.setMap(null);state.marker=null;};
-    async function markerAt(lat,lng,source){
-      const maps=await mapsReady();if(!live())return;
+    const say=msg=>{if(live())status.textContent=msg;};
+    const clear=()=>{state.position=null;state.addressKey=null;state.source=null;state.manual=false;
+      if(state.marker)state.marker.setMap(null);state.marker=null;};
+    async function markerAt(lat,lng,source,expectedKey){
       lat=Number(lat);lng=Number(lng);
-      if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)throw Error('Ungültige Standortkoordinaten. Bitte Adresse erneut ermitteln.');
+      if(!valid(lat,lng))throw Error('Ungültige Standortkoordinaten. Bitte Adresse erneut ermitteln.');
+      const maps=await mapsReady();if(!live()||(expectedKey&&expectedKey!==addressKey(fields(form))))return false;
       if(!state.map)state.map=new maps.Map(root,{center:{lat,lng},zoom:16,streetViewControl:false,mapTypeControl:false});
       if(state.marker)state.marker.setMap(null);
-      state.position={lat,lng};state.source=source;state.addressKey=addressKey(fields(form));
+      state.position={lat,lng};state.source=source;state.addressKey=addressKey(fields(form));state.manual=source==='manual';
       state.map.setCenter({lat,lng});state.map.setZoom(16);
       state.marker=new maps.Marker({position:{lat,lng},map:state.map,draggable:false,title:'Betriebsstandort'});
+      return true;
     }
-    async function geo(){
-      const b=fields(form);
-      if(!b.postal_code||!b.city)return say('Bitte zuerst Land, PLZ und Ort erfassen.');
-      say('Standort wird ermittelt …');
+    async function geo(force=false){
+      if(!live()||disabled)return;
+      const snapshot=fields(form),snapshotKey=addressKey(snapshot),serial=++state.serial;
+      if(!snapshot.country||!snapshot.postal_code||!snapshot.city){
+        say('Land, PLZ und Ort erfassen; die Standortermittlung startet danach automatisch.');return;
+      }
+      if(state.manual&&!force)return;
+      if(state.position&&state.addressKey===snapshotKey&&!force)return;
+      state.loading=true;say('Standort wird automatisch ermittelt …');
       try{
-        const maps=await mapsReady();const snapshot=addressKey(b);
-        const {results}=await new maps.Geocoder().geocode({address:address(b),componentRestrictions:{country:b.country}});
-        if(!live())return;
-        if(snapshot!==addressKey(fields(form)))return say('Adresse wurde geändert. Bitte Standort erneut ermitteln.');
+        const maps=await mapsReady();
+        const {results}=await new maps.Geocoder().geocode({address:address(snapshot),componentRestrictions:{country:snapshot.country}});
+        if(!live()||serial!==state.serial||snapshotKey!==addressKey(fields(form)))return;
         if(!results?.length)throw Error('Google hat die Adresse nicht gefunden.');
         const pos=results[0].geometry.location;
-        await markerAt(pos.lat(),pos.lng(),'geocoded');say('Standort ermittelt. Bitte Position prüfen und dann Betriebsprofil speichern.');
-      }catch(e){if(live())say('Standort nicht ermittelt: '+e.message);}
+        if(await markerAt(pos.lat(),pos.lng(),'geocoded',snapshotKey))say('Standort automatisch ermittelt. Bitte Position prüfen und anschliessend speichern.');
+      }catch(e){if(live()&&serial===state.serial)say('Standort konnte nicht ermittelt werden: '+e.message+' Du kannst die Ermittlung erneut starten.');}
+      finally{if(live()&&serial===state.serial)state.loading=false;}
     }
-    form.querySelectorAll('[name="country"],[name="postal_code"],[name="city"],[name="street"],[name="house_number"]').forEach(el=>el.addEventListener('input',()=>{if(!live())return;clear();say('Adresse verändert: Standort bitte neu ermitteln.');}));
-    form.querySelector('#sk-edit-location-search')?.addEventListener('click',()=>{void geo();});
-    form.querySelector('#sk-edit-location-correct')?.addEventListener('click',async()=>{
+    function scheduleGeo(){
+      if(!live())return;
+      ++state.serial;
+      if(state.timer)clearTimeout(state.timer);
+      const newKey=addressKey(fields(form));
+      if(newKey===state.addressKey&&state.position)return;
+      clear();say('Adresse geändert. Der Standort wird automatisch neu ermittelt …');
+      state.timer=setTimeout(()=>{if(live())void geo();},700);
+    }
+    form.querySelectorAll('[name="country"],[name="postal_code"],[name="city"],[name="street"],[name="house_number"]').forEach(el=>{
+      el.addEventListener('input',scheduleGeo);el.addEventListener('change',scheduleGeo);
+    });
+    form.querySelector('#sk-edit-location-search')?.addEventListener('click',()=>{
+      if(state.timer)clearTimeout(state.timer);void geo(true);
+    });
+    form.querySelector('#sk-edit-location-correct')?.addEventListener('click',()=>{
       if(!live())return;
       if(!state.marker)return say('Zuerst Standort ermitteln.');
-      state.marker.setDraggable(true);say('Marker auf der Karte verschieben.');
-      state.marker.addListener('dragend',e=>{state.position={lat:e.latLng.lat(),lng:e.latLng.lng()};state.source='manual';state.addressKey=addressKey(fields(form));state.marker.setDraggable(false);say('Position manuell korrigiert. Zum Übernehmen Betriebsprofil speichern.');});
+      state.marker.setDraggable(true);say('Marker auf der Karte an den richtigen Ort ziehen.');
+      state.marker.addListener('dragend',e=>{
+        if(!live())return;
+        state.serial++;
+        if(state.timer)clearTimeout(state.timer);
+        state.position={lat:e.latLng.lat(),lng:e.latLng.lng()};state.source='manual';state.manual=true;
+        state.addressKey=addressKey(fields(form));state.marker.setDraggable(false);
+        say('Position manuell korrigiert. Diese Position bleibt bis zur nächsten Adressänderung erhalten. Bitte speichern.');
+      });
     });
-    if(b.latitude!=null&&b.longitude!=null&&Number.isFinite(Number(b.latitude))&&Number.isFinite(Number(b.longitude))){
-      try{await markerAt(Number(b.latitude),Number(b.longitude),b.location_source||'geocoded');say('Gespeicherter Standort. Bei Adressänderung bitte neu ermitteln.');}
+    if(valid(b.latitude,b.longitude)&&sameAddress){
+      try{await markerAt(b.latitude,b.longitude,b.location_source||'geocoded');say('Gespeicherter Standort geladen.');}
       catch(e){say('Kartenanzeige nicht verfügbar: '+e.message);}
-    }else say('Noch keine Standortkoordinaten gespeichert. Standort aus Adresse ermitteln.');
-    if(disabled)say('Prüfung läuft: Standort nur zur Ansicht.');
+    }else if(!disabled){
+      say('Noch kein gespeicherter Standort. Er wird aus der Adresse ermittelt.');
+      scheduleGeo();
+    }else say('Noch kein gespeicherter Standort. Während der Prüfung nur lesbar.');
+    if(disabled&&state.position)say('Gespeicherter Standort (nur zur Ansicht).');
   }
   function editorPosition(form){
     if(!editor||editor.form!==form||!editor.root.isConnected)return null;
