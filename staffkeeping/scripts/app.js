@@ -1,4 +1,4 @@
-/* StaffKeeping 0.33.1.3 – separate business profiles, consistent administration */
+/* StaffKeeping 0.33.1.4 – separate business profiles, consistent administration */
 'use strict';
 const screens=['login','register','reset','pending','market','profile','account','my-listings','my-businesses','detail','messages','reviews','admin-businesses','admin-listings','admin-dashboard','admin-docs','admin-home','admin-activity','admin-deletions','help'];
 const navOnly=document.querySelectorAll('.nav-only'), guests=document.querySelectorAll('.guest-only');
@@ -192,7 +192,7 @@ function skBusinessForm(b){
  <label>Kontakt-E-Mail *</label><input name="contact_email" type="email" required maxlength="254" value="${esc(b.contact_email||'')}">
  <label>Telefon *</label><input name="contact_phone" required minlength="5" maxlength="60" value="${esc(b.contact_phone||'')}">
  <label>Beschreibung *</label><textarea name="description" required minlength="30" maxlength="1000">${esc(b.description||'')}</textarea>
- <p class="muted">Änderungen an Standortangaben setzen die bisherige Koordinatenprüfung zurück. Bei Nachbesserungen prüft Annette die erneute Einreichung.</p>
+ <section class="sk-business-location-panel"><h3>Standort des Betriebs</h3><p class="muted">Adresse zuerst erfassen. Mit «Standort ermitteln» erscheint die Karte. Den Marker kannst du bei Bedarf verschieben. Die geprüfte Position wird beim Speichern diesem Betrieb zugeordnet.</p><div class="business-map" id="sk-edit-business-map" role="region" aria-label="Karte des ausgewählten Betriebs"></div><p id="sk-edit-location-status" role="status">Noch keine neue Standortbestimmung durchgeführt.</p><button type="button" class="subtle-btn" id="sk-edit-location-search" ${readOnly?'disabled':''}>Standort aus Adresse ermitteln</button><button type="button" class="subtle-btn" id="sk-edit-location-correct" ${readOnly?'disabled':''}>Marker verschieben</button><p class="muted">Ohne bestätigte Koordinaten wird der Standort als «Entfernung unbekannt» behandelt. Annette kann eine eingereichte Adresse separat prüfen.</p></section>
  <p class="form-feedback" id="sk-business-edit-feedback" role="alert"></p>
  ${readOnly?'':`<button type="submit" class="btn">${b.review_state==='changes_requested'?'Korrigieren und erneut einreichen':'Änderungen speichern'}</button>`}
  </form>`;
@@ -200,14 +200,14 @@ function skBusinessForm(b){
 document.getElementById('my-businesses-list').addEventListener('click',async e=>{
  const btn=e.target.closest('[data-edit-business]');if(!btn)return;
  btn.disabled=true;
- try{const all=await window.SK_AUTH.listMyBusinesses(),b=all.find(x=>x.id===btn.dataset.editBusiness);if(!b)throw Error('Betrieb nicht mehr zugeordnet.');modal('Betriebsprofil · '+b.company_name,skBusinessForm(b));}
+ try{const all=await window.SK_AUTH.listMyBusinesses(),b=all.find(x=>x.id===btn.dataset.editBusiness);if(!b)throw Error('Betrieb nicht mehr zugeordnet.');modal('Betriebsprofil · '+b.company_name,skBusinessForm(b)); void window.SK_LOCATION?.editBusiness(document.getElementById('sk-edit-business-form'),b);}
  catch(err){alert('Betriebsprofil konnte nicht geöffnet werden: '+err.message);}finally{btn.disabled=false;}
 });
 document.getElementById('dialog-body').addEventListener('submit',async e=>{
  const form=e.target;if(form.id!=='sk-edit-business-form')return;e.preventDefault();if(!form.reportValidity())return;
  const button=form.querySelector('[type="submit"]');button.disabled=true;
  const val=n=>form.elements.namedItem(n).value.trim();
- try{await window.SK_AUTH.saveBusinessById({p_business_id:form.dataset.business,p_company_name:val('company_name'),p_vat_id:val('vat_id'),p_industry:val('industry'),p_country:val('country'),p_postal_code:val('postal_code'),p_city:val('city'),p_street:val('street'),p_house_number:val('house_number'),p_address_extra:val('address_extra'),p_contact_name:val('contact_name'),p_contact_email:val('contact_email'),p_contact_phone:val('contact_phone'),p_description:val('description')});dialog.close();await loadMyBusinesses();}
+ try{const coords=window.SK_LOCATION?.editorPosition(form);await window.SK_AUTH.saveBusinessWithLocation({p_profile:{p_business_id:form.dataset.business,p_company_name:val('company_name'),p_vat_id:val('vat_id'),p_industry:val('industry'),p_country:val('country'),p_postal_code:val('postal_code'),p_city:val('city'),p_street:val('street'),p_house_number:val('house_number'),p_address_extra:val('address_extra'),p_contact_name:val('contact_name'),p_contact_email:val('contact_email'),p_contact_phone:val('contact_phone'),p_description:val('description')},p_latitude:coords?.lat??null,p_longitude:coords?.lng??null,p_source:coords?.source??null,p_address_key:coords?.addressKey??null});dialog.close();await loadMyBusinesses();}
  catch(err){document.getElementById('sk-business-edit-feedback').textContent='Nicht gespeichert: '+err.message;button.disabled=false;}
 });
 document.getElementById('add-business-button').addEventListener('click',()=>{
