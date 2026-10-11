@@ -1,6 +1,6 @@
-/* StaffKeeping 0.32.2.2 – listing expiration and visibility diagnostics */
+/* StaffKeeping 0.33.1 – listing expiration and visibility diagnostics */
 'use strict';
-const screens=['login','register','reset','pending','market','profile','my-listings','detail','messages','reviews','admin-businesses','admin-listings','admin-dashboard','admin-docs','admin-home','admin-activity','admin-deletions','help'];
+const screens=['login','register','reset','pending','market','profile','my-listings','my-businesses','detail','messages','reviews','admin-businesses','admin-listings','admin-dashboard','admin-docs','admin-home','admin-activity','admin-deletions','help'];
 const navOnly=document.querySelectorAll('.nav-only'), guests=document.querySelectorAll('.guest-only');
 const publicViews=new Set(['login','register','reset','pending','help']);
 let demoSignedIn=false;
@@ -34,14 +34,14 @@ function performShow(view,updateUrl=true){
   // Demo-Ansicht: Nur ein explizit gestarteter Demo-Zugang darf interne Seiten sehen.
   if(!demoSignedIn && !publicViews.has(view) && !(view==='profile'&&skCanProfile))view=skPending?'pending':'login';
   if(!skAdmin && view.startsWith('admin-'))view=demoSignedIn?'market':skCanProfile?'profile':'login';
-  if(!skCanTrade && ['my-listings','messages','profile','reviews'].includes(view))view=skAdmin?'market':skCanProfile?'profile':'login';
+  if(!skCanTrade && ['my-listings','my-businesses','messages','profile','reviews'].includes(view))view=skAdmin?'market':skCanProfile?'profile':'login';
   if(demoSignedIn && view==='login')view='market';
   if(currentScreen==='admin-docs'&&view!=='admin-docs')window.SK_DOCS?.close();
   currentScreen=view;
   screens.forEach(v=>document.getElementById('view-'+v).classList.toggle('hidden',v!==view));
   // The help screen is public, but opening it must not discard the current session navigation.
   const hasSession=demoSignedIn||skCanProfile||skAdmin;
-  navOnly.forEach(n=>n.classList.toggle('hidden',!hasSession || (skCanProfile&&!demoSignedIn&&!skAdmin&&!['profile','login'].includes(n.dataset.view)) || (!skCanTrade && ['my-listings','messages','profile','reviews'].includes(n.dataset.view))));
+  navOnly.forEach(n=>n.classList.toggle('hidden',!hasSession || (skCanProfile&&!demoSignedIn&&!skAdmin&&!['profile','login'].includes(n.dataset.view)) || (!skCanTrade && ['my-listings','my-businesses','messages','profile','reviews'].includes(n.dataset.view))));
   guests.forEach(n=>n.classList.toggle('hidden',hasSession||skPending));
   document.querySelectorAll('.admin-nav, .admin-tabs').forEach(n=>n.classList.toggle('hidden',!skAdmin));
   document.querySelectorAll('.admin-tabs [data-view]').forEach(b=>{const active=b.dataset.view===view;b.classList.toggle('active',active);b.setAttribute('aria-current',active?'page':'false');});
@@ -51,8 +51,9 @@ function performShow(view,updateUrl=true){
   if(view==='profile'){window.SK_PROFILE?.load();window.SK_DELETION?.refreshMy();}
   if(view==='market')loadMarketplace();
   if(view==='my-listings')loadMyListings();
+  if(view==='my-businesses')loadMyBusinesses();
   if(view==='messages')renderChats();
-  if(view==='admin-businesses')renderBusinesses();
+  if(view==='admin-businesses'){renderBusinesses();loadManualAccessAdmin();}
   if(view==='admin-deletions')window.SK_DELETION?.refreshAdmin();
   if(view==='admin-listings')renderAdminListings();
   if(view==='admin-docs'){renderProjectDocs();window.SK_HELP?.loadAdmin();}
@@ -148,16 +149,75 @@ document.getElementById('list-btn').addEventListener('click',()=>setView(false))
 /* Zusätzliche UI-Demoseiten, ohne Backend und ohne dauerhafte Speicherung */
 const dialog=document.getElementById('app-dialog');
 function modal(title,html){document.getElementById('dialog-title').textContent=title;document.getElementById('dialog-body').innerHTML=html;dialog.showModal();}
+
+async function loadMyBusinesses(){
+ const root=document.getElementById('my-businesses-list');root.textContent='Betriebe werden geladen …';
+ try{const rows=await window.SK_AUTH.listMyBusinesses();root.innerHTML=rows.length?rows.map(b=>`<div class="panel" style="margin:0 0 12px"><strong>${esc(b.company_name)}</strong><p>${esc(b.city)} · ${esc(b.country)} · ${esc(b.status)} / ${esc(b.review_state||'–')}</p><small>${b.status==='Freigeschaltet'?'Für Marktplatz freigegeben':'Annette muss diesen Betrieb separat freigeben; keine automatische Abo-Zuordnung.'}</small>${b.review_state==='changes_requested'?`<p role="alert">Nachbesserung: ${esc(b.review_message||'Bitte Angaben ergänzen')}</p><button class="subtle-btn" data-rework-business="${esc(b.id)}">Nachbessern und erneut einreichen</button>`:''}</div>`).join(''):'<p>Keine Betriebe zugeordnet.</p>';}
+ catch(e){root.textContent='Betriebe konnten nicht geladen werden: '+e.message;}
+}
+document.getElementById('my-businesses-list').addEventListener('click',async e=>{
+ const btn=e.target.closest('[data-rework-business]');if(!btn)return;
+ const businesses=await window.SK_AUTH.listMyBusinesses();const b=businesses.find(x=>x.id===btn.dataset.reworkBusiness);
+ if(!b||b.review_state!=='changes_requested')return;
+ modal('Nachbesserung für '+b.company_name,`<form id="sk-rework-business-form" data-business="${esc(b.id)}"><p>Änderungsgrund von Annette: ${esc(b.review_message||'Keine Details')}</p><label>Kontaktperson *</label><input name="contact_name" required minlength="2" value="${esc(b.contact_name||'')}"><label>Telefon *</label><input name="contact_phone" required minlength="5" value="${esc(b.contact_phone||'')}"><label>Beschreibung *</label><textarea name="description" required minlength="30" maxlength="1000">${esc(b.description||'')}</textarea><p id="sk-rework-error" role="alert"></p><button class="btn" type="submit">Erneut einreichen</button></form>`);
+});
+document.getElementById('dialog-body').addEventListener('submit',async e=>{
+ const form=e.target;if(form.id!=='sk-rework-business-form')return;e.preventDefault();if(!form.reportValidity())return;const btn=form.querySelector('[type="submit"]');btn.disabled=true;
+ try{await window.SK_AUTH.resubmitAdditionalBusiness(form.dataset.business,form.elements.namedItem('description').value,form.elements.namedItem('contact_phone').value,form.elements.namedItem('contact_name').value);dialog.close();await loadMyBusinesses();}
+ catch(err){document.getElementById('sk-rework-error').textContent=err.message;btn.disabled=false;}
+});
+document.getElementById('add-business-button').addEventListener('click',()=>{
+ modal('Weiteren Betrieb beantragen',`<form id="sk-extra-business-form">
+ <p>Der neue Betrieb wird unabhängig geprüft. Er erhält kein automatisch gemeinsames Abonnement.</p>
+ <label>Firmenname *</label><input name="company_name" required minlength="2" maxlength="160">
+ <label>UID / USt-ID *</label><input name="vat_id" required minlength="2" maxlength="64">
+ <label>Branche *</label><select name="industry" required><option value="">Bitte wählen</option><option value="Hotel">Hotellerie</option><option value="Gastro">Gastronomie</option><option value="Camping">Camping</option></select>
+ <label>Land *</label><select name="country" required><option value="">Bitte wählen</option><option value="CH">Schweiz</option><option value="DE">Deutschland</option><option value="AT">Österreich</option></select>
+ <div class="field-grid"><div><label>PLZ *</label><input name="postal_code" required minlength="2" maxlength="16"></div><div><label>Ort *</label><input name="city" required minlength="2" maxlength="120"></div></div>
+ <label>Kontaktperson *</label><input name="contact_name" required minlength="2" maxlength="160">
+ <label>Telefon *</label><input name="contact_phone" required minlength="5" maxlength="60"><label>Beschreibung des Betriebs *</label><textarea name="description" required minlength="30" maxlength="1000"></textarea>
+ <label class="check"><input type="checkbox" name="terms" required><span>Ich akzeptiere die geltenden Nutzungsbedingungen auch für diesen Betrieb.</span></label>
+ <p id="sk-extra-business-error" role="alert"></p><button class="btn" type="submit">Betrieb zur Prüfung erfassen</button></form>`);
+});
+document.getElementById('dialog-body').addEventListener('submit',async e=>{
+ const form=e.target;if(form.id!=='sk-extra-business-form')return;e.preventDefault();
+ if(!form.reportValidity())return;
+ const get=k=>form.elements.namedItem(k).value.trim(),btn=form.querySelector('[type="submit"]');btn.disabled=true;
+ try{await window.SK_AUTH.addAdditionalBusiness({p_company_name:get('company_name'),p_vat_id:get('vat_id'),p_industry:get('industry'),p_country:get('country'),p_postal_code:get('postal_code'),p_city:get('city'),p_contact_name:get('contact_name'),p_contact_phone:get('contact_phone'),p_description:get('description')});dialog.close();await loadMyBusinesses();alert('Betrieb zur Prüfung durch Annette eingereicht. Er ist noch nicht für den Marktplatz freigegeben.');}
+ catch(err){document.getElementById('sk-extra-business-error').textContent=err.message;btn.disabled=false;}
+});
+async function loadManualAccessAdmin(){
+ const root=document.getElementById('sk-admin-manual-access');if(!root)return;
+ root.textContent='Kundenkonten werden geladen …';
+ try{const rows=await window.SK_AUTH.adminManualAccounts();
+ root.innerHTML=rows.length?rows.map(c=>`<article class="panel" style="margin-bottom:12px"><strong>${esc(c.account_label)}</strong><p>${c.manual_active?'<span class="status-tag sk-list-status-active">Manuell freigegeben</span>':'<span class="status-tag">Keine aktive manuelle Freigabe</span>'}${c.valid_until?' · bis '+esc(dateDisplay(c.valid_until)):''}</p>${c.reason?`<p class="muted">Grund: ${esc(c.reason)}</p>`:''}<div class="dialog-actions"><button type="button" class="subtle-btn" data-sk-grant="${esc(c.account_id)}">Freigabe erteilen / ändern</button><button type="button" class="subtle-btn" data-sk-revoke="${esc(c.account_id)}" ${!c.manual_active?'disabled':''}>Manuelle Freigabe widerrufen</button></div></article>`).join(''):'<p>Keine Kundenkonten vorhanden.</p>';
+ }catch(e){root.textContent='Freigaben konnten nicht geladen werden: '+e.message;}
+}
+document.getElementById('sk-admin-manual-access').addEventListener('click',async e=>{
+ const give=e.target.closest('[data-sk-grant]');const revoke=e.target.closest('[data-sk-revoke]');if(!give&&!revoke)return;
+ if(revoke){if(!confirm('Manuelle Freigabe widerrufen? Ein gültiges bezahltes Abo bleibt davon unberührt.'))return;revoke.disabled=true;try{await window.SK_AUTH.adminSetManualAccess(revoke.dataset.skRevoke,false);await loadManualAccessAdmin();}catch(err){alert(err.message);revoke.disabled=false;}return;}
+ const id=give.dataset.skGrant;
+ modal('Manuelle Nutzungsfreigabe',`<form id="sk-manual-access-form" data-account="${esc(id)}"><p>Diese Freigabe ersetzt kein bezahltes Abonnement. Stufe 2 ist noch nicht als Marktplatzsperre aktiviert.</p><label>Grund *</label><select name="category"><option>Testphase</option><option>Kulanz</option><option>Partnervereinbarung</option><option>Sonstiges</option></select><label>Erläuterung *</label><textarea name="reason" required minlength="4" maxlength="500"></textarea><label>Gültig bis (leer = unbefristet)</label><input type="date" name="until"><p id="sk-manual-error" role="alert"></p><button class="btn" type="submit">Manuelle Freigabe speichern</button></form>`);
+});
+document.getElementById('dialog-body').addEventListener('submit',async e=>{
+ const form=e.target;if(form.id!=='sk-manual-access-form')return;e.preventDefault();if(!form.reportValidity())return;
+ const btn=form.querySelector('[type="submit"]');btn.disabled=true;
+ try{const reason=form.elements.namedItem('category').value+': '+form.elements.namedItem('reason').value.trim();await window.SK_AUTH.adminSetManualAccess(form.dataset.account,true,reason,form.elements.namedItem('until').value);dialog.close();await loadManualAccessAdmin();}
+ catch(err){document.getElementById('sk-manual-error').textContent=err.message;btn.disabled=false;}
+});
+
 document.getElementById('dialog-close').addEventListener('click',()=>dialog.close());dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()});
 let chosenListing=1, listTab='inserate';const listingStatus=new Map(listings.map(l=>[l.id,'Aktiv']));
 let ownListings=[];
+let ownBusinessList=[];
+window.SK_SELECTED_BUSINESS=null;
 let ownListingsBusy=false;
 const listingFormField=(form,name)=>form.elements.namedItem(name);
 function listingError(error){modal('Inserat nicht gespeichert',`<p>${esc(error?.message||'Unbekannter Fehler')}</p><p>Das Inserat wurde nicht als gespeichert bestätigt. Bitte überprüfe deine Anmeldung und die Datenbankmigration 0.32.1.</p>`);}
 async function loadMyListings(){
   const root=document.getElementById('my-list-table');
   root.innerHTML='<p class="muted">Eigene Inserate werden geladen …</p>';
-  try{ownListings=await window.SK_AUTH.listMyListings();renderMyListings();}
+  try{ownBusinessList=await window.SK_AUTH.listApprovedBusinesses();ownListings=await window.SK_AUTH.listMyListings();renderMyListings();}
   catch(error){root.innerHTML=`<p role="alert">Inserate konnten nicht geladen werden: ${esc(error.message)}</p>`;}
 }
 async function saveListing(){
@@ -166,9 +226,9 @@ async function saveListing(){
   const from=listingFormField(form,'from').value,to=listingFormField(form,'to').value;
   if(to<from){listingFormField(form,'to').setCustomValidity('Das Bis-Datum muss am oder nach dem Von-Datum liegen.');form.reportValidity();listingFormField(form,'to').setCustomValidity('');return;}
   const payload={type:listingFormField(form,'type').value,category:listingFormField(form,'category').value,title:listingFormField(form,'title').value.trim(),description:listingFormField(form,'description').value.trim(),date_from:from,date_to:to,conditions:listingFormField(form,'conditions').value.trim(),accommodation:listingFormField(form,'accommodation').checked,languages:[...form.querySelectorAll('input[name="languages"]:checked')].map(e=>e.value)};
-  const id=form.dataset.edit||null;
+  const id=form.dataset.edit||null;const businessId=listingFormField(form,'business_id').value;
   const button=document.getElementById('save-real-listing');button.disabled=true;button.textContent='Wird gespeichert …';ownListingsBusy=true;
-  try{await window.SK_AUTH.saveMyListing(payload,id);dialog.close();await loadMyListings();}
+  try{await window.SK_AUTH.saveMyListing(payload,id,businessId);dialog.close();await loadMyListings();}
   catch(error){button.disabled=false;button.textContent='Inserat speichern';const note=form.querySelector('.listing-save-error');if(note)note.textContent='Speichern fehlgeschlagen: '+error.message;}
   finally{ownListingsBusy=false;}
 }
@@ -176,7 +236,7 @@ function listingForm(id){
   const l=ownListings.find(x=>x.id===id);
   const today=skTodayCH();
   const dateFrom=l?.date_from||today,dateTo=l?.date_to||today;
-  modal(l?'Inserat bearbeiten':'Neues Inserat',`<form id="listing-form" data-edit="${esc(l?.id||'')}"><div class="field-grid"><div><label>Typ *</label><select name="type" required>${['Suche','Biete'].map(x=>`<option ${l?.type===x?'selected':''}>${x}</option>`).join('')}</select></div><div><label>Kategorie *</label><select name="category" required>${['Küche','Service','Housekeeping','Technik','Animation'].map(x=>`<option ${l?.category===x?'selected':''}>${x}</option>`).join('')}</select></div></div><p class="muted">Ort und Land werden automatisch aus dem freigegebenen Betriebsprofil übernommen.</p><label>Titel (5–80 Zeichen) *</label><input name="title" required minlength="5" maxlength="80" value="${esc(l?.title||'')}"><label>Beschreibung (20–1000 Zeichen) *</label><textarea name="description" required minlength="20" maxlength="1000" rows="3">${esc(l?.description||'')}</textarea><div class="field-grid"><div><label>Von *</label><input name="from" type="date" required value="${esc(dateFrom)}"></div><div><label>Bis *</label><input name="to" type="date" required value="${esc(dateTo)}"></div></div><label>Rahmenbedingungen (max. 500 Zeichen)</label><textarea name="conditions" maxlength="500" rows="2">${esc(l?.conditions||'')}</textarea><label class="check"><input type="checkbox" name="accommodation" ${l?.accommodation?'checked':''}><span>Unterkunft vorhanden</span></label><p class="muted">Sprachen: ${['DE','FR','IT','EN','ES'].map(x=>`<label class="inline-check"><input type="checkbox" name="languages" value="${x}" ${(l?.languages||['DE']).includes(x)?'checked':''}> ${x}</label>`).join(' ')}</p><p class="listing-save-error" role="alert"></p><div class="dialog-actions"><button type="button" class="btn" id="save-real-listing">Inserat speichern</button></div></form>`);
+  modal(l?'Inserat bearbeiten':'Neues Inserat',`<form id="listing-form" data-edit="${esc(l?.id||'')}"><label>Betrieb / Einsatzstandort *</label><select name="business_id" required ${l?"disabled":""}>${ownBusinessList.map(b=>`<option value="${esc(b.id)}" ${(l?.business_id||window.SK_SELECTED_BUSINESS||ownBusinessList[0]?.id)===b.id?"selected":""}>${esc(b.company_name)} · ${esc(b.city||"")}</option>`).join("")}</select><div class="field-grid"><div><label>Typ *</label><select name="type" required>${['Suche','Biete'].map(x=>`<option ${l?.type===x?'selected':''}>${x}</option>`).join('')}</select></div><div><label>Kategorie *</label><select name="category" required>${['Küche','Service','Housekeeping','Technik','Animation'].map(x=>`<option ${l?.category===x?'selected':''}>${x}</option>`).join('')}</select></div></div><p class="muted">Ort und Land werden automatisch aus dem freigegebenen Betriebsprofil übernommen.</p><label>Titel (5–80 Zeichen) *</label><input name="title" required minlength="5" maxlength="80" value="${esc(l?.title||'')}"><label>Beschreibung (20–1000 Zeichen) *</label><textarea name="description" required minlength="20" maxlength="1000" rows="3">${esc(l?.description||'')}</textarea><div class="field-grid"><div><label>Von *</label><input name="from" type="date" required value="${esc(dateFrom)}"></div><div><label>Bis *</label><input name="to" type="date" required value="${esc(dateTo)}"></div></div><label>Rahmenbedingungen (max. 500 Zeichen)</label><textarea name="conditions" maxlength="500" rows="2">${esc(l?.conditions||'')}</textarea><label class="check"><input type="checkbox" name="accommodation" ${l?.accommodation?'checked':''}><span>Unterkunft vorhanden</span></label><p class="muted">Sprachen: ${['DE','FR','IT','EN','ES'].map(x=>`<label class="inline-check"><input type="checkbox" name="languages" value="${x}" ${(l?.languages||['DE']).includes(x)?'checked':''}> ${x}</label>`).join(' ')}</p><p class="listing-save-error" role="alert"></p><div class="dialog-actions"><button type="button" class="btn" id="save-real-listing">Inserat speichern</button></div></form>`);
 }
 document.getElementById('new-listing').addEventListener('click',()=>listingForm());
 document.querySelectorAll('[data-list-tab]').forEach(b=>b.addEventListener('click',()=>{listTab=b.dataset.listTab;document.querySelectorAll('[data-list-tab]').forEach(x=>x.classList.toggle('active',x===b));renderMyListings()}));
@@ -195,8 +255,8 @@ document.getElementById('my-list-table').addEventListener('click',async e=>{
   if(b.dataset.own==='delete'&&!confirm('Dieses Inserat dauerhaft löschen?'))return;
   ownListingsBusy=true;b.disabled=true;
   try{
-    if(b.dataset.own==='toggle')await window.SK_AUTH.setMyListingStatus(id,l.status==='Aktiv'?'Inaktiv':'Aktiv');
-    else if(b.dataset.own==='delete')await window.SK_AUTH.deleteMyListing(id);
+    if(b.dataset.own==='toggle')await window.SK_AUTH.setMyListingStatus(id,l.status==='Aktiv'?'Inaktiv':'Aktiv',l.business_id);
+    else if(b.dataset.own==='delete')await window.SK_AUTH.deleteMyListing(id,l.business_id);
     await loadMyListings();
   }catch(error){alert('Aktion fehlgeschlagen: '+error.message);b.disabled=false;}
   finally{ownListingsBusy=false;}

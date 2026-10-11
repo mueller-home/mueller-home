@@ -1,4 +1,4 @@
-/* StaffKeeping 0.32.2.2 – Auth, Rollen, echte Inserate und Radius */
+/* StaffKeeping 0.33.1 – Auth, Rollen, echte Inserate und Radius */
 'use strict';
 (function(){
  const cfg=window.SK_CONFIG||{};
@@ -154,9 +154,11 @@
     }
     exitCompletionMode();ui().setAccess(true,true,'approved',eligible);return;
   }
-  const {data:members,error:me}=await db.from('sk_business_members').select('business_id').eq('user_id',user.id).limit(1);if(me)throw me;
+  const {data:members,error:me}=await db.from('sk_business_members').select('business_id').eq('user_id',user.id);if(me)throw me;
   if(!members?.length){setCompletionMode(user);return;}
-  const {data:approved,error:pe}=await db.rpc('sk_is_approved_member',{p_business_id:members[0].business_id});if(pe)throw pe;
+  let approved=false;
+  for(const member of members){const {data:ok,error:pe}=await db.rpc('sk_is_approved_member',{p_business_id:member.business_id});if(pe)throw pe;if(ok){approved=true;break;}}
+
   exitCompletionMode();
   let business=null;
   if(!approved){
@@ -167,15 +169,32 @@
  }
  async function safeEvaluate(){try{await evaluate();}catch(e){msg('auth-message','Prüfung fehlgeschlagen: '+e.message);if(!recoveryMode)ui().logoutView();else showRecovery();}}
  window.SK_AUTH={
-  async myListingBusiness(){
-    const user=await verifiedCurrentUser();if(!user)throw Error('Bitte erneut anmelden.');
-    const {data:members,error:me}=await db.from('sk_business_members').select('business_id').eq('user_id',user.id).limit(1);if(me)throw me;
-    if(!members?.length)throw Error('Kein Betrieb zugeordnet.');
-    const id=members[0].business_id;
-    const {data:approved,error:ae}=await db.rpc('sk_is_approved_member',{p_business_id:id});if(ae)throw ae;
-    if(!approved)throw Error('Der Betrieb ist nicht freigegeben.');
-    return id;
+  async listMyBusinesses(){
+    const user=await verifiedCurrentUser();if(!user)throw Error('Bitte anmelden.');
+    const {data:members,error:me}=await db.from('sk_business_members').select('business_id').eq('user_id',user.id);if(me)throw me;
+    const ids=[...new Set((members||[]).map(m=>m.business_id))];if(!ids.length)return [];
+    const {data:businesses,error:be}=await db.from('sk_businesses').select('id,company_name,city,country,status,review_state,review_message,description,contact_name,contact_phone').in('id',ids);if(be)throw be;
+    return (businesses||[]).sort((a,b)=>a.company_name.localeCompare(b.company_name,'de'));
   },
+  async listApprovedBusinesses(){
+    const businesses=await this.listMyBusinesses(),approved=[];
+    for(const business of businesses){const {data:ok,error}=await db.rpc('sk_is_approved_member',{p_business_id:business.id});if(error)throw error;if(ok)approved.push(business);}
+    return approved;
+  },
+  async myListingBusiness(businessId){
+    const approved=await this.listApprovedBusinesses();
+    if(!approved.length)throw Error('Kein freigegebener Betrieb zugeordnet.');
+    const selected=businessId||window.SK_SELECTED_BUSINESS||approved[0].id;
+    if(!approved.some(b=>b.id===selected))throw Error('Für diesen Betrieb besteht keine aktive Berechtigung.');
+    return selected;
+  },
+  async addAdditionalBusiness(payload){
+    const user=await verifiedCurrentUser();if(!user||!user.email_confirmed_at)throw Error('Bestätigtes Benutzerkonto erforderlich.');
+    const {data,error}=await db.rpc('sk_add_business',{...payload,p_contact_email:user.email,p_terms_accepted:true});if(error)throw error;return data;
+  },
+  async resubmitAdditionalBusiness(id,description,phone,name){const {error}=await db.rpc('sk_resubmit_additional_business',{p_business_id:id,p_description:description,p_contact_phone:phone,p_contact_name:name});if(error)throw error;},
+  async adminManualAccounts(){const {data,error}=await db.rpc('sk_admin_manual_access_overview');if(error)throw error;return data||[];},
+  async adminSetManualAccess(accountId,enable,reason,until){const {error}=await db.rpc('sk_admin_set_manual_access',{p_account_id:accountId,p_enable:enable,p_reason:enable?reason:null,p_valid_until:enable?(until||null):null});if(error)throw error;},
   async listMarketplaceListings(){
     const user=await verifiedCurrentUser();if(!user)throw Error('Bitte erneut anmelden.');
     // Admins may read for moderation; regular participants must have an
@@ -210,22 +229,23 @@
     return data||[];
   },
   async listMyListings(){
-    const businessId=await this.myListingBusiness();
-    const {data,error}=await db.from('sk_listings').select('id,business_id,type,category,title,description,date_from,date_to,conditions,accommodation,languages,city,country,status,created_at').eq('business_id',businessId).order('created_at',{ascending:false});
+    const businesses=await this.listApprovedBusinesses();if(!businesses.length)return [];
+    const ids=businesses.map(b=>b.id);
+    const {data,error}=await db.from('sk_listings').select('id,business_id,type,category,title,description,date_from,date_to,conditions,accommodation,languages,city,country,status,created_at').in('business_id',ids).order('created_at',{ascending:false});
     if(error)throw error;return data||[];
   },
-  async saveMyListing(payload,id=null){
-    const businessId=await this.myListingBusiness();
-    if(id){const {data,error}=await db.from('sk_listings').update(payload).eq('id',id).eq('business_id',businessId).select('id').single();if(error)throw error;return data;}
-    const {data,error}=await db.from('sk_listings').insert({...payload,business_id:businessId}).select('id').single();if(error)throw error;return data;
+  async saveMyListing(payload,id=null,businessId=null){
+    const selected=await this.myListingBusiness(businessId);
+    if(id){const {data,error}=await db.from('sk_listings').update(payload).eq('id',id).eq('business_id',selected).select('id').single();if(error)throw error;return data;}
+    const {data,error}=await db.from('sk_listings').insert({...payload,business_id:selected}).select('id').single();if(error)throw error;return data;
   },
-  async setMyListingStatus(id,status){
-    const businessId=await this.myListingBusiness();
-    const {error}=await db.from('sk_listings').update({status}).eq('id',id).eq('business_id',businessId).select('id').single();if(error)throw error;
+  async setMyListingStatus(id,status,businessId){
+    const selected=await this.myListingBusiness(businessId);
+    const {error}=await db.from('sk_listings').update({status}).eq('id',id).eq('business_id',selected).select('id').single();if(error)throw error;
   },
-  async deleteMyListing(id){
-    const businessId=await this.myListingBusiness();
-    const {error}=await db.from('sk_listings').delete().eq('id',id).eq('business_id',businessId).select('id').single();if(error)throw error;
+  async deleteMyListing(id,businessId){
+    const selected=await this.myListingBusiness(businessId);
+    const {error}=await db.from('sk_listings').delete().eq('id',id).eq('business_id',selected).select('id').single();if(error)throw error;
   },
   // Re-check account on protected navigation; revoked/deleted auth users must not
   // continue browsing a previously rendered authenticated SPA after admin deletion.
