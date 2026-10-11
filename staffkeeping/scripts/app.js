@@ -1,6 +1,6 @@
-/* StaffKeeping 0.33.1 – listing expiration and visibility diagnostics */
+/* StaffKeeping 0.33.1.1 – profile subnavigation and protected business views */
 'use strict';
-const screens=['login','register','reset','pending','market','profile','my-listings','my-businesses','detail','messages','reviews','admin-businesses','admin-listings','admin-dashboard','admin-docs','admin-home','admin-activity','admin-deletions','help'];
+const screens=['login','register','reset','pending','market','profile','account','my-listings','my-businesses','detail','messages','reviews','admin-businesses','admin-listings','admin-dashboard','admin-docs','admin-home','admin-activity','admin-deletions','help'];
 const navOnly=document.querySelectorAll('.nav-only'), guests=document.querySelectorAll('.guest-only');
 const publicViews=new Set(['login','register','reset','pending','help']);
 let demoSignedIn=false;
@@ -32,23 +32,25 @@ async function show(view,updateUrl=true){
 function performShow(view,updateUrl=true){
   if(!screens.includes(view))view='login';
   // Demo-Ansicht: Nur ein explizit gestarteter Demo-Zugang darf interne Seiten sehen.
-  if(!demoSignedIn && !publicViews.has(view) && !(view==='profile'&&skCanProfile))view=skPending?'pending':'login';
+  if(!demoSignedIn && !skAdmin && !publicViews.has(view) && !(['profile','account'].includes(view)&&skCanProfile))view=skPending?'pending':'login';
   if(!skAdmin && view.startsWith('admin-'))view=demoSignedIn?'market':skCanProfile?'profile':'login';
-  if(!skCanTrade && ['my-listings','my-businesses','messages','profile','reviews'].includes(view))view=skAdmin?'market':skCanProfile?'profile':'login';
+  if(!skCanTrade && ['my-listings','my-businesses','messages','reviews'].includes(view))view=skAdmin?'market':skCanProfile?'profile':'login';
   if(demoSignedIn && view==='login')view='market';
   if(currentScreen==='admin-docs'&&view!=='admin-docs')window.SK_DOCS?.close();
   currentScreen=view;
   screens.forEach(v=>document.getElementById('view-'+v).classList.toggle('hidden',v!==view));
   // The help screen is public, but opening it must not discard the current session navigation.
   const hasSession=demoSignedIn||skCanProfile||skAdmin;
-  navOnly.forEach(n=>n.classList.toggle('hidden',!hasSession || (skCanProfile&&!demoSignedIn&&!skAdmin&&!['profile','login'].includes(n.dataset.view)) || (!skCanTrade && ['my-listings','my-businesses','messages','profile','reviews'].includes(n.dataset.view))));
+  navOnly.forEach(n=>n.classList.toggle('hidden',!hasSession || (skCanProfile&&!demoSignedIn&&!skAdmin&&!['profile','account','login'].includes(n.dataset.view)) || (!skCanTrade && ['my-listings','my-businesses','messages','reviews'].includes(n.dataset.view))));
   guests.forEach(n=>n.classList.toggle('hidden',hasSession||skPending));
   document.querySelectorAll('.admin-nav, .admin-tabs').forEach(n=>n.classList.toggle('hidden',!skAdmin));
   document.querySelectorAll('.admin-tabs [data-view]').forEach(b=>{const active=b.dataset.view===view;b.classList.toggle('active',active);b.setAttribute('aria-current',active?'page':'false');});
-  document.querySelectorAll('.headnav [data-view]').forEach(n=>n.setAttribute('aria-current',n.dataset.view===view?'page':'false'));
+  document.querySelectorAll('.headnav [data-view]').forEach(n=>n.setAttribute('aria-current',n.dataset.view===(['account','my-businesses','profile'].includes(view)?'account':view)?'page':'false'));
+  document.querySelectorAll('.sk-profile-tabs [data-view]').forEach(n=>n.setAttribute('aria-current',n.dataset.view===view?'page':'false'));
   if(updateUrl && location.hash!=='#'+view)history.pushState({view},'', '#'+view);
   window.scrollTo(0,0);
-  if(view==='profile'){window.SK_PROFILE?.load();window.SK_DELETION?.refreshMy();}
+  if(view==='profile'){void loadSafeBusinessProfile();}
+  if(view==='account'){void loadPersonalAccount();}
   if(view==='market')loadMarketplace();
   if(view==='my-listings')loadMyListings();
   if(view==='my-businesses')loadMyBusinesses();
@@ -60,6 +62,22 @@ function performShow(view,updateUrl=true){
   if(view==='admin-home'||view==='admin-activity')window.SK_ADMIN_HOME?.load(view);
   if(view==='help')window.SK_HELP?.load();
 }
+
+async function loadPersonalAccount(){
+ const email=document.getElementById('account-login-email'),info=document.getElementById('account-status');
+ try{const user=await window.SK_AUTH.getAccountIdentity();email.textContent=user?.email||'Keine Anmeldeadresse gefunden';info.textContent='';}
+ catch(e){email.textContent='Nicht verfügbar';info.textContent='Benutzerkonto konnte nicht geladen werden: '+e.message;}
+}
+async function loadSafeBusinessProfile(){
+ const notice=document.getElementById('multi-business-profile-notice'),body=document.getElementById('legacy-business-profile-content');
+ body.classList.add('hidden');notice.classList.add('hidden');
+ try{
+   const businesses=await window.SK_AUTH.listMyBusinesses();
+   if(businesses.length!==1){notice.classList.remove('hidden');return;}
+   body.classList.remove('hidden');window.SK_PROFILE?.load();window.SK_DELETION?.refreshMy();
+ }catch(e){notice.classList.remove('hidden');notice.querySelector('p').textContent='Betriebsdaten konnten nicht geladen werden: '+e.message;}
+}
+
 async function logout(){
  if(currentScreen==='profile'&&window.SK_PROFILE?.hasPending()){
    if(!(await window.SK_PROFILE.beforeLeave()))return;
@@ -152,7 +170,7 @@ function modal(title,html){document.getElementById('dialog-title').textContent=t
 
 async function loadMyBusinesses(){
  const root=document.getElementById('my-businesses-list');root.textContent='Betriebe werden geladen …';
- try{const rows=await window.SK_AUTH.listMyBusinesses();root.innerHTML=rows.length?rows.map(b=>`<div class="panel" style="margin:0 0 12px"><strong>${esc(b.company_name)}</strong><p>${esc(b.city)} · ${esc(b.country)} · ${esc(b.status)} / ${esc(b.review_state||'–')}</p><small>${b.status==='Freigeschaltet'?'Für Marktplatz freigegeben':'Annette muss diesen Betrieb separat freigeben; keine automatische Abo-Zuordnung.'}</small>${b.review_state==='changes_requested'?`<p role="alert">Nachbesserung: ${esc(b.review_message||'Bitte Angaben ergänzen')}</p><button class="subtle-btn" data-rework-business="${esc(b.id)}">Nachbessern und erneut einreichen</button>`:''}</div>`).join(''):'<p>Keine Betriebe zugeordnet.</p>';}
+ try{const rows=await window.SK_AUTH.listMyBusinesses();root.innerHTML=rows.length?rows.map(b=>`<div class="panel" style="margin:0 0 12px"><strong>${esc(b.company_name)}</strong><p>${esc(b.city)} · ${esc(b.country)} · ${esc(b.status)} / ${esc(b.review_state||'–')}</p><small>${b.status==='Freigeschaltet'?'Für Marktplatz freigegeben':'Annette muss diesen Betrieb separat freigeben; keine automatische Abo-Zuordnung.'}</small>${rows.length===1?'<p><button class="subtle-btn" data-view="profile">Betriebsprofil bearbeiten</button></p>':'<p><small>Einzelne Betriebsprofile bearbeiten: folgt nach der eindeutigen Betriebs-ID-Anbindung.</small></p>'}${b.review_state==='changes_requested'?`<p role="alert">Nachbesserung: ${esc(b.review_message||'Bitte Angaben ergänzen')}</p><button class="subtle-btn" data-rework-business="${esc(b.id)}">Nachbessern und erneut einreichen</button>`:''}</div>`).join(''):'<p>Keine Betriebe zugeordnet.</p>';}
  catch(e){root.textContent='Betriebe konnten nicht geladen werden: '+e.message;}
 }
 document.getElementById('my-businesses-list').addEventListener('click',async e=>{

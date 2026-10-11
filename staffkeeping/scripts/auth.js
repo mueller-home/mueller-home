@@ -169,6 +169,7 @@
  }
  async function safeEvaluate(){try{await evaluate();}catch(e){msg('auth-message','Prüfung fehlgeschlagen: '+e.message);if(!recoveryMode)ui().logoutView();else showRecovery();}}
  window.SK_AUTH={
+  async getAccountIdentity(){const user=await verifiedCurrentUser();if(!user)throw Error('Bitte anmelden.');return {email:user.email||''};},
   async listMyBusinesses(){
     const user=await verifiedCurrentUser();if(!user)throw Error('Bitte anmelden.');
     const {data:members,error:me}=await db.from('sk_business_members').select('business_id').eq('user_id',user.id);if(me)throw me;
