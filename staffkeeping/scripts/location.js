@@ -145,7 +145,7 @@
  });
  window.SK_LOCATION={load,addressSaved,showAdmin};
 })();
-// StaffKeeping 0.33.1.4 – wiederverwendbarer Karteneditor für betriebs-ID-basierte Formulare.
+// StaffKeeping 0.33.1.5 – wiederverwendbarer Karteneditor für betriebs-ID-basierte Formulare.
 (function(){
   const existing=window.SK_LOCATION||{};
   let editor=null;
@@ -175,6 +175,8 @@
     const clear=()=>{state.position=null;state.addressKey=null;state.source=null;if(state.marker)state.marker.setMap(null);state.marker=null;};
     async function markerAt(lat,lng,source){
       const maps=await mapsReady();if(!live())return;
+      lat=Number(lat);lng=Number(lng);
+      if(!Number.isFinite(lat)||!Number.isFinite(lng)||Math.abs(lat)>90||Math.abs(lng)>180)throw Error('Ungültige Standortkoordinaten. Bitte Adresse erneut ermitteln.');
       if(!state.map)state.map=new maps.Map(root,{center:{lat,lng},zoom:16,streetViewControl:false,mapTypeControl:false});
       if(state.marker)state.marker.setMap(null);
       state.position={lat,lng};state.source=source;state.addressKey=addressKey(fields(form));
@@ -192,7 +194,7 @@
         if(snapshot!==addressKey(fields(form)))return say('Adresse wurde geändert. Bitte Standort erneut ermitteln.');
         if(!results?.length)throw Error('Google hat die Adresse nicht gefunden.');
         const pos=results[0].geometry.location;
-        await markerAt(pos.lat(),pos.lng,'geocoded');say('Standort ermittelt. Bitte Position prüfen und dann Betriebsprofil speichern.');
+        await markerAt(pos.lat(),pos.lng(),'geocoded');say('Standort ermittelt. Bitte Position prüfen und dann Betriebsprofil speichern.');
       }catch(e){if(live())say('Standort nicht ermittelt: '+e.message);}
     }
     form.querySelectorAll('[name="country"],[name="postal_code"],[name="city"],[name="street"],[name="house_number"]').forEach(el=>el.addEventListener('input',()=>{if(!live())return;clear();say('Adresse verändert: Standort bitte neu ermitteln.');}));
