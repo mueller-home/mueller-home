@@ -164,6 +164,36 @@
     });
     return window.__skMapPromise;
   }
+  // 0.33.1.6.1: Keine Land-/Regions-Fallbacks als Betriebsstandort akzeptieren.
+  const GEOCODE_TIMEOUT_MS=10000;
+  function validGeocode(result, requested){
+    if(!result?.geometry?.location)return false;
+    const types=result.types||[];
+    const components=result.address_components||[];
+    const country=components.find(c=>c.types?.includes('country'))?.short_name;
+    if(country&&country.toUpperCase()!==requested.country.toUpperCase())return false;
+    const broad=types.some(t=>['country','administrative_area_level_1','administrative_area_level_2','political'].includes(t));
+    const detailed=types.some(t=>['street_address','route','premise','subpremise','establishment','point_of_interest','postal_code','locality','sublocality','intersection'].includes(t));
+    if(broad&&!detailed)return false;
+    const streetWanted=Boolean(norm(requested.street));
+    if(streetWanted){
+      // A postal-code or entire-country fallback is NOT a street match.
+      const hasRoute=components.some(c=>c.types?.includes('route'));
+      const exact=types.some(t=>['street_address','route','premise','subpremise','intersection'].includes(t));
+      return (hasRoute||exact)&&result.geometry.location_type!=='APPROXIMATE';
+    }
+    // PLZ/Ort bewusst erlaubt, aber keine reine Landes-/Kantonsposition.
+    return detailed&&components.some(c=>c.types?.includes('locality')||c.types?.includes('postal_code'));
+  }
+  async function geocodeWithTimeout(maps,requested){
+    let timer;
+    try{
+      return await Promise.race([
+        new maps.Geocoder().geocode({address:address(requested),componentRestrictions:{country:requested.country}}),
+        new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Zeitüberschreitung bei Google Maps (10 Sekunden). Bitte erneut versuchen.')),GEOCODE_TIMEOUT_MS);})
+      ]);
+    }finally{clearTimeout(timer);}
+  }
   async function editBusiness(form,b={}){
     if(!form)return;
     const root=form.querySelector('#sk-edit-business-map'),status=form.querySelector('#sk-edit-location-status');
@@ -202,13 +232,13 @@
       state.loading=true;say('Standort wird automatisch ermittelt …');
       try{
         const maps=await mapsReady();
-        const {results}=await new maps.Geocoder().geocode({address:address(snapshot),componentRestrictions:{country:snapshot.country}});
+        const {results}=await geocodeWithTimeout(maps,snapshot);
         if(!live()||serial!==state.serial||snapshotKey!==addressKey(fields(form)))return;
-        if(!results?.length)throw Error('Google hat die Adresse nicht gefunden.');
+        if(!results?.length||!validGeocode(results[0],snapshot))throw Error('Google hat keinen ausreichend genauen Treffer für die eingegebene Adresse geliefert. Bitte Adresse kontrollieren oder Marker nach einer gültigen Ermittlung korrigieren.');
         const pos=results[0].geometry.location;
         if(await markerAt(pos.lat(),pos.lng(),'geocoded',snapshotKey))say('Standort automatisch ermittelt. Bitte Position prüfen und anschliessend speichern.');
       }catch(e){if(live()&&serial===state.serial)say('Standort konnte nicht ermittelt werden: '+e.message+' Du kannst die Ermittlung erneut starten.');}
-      finally{if(live()&&serial===state.serial)state.loading=false;}
+      finally{if(live()&&serial===state.serial){state.loading=false;if(snapshotKey!==addressKey(fields(form)))say('Adresse wurde während der Ermittlung geändert. Bitte Standort erneut ermitteln.');}}
     }
     function scheduleGeo(){
       if(!live())return;
@@ -260,9 +290,9 @@
       const maps=await mapsReady();if(!same())return;
       let lat=Number(b.latitude),lng=Number(b.longitude),preview=false;
       if(b.latitude==null||b.longitude==null||!Number.isFinite(lat)||!Number.isFinite(lng)){
-        const {results}=await new maps.Geocoder().geocode({address:address(b),componentRestrictions:{country:b.country}});
+        const {results}=await geocodeWithTimeout(maps,b);
         if(!same())return;
-        if(!results?.length)throw Error('Kein Standort hinterlegt; Adresse nicht gefunden.');
+        if(!results?.length||!validGeocode(results[0],b))throw Error('Keine ausreichend genaue Standort-Vorschau für diese Adresse gefunden.');
         lat=results[0].geometry.location.lat();lng=results[0].geometry.location.lng();preview=true;
       }
       const m=new maps.Map(root,{center:{lat,lng},zoom:b.street?16:11,streetViewControl:false,mapTypeControl:false});
