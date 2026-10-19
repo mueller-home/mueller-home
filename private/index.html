@@ -1,692 +1,106 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Link-Sammlung</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #0f0f23;
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(102, 126, 234, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 0%, rgba(118, 75, 162, 0.15) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(102, 126, 234, 0.15) 0px, transparent 50%),
-                radial-gradient(at 0% 100%, rgba(118, 75, 162, 0.15) 0px, transparent 50%);
-            min-height: 100vh;
-            padding: 20px;
-            color: #e2e8f0;
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-            animation: fadeInDown 0.6s ease-out;
-        }
-
-        h1 {
-            font-size: 3rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 10px;
-            letter-spacing: -1px;
-        }
-
-        .subtitle {
-            color: #94a3b8;
-            font-size: 1.1rem;
-        }
-
-        /* Tab Navigation */
-        .tabs {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
-            justify-content: center;
-            animation: fadeIn 0.8s ease-out 0.2s both;
-        }
-
-        .tab-button {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 15px 35px;
-            border-radius: 12px;
-            color: #cbd5e1;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .tab-button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-            transition: left 0.5s;
-        }
-
-        .tab-button:hover::before {
-            left: 100%;
-        }
-
-        .tab-button:hover {
-            transform: translateY(-2px);
-            border-color: rgba(102, 126, 234, 0.5);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
-        }
-
-        .tab-button.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-color: transparent;
-            color: white;
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-        }
-
-        /* Tab Content */
-        .tab-content {
-            display: none;
-            animation: fadeInUp 0.5s ease-out;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        /* Card Grid */
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 25px;
-            margin-bottom: 30px;
-        }
-
-        .card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            padding: 25px;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            transform: scaleX(0);
-            transition: transform 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            border-color: rgba(102, 126, 234, 0.3);
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
-        }
-
-        .card:hover::before {
-            transform: scaleX(1);
-        }
-
-        .card-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #f1f5f9;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .card-icon {
-            font-size: 1.8rem;
-        }
-
-        .sub-card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
-        }
-
-        .sub-card:last-child {
-            margin-bottom: 0;
-        }
-
-        .sub-card-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #cbd5e1;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .links {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .link-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            background: rgba(102, 126, 234, 0.05);
-            border-radius: 8px;
-            border: 1px solid rgba(102, 126, 234, 0.1);
-            transition: all 0.2s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .link-item::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 3px;
-            background: linear-gradient(180deg, #667eea, #764ba2);
-            transform: scaleY(0);
-            transition: transform 0.2s ease;
-        }
-
-        .link-item:hover {
-            background: rgba(102, 126, 234, 0.1);
-            border-color: rgba(102, 126, 234, 0.3);
-            transform: translateX(5px);
-        }
-
-        .link-item:hover::before {
-            transform: scaleY(1);
-        }
-
-        .link-item a {
-            color: #e2e8f0;
-            text-decoration: none;
-            font-weight: 500;
-            flex: 1;
-            transition: color 0.2s;
-        }
-
-        .link-item:hover a {
-            color: #667eea;
-        }
-
-        .link-icon {
-            font-size: 1.2rem;
-            opacity: 0.7;
-        }
-
-        .external-icon {
-            opacity: 0;
-            transition: opacity 0.2s;
-            font-size: 0.9rem;
-        }
-
-        .link-item:hover .external-icon {
-            opacity: 0.5;
-        }
-
-        .placeholder {
-            color: #64748b;
-            font-style: italic;
-            padding: 12px 16px;
-            text-align: center;
-            opacity: 0.6;
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
-
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2rem;
-            }
-
-            .tabs {
-                gap: 10px;
-            }
-
-            .tab-button {
-                padding: 12px 25px;
-                font-size: 1rem;
-            }
-
-            .card-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar {
-            width: 10px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, #667eea, #764ba2);
-            border-radius: 5px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(180deg, #7c8ef5, #8b5cb8);
-        }
-    </style>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light"><title>Link-Sammlung · Dein digitaler Heimathafen</title>
+<style>
+:root{--bg:#f2f3f5;--paper:#fff;--ink:#25272c;--muted:#74777f;--line:#e1e3e8;--accent:#d15c35;--primary:#292c33}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px}button,input,select{font:inherit}button,a,input,select{touch-action:manipulation}button{cursor:pointer}button:disabled{opacity:.5;cursor:wait}a{color:inherit}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #d58b69;outline-offset:3px}[hidden]{display:none!important}.sidebar{width:248px;position:fixed;inset:0 auto 0 0;background:#23262d;color:#f0f1f4;padding:34px 23px;display:flex;flex-direction:column}.brand{display:flex;align-items:center;gap:12px;font-size:19px;font-weight:750;letter-spacing:-.5px}.brandmark{display:grid;place-items:center;width:36px;height:36px;border:1px solid #626773;border-radius:11px;font-size:24px;color:#ead8b5}.eyebrow{font-size:11px;font-weight:700;letter-spacing:1.8px;text-transform:uppercase}.nav-label{color:#9da3ae;margin:58px 12px 17px}.nav{display:grid;gap:7px}.nav button{background:none;color:#c0c4ce;border:0;display:flex;align-items:center;gap:13px;padding:14px;border-radius:10px;text-align:left}.nav button.active{background:#f0f1f4;color:#292c33;font-weight:650}.nav button:hover:not(.active){background:#ffffff0d;color:white}.nav .count{margin-left:auto;font-size:12px;opacity:.65}.nav-icon{width:20px;text-align:center}.side-bottom{margin-top:auto;border-top:1px solid #ffffff23;padding-top:23px}.side-note{font-size:12px;line-height:1.7;color:#a3a9b5}.side-bottom button{background:none;border:0;color:#e3e6ec;padding:12px 0;text-align:left}.main{margin-left:248px;padding:30px 52px 24px;max-width:1700px}.topbar{display:flex;align-items:center;justify-content:space-between;gap:14px;border-bottom:1px solid var(--line);padding-bottom:24px}.breadcrumb{color:var(--muted);font-size:12px}.breadcrumb b{color:var(--ink);font-weight:500}.actions{display:flex;gap:9px;align-items:center}.btn{border:1px solid var(--line);border-radius:9px;padding:10px 15px;background:var(--paper);color:var(--ink);font-size:13px;font-weight:600}.btn.primary{background:var(--primary);border-color:var(--primary);color:white}.btn:hover{filter:brightness(.96)}.hero{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:47px 0 36px}.hero .eyebrow{color:var(--accent);margin-bottom:15px}h1{font-size:clamp(32px,3.6vw,51px);letter-spacing:-2px;line-height:1.12;margin:0 0 16px;font-weight:650}h1 em{font-family:Georgia,serif;font-weight:400;color:var(--accent)}.intro{color:var(--muted);line-height:1.7;margin:0}.hero-art{flex-shrink:0;width:170px;height:145px;position:relative;display:grid;place-items:center}.orbit{position:absolute;width:145px;height:145px;border:1px solid #d9dce3;border-radius:50%}.orbit:after{content:'';position:absolute;inset:16px;border:1px dashed #d9dce3;border-radius:50%}.art-tile{position:relative;background:#e7e9ef;transform:rotate(-12deg);border:1px solid #cdd1dc;border-radius:19px;padding:23px;font-size:43px;color:var(--primary);box-shadow:8px 12px 0 #dce0e857}.spark{position:absolute;right:1px;top:6px;color:var(--accent);font-size:30px}.toolbar{display:flex;gap:14px;align-items:center;margin-bottom:28px}.search{display:flex;gap:11px;align-items:center;background:white;border:1px solid #dce0e7;border-radius:11px;padding:0 16px;flex:1;box-shadow:0 2px 3px #23262d03}.search span{font-size:22px;color:#8a8f9b}.search input{width:100%;border:0;outline:none;background:none;padding:15px 0;font-size:14px;color:var(--ink)}.search kbd{font-size:11px;color:#999;background:#f5f6f8;padding:3px 5px;border:1px solid var(--line);border-radius:4px}.sectionhead{display:flex;align-items:center;justify-content:space-between;margin:0 0 17px}.sectionhead h2{font-size:19px;margin:0;letter-spacing:-.5px}.sectionhead span{font-size:12px;color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;align-items:start}.card{background:white;border:1px solid var(--line);border-radius:15px;padding:22px 20px 10px;box-shadow:0 4px 20px #23262d03}.cardhead{display:flex;align-items:center;gap:12px;margin-bottom:17px}.category-icon{display:grid;place-items:center;width:39px;height:39px;background:#eef0f5;border-radius:11px;font-size:21px}.card:nth-child(3n+2) .category-icon{background:#fbefe5}.cardhead h3{font-size:16px;margin:0;font-weight:650;letter-spacing:-.25px}.cardhead small{font-size:11px;color:var(--muted);display:block;margin-top:4px}.row{display:flex;gap:4px;align-items:center;border-top:1px solid #eef0f4;min-width:0}.link{display:flex;gap:11px;align-items:center;flex:1;text-decoration:none;padding:15px 2px;min-width:0}.link:hover .link-title{color:var(--accent)}.link-icon{font-size:16px;flex-shrink:0;opacity:.85}.link-text{flex:1;min-width:0}.link-title{font-size:13px;line-height:1.5;display:block;font-weight:550;overflow-wrap:anywhere}.domain{font-size:11px;display:block;color:#858b97;margin-top:3px;overflow-wrap:anywhere}.arrow{color:#a0a6b2;margin:0 3px}.edit{border:0;background:none;color:#a4aab6;padding:9px 6px;font-size:17px;border-radius:5px}.edit:hover{background:#f2f3f6}.edit{font-size:12px;color:var(--primary)}.group{font-size:11px;color:var(--muted);margin:18px 0 6px;line-height:1.5}.empty{padding:45px 20px;text-align:center;grid-column:1/-1;color:var(--muted);border:1px dashed #d6dbe4;border-radius:13px;line-height:1.8}.footer{display:flex;justify-content:space-between;margin-top:37px;padding:20px 0;border-top:1px solid var(--line);color:#858c99;font-size:11px;gap:15px}.status{color:var(--muted);font-size:12px;line-height:1.7;margin-bottom:15px}.status.error{color:#a43c2f}dialog{border:1px solid var(--line);border-radius:17px;padding:28px;max-width:520px;width:calc(100% - 32px);color:var(--ink);box-shadow:0 20px 80px #171a2233}dialog::backdrop{background:#171a2288;backdrop-filter:blur(3px)}dialog h2{margin:0 0 10px;font-size:24px;letter-spacing:-.7px}dialog p{font-size:13px;color:var(--muted);line-height:1.7}label{display:block;font-size:12px;font-weight:650;margin-top:17px}label input,label select{display:block;margin-top:7px;width:100%;border:1px solid #d5dae3;border-radius:8px;padding:11px;background:#fff;color:var(--ink)}.formactions{display:flex;gap:9px;margin-top:25px;justify-content:flex-end;flex-wrap:wrap}.danger{margin-right:auto;color:#ad3e2f}.formerror{color:#ad3e2f;font-size:13px;line-height:1.6;margin-top:14px}.two{display:grid;grid-template-columns:1fr 1fr;gap:15px}.setup-list{font-size:13px;line-height:1.8;padding-left:20px}.code{font:12px monospace;background:#eef0f4;padding:4px;overflow-wrap:anywhere}.toast{position:fixed;bottom:25px;left:calc(50% + 100px);transform:translateX(-50%);padding:13px 22px;background:var(--primary);color:white;border-radius:10px;font-size:13px;box-shadow:0 4px 20px #0002;z-index:10}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+@media(min-width:1450px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}@media(max-width:1050px){.main{padding:26px}.sidebar{width:210px;padding:30px 17px}.main{margin-left:210px}.grid{gap:15px}.card{padding:18px 15px 8px}.hero-art{width:140px}}@media(max-width:760px){.sidebar{position:static;width:auto;padding:20px 20px 15px}.brand{font-size:18px}.nav-label,.side-bottom{display:none}.nav{display:flex;gap:6px;margin-top:21px;overflow:auto}.nav button{flex:1;padding:12px 10px;justify-content:center;font-size:12px;gap:6px;white-space:nowrap}.nav .count{display:none}.main{margin:0;padding:20px}.topbar{padding-bottom:18px}.breadcrumb{font-size:11px}.actions .btn{padding:9px 10px;font-size:12px}.hero{padding:32px 0 22px}.hero-art{display:none}h1{letter-spacing:-1.4px}.intro{font-size:13px}.toolbar{gap:8px}.search{padding:0 12px}.search kbd{display:none}.grid{grid-template-columns:1fr}.toast{left:50%;width:max-content;max-width:90%}.footer{font-size:10px}.two{grid-template-columns:1fr;gap:0}}@media(prefers-reduced-motion:no-preference){.card{animation:arrive .3s ease-out}.btn,.link-title{transition:color .15s,background .15s}@keyframes arrive{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}}
+</style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🎯 Link-Sammlung</h1>
-            <p class="subtitle">Deine persönliche Navigation</p>
-        </header>
-
-        <!-- Tab Navigation -->
-        <div class="tabs">
-            <button class="tab-button active" data-tab="wir">👨‍👩‍👧‍👦 Wir</button>
-            <button class="tab-button" data-tab="financial">💰 Financial</button>
-            <button class="tab-button" data-tab="carmen">💼 Carmen</button>
-            <button class="tab-button" data-tab="chris">🚀 Chris</button>
-        </div>
-
-        <!-- Wir Tab -->
-        <div class="tab-content active" id="wir">
-            <div class="card-grid">
-                <div class="card">
-                    <div class="card-title">
-                        <span class="card-icon">🏠</span>
-                        Privat & Familie
-                    </div>
-                    <div class="links">
-                        <div class="link-item">
-                            <span class="link-icon">📄</span>
-                            <a href="shortcuts://run-shortcut?name=UnsereDokumenteVerträge" target="_blank">Unsere Dokumente & Verträge</a>
-                            <span class="external-icon">↗</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">
-                        <span class="card-icon">✈️</span>
-                        Reisen & Ferien
-                    </div>
-                    <div class="links">
-                        <div class="link-item">
-                            <span class="link-icon">🌍</span>
-                            <a href="http://muellers-unterwegs.ch" target="_blank">Müllers Unterwegs</a>
-                            <span class="external-icon">↗</span>
-                        </div>
-                        <div class="link-item">
-                            <span class="link-icon">🐧</span>
-                            <a href="https://findpenguins.com/muellers-unterwegs" target="_blank">FindPenguins</a>
-                            <span class="external-icon">↗</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Financial Tab -->
-        <div class="tab-content" id="financial">
-            <div class="card-grid">
-                <div class="card">
-                    <div class="card-title">
-                        <span class="card-icon">💡</span>
-                        Allgemein
-                    </div>
-                    <div class="links">
-                        <div class="link-item">
-                            <span class="link-icon">🔧</span>
-                            <a href="shortcuts://run-shortcut?name=DefiToolsReferralLinks" target="_blank">Defi Tools und Referral Links</a>
-                            <span class="external-icon">↗</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">
-                        <span class="card-icon">📊</span>
-                        TLN/VOW
-                    </div>
-                    
-                    <div class="sub-card">
-                        <div class="links">
-                            <div class="link-item">
-                                <span class="link-icon">🏠</span>
-                                <a href="https://letsgofree.me/tlnvow" target="_blank">Startseite</a>
-                                <span class="external-icon">↗</span>
-                            </div>
-                            <div class="link-item">
-                                <span class="link-icon">🌐</span>
-                                <a href="https://tln.dapp.com" target="_blank">dApp</a>
-                                <span class="external-icon">↗</span>
-                            </div>
-                            <div class="link-item">
-                                <span class="link-icon">✍️</span>
-                                <a href="https://letsgofree.me/tlnvow/private/tlnloans" target="_blank">Unsere Loans, Erfassung</a>
-                                <span class="external-icon">↗</span>
-                            </div>
-                            <div class="link-item">
-                                <span class="link-icon">🎥</span>
-                                <a href="shortcuts://run-shortcut?name=TLN_Online_Präsentation" target="_blank">Aufzeichnung Online-Präsentation</a>
-                                <span class="external-icon">↗</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">
-                        <span class="card-icon">🏛️</span>
-                        dao1
-                    </div>
-                    
-                    <div class="sub-card">
-                        <div class="links">
-                            <div class="link-item">
-                                <span class="link-icon">🏠</span>
-                                <a href="https://letsgofree.me/dao1" target="_blank">Startseite</a>
-                                <span class="external-icon">↗</span>
-                            </div>
-                            <div class="link-item">
-                                <span class="link-icon">📊</span>
-                                <a href="https://aptmdao.io/dashboard" target="_blank">APTMDAO Dashboard</a>
-                                <span class="external-icon">↗</span>
-                            </div>
-                            <div class="link-item">
-                                <span class="link-icon">🌐</span>
-                                <a href="https://app.dao1.ai" target="_blank">dApp app.dao1.ai</a>
-                                <span class="external-icon">↗</span>
-                            </div>
-                            <div class="link-item">
-                                <span class="link-icon">🪙</span>
-                                <a href="shortcuts://run-shortcut?name=dao1-NotizTokenAdressen" target="_blank">Token-Adressen</a>
-                                <span class="external-icon">↗</span>
-                            </div>
-                            <div class="link-item">
-                                <span class="link-icon">🖼️</span>
-                                <a href="https://nfts.apertum.io" target="_blank">Übersicht NFT's</a>
-                                <span class="external-icon">↗</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">
-                        <span class="card-icon">💱</span>
-                        TagMarkets
-                    </div>
-                    
-                    <div class="sub-card">
-                        <div class="links">
-                            <div class="link-item">
-                                <span class="link-icon">🏠</span>
-                                <a href="https://letsgofree.me/neofx" target="_blank">Startseite</a>
-                                <span class="external-icon">↗</span>
-                            </div>
-                            <div class="link-item">
-                                <span class="link-icon">🏦</span>
-                                <a href="https://portal.tagmarkets.com" target="_blank">Portal TagMarkets</a>
-                                <span class="external-icon">↗</span>
-                            </div>
-                            <div class="link-item">
-                                <span class="link-icon">🔐</span>
-                                <a href="https://exfusion.ibportal.io" target="_blank">IB-Portal</a>
-                                <span class="external-icon">↗</span>
-                            </div>
-                            <div class="link-item">
-                                <span class="link-icon">📊</span>
-                                <a href="https://docs.google.com/spreadsheets/d/1JseyzsRTi5lNeX6dvGiTKYOM849NJ6fPAO4P57-2BA8/edit?gid=0#gid=0" target="_blank">GoogleSheets Trading-Statistik</a>
-                                <span class="external-icon">↗</span>
-                            </div>
-                            <div class="link-item">
-                                <span class="link-icon">📝</span>
-                                <a href="shortcuts://run-shortcut?name=neoFX-Notizen" target="_blank">Notizen</a>
-                                <span class="external-icon">↗</span>
-                            </div>
-                            <div class="link-item">
-                                <span class="link-icon">📚</span>
-                                <a href="https://www.letsgofree.me/neofx/manual" target="_blank">Anleitungen</a>
-                                <span class="external-icon">↗</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">
-                        <span class="card-icon">🔷</span>
-                        NEOBank! | OneTrade
-                    </div>
-                    
-                    <div class="sub-card">
-                        <div class="links">
-                            <div class="link-item">
-                                <span class="link-icon">🏠</span>
-                                <a href="https://www.letsgofree.me/arbcore/" target="_blank">Startseite</a>
-                                <span class="external-icon">↗</span>
-                            </div>
-                            <div class="link-item">
-                                <span class="link-icon">🏦</span>
-                                <a href="https://neo-b.ltd" target="_blank">NEOBank!</a>
-                                <span class="external-icon">↗</span>
-                            </div>
-                            <div class="link-item">
-                                <span class="link-icon">📱</span>
-                                <a href="https://onetrade.ltd/login" target="_blank">App OneTrade</a>
-                                <span class="external-icon">↗</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Carmen Tab -->
-        <div class="tab-content" id="carmen">
-            <div class="card-grid">
-                <div class="card">
-                    <div class="card-title">
-                        <span class="card-icon">🎭</span>
-                        Pott&Pott
-                    </div>
-
-                    <div class="sub-card">
-                        <div class="sub-card-title">👤 Face Reading (PW: pott)</div>
-                        <div class="links">
-                            <div class="link-item">
-                                <span class="link-icon">📁</span>
-                                <a href="https://mueller-synology.DSCloud.me:5001/d/s/15obaZFYxgDv0ni3568PgcXDnRxSCF8A/64j9SKpTH7B3gLyF7mMamd-h8DwyoqnP-rrvgHZHRxww" target="_blank">Face Reading Aufzeichnungen</a>
-                                <span class="external-icon">↗</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="sub-card">
-                        <div class="sub-card-title">📱 Social Media (PW: pott)</div>
-                        <div class="links">
-                            <div class="link-item">
-                                <span class="link-icon">📁</span>
-                                <a href="https://mueller-synology.DSCloud.me:5001/d/s/15obarrQNQbcUzWGpRTZCy5S59vDtdBf/qLE47qFlGvNNA32m56Z1mIdEKuATC-8l-bbXAcMsm5gw" target="_blank">Social Media Aufzeichnungen</a>
-                                <span class="external-icon">↗</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="sub-card">
-                        <div class="sub-card-title">🎯 Verkaufs-Training (PW: pott)</div>
-                        <div class="links">
-                            <div class="link-item">
-                                <span class="link-icon">📁</span>
-                                <a href="https://mueller-synology.DSCloud.me:5001/d/s/15obbDGR6WbkDc04ckZKEBBSmVxuWYGH/-RGuFL8ft7-4Z0gy2WCX8FBJegu6i-do-irXgueMm5gw" target="_blank">Verkaufs-Training Aufzeichnungen</a>
-                                <span class="external-icon">↗</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Chris Tab -->
-        <div class="tab-content" id="chris">
-            <div class="card-grid">
-                <div class="card">
-                    <div class="card-title">
-                        <span class="card-icon">₿</span>
-                        DeFi Coaching
-                    </div>
-                    <div class="links">
-                        <div class="link-item">
-                            <span class="link-icon">🏠</span>
-                            <a href="https://letsgofree.me" target="_blank">Startseite</a>
-                            <span class="external-icon">↗</span>
-                        </div>
-                        <div class="link-item">
-                            <span class="link-icon">🎓</span>
-                            <a href="https://letsgofree.me/coaching" target="_blank">Coaching</a>
-                            <span class="external-icon">↗</span>
-                        </div>
-                        <div class="link-item">
-                            <span class="link-icon">🎁</span>
-                            <a href="https://letsgofree.me/freebies" target="_blank">Freebies</a>
-                            <span class="external-icon">↗</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-title">
-                        <span class="card-icon">💼</span>
-                        Business
-                    </div>
-                    <div class="links">
-                        <div class="link-item">
-                            <span class="link-icon">👥</span>
-                            <a href="https://www.mueller-home.me/staffkeeping" target="_blank">StaffKeeping</a>
-                            <span class="external-icon">↗</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Tab Switching
-        const tabButtons = document.querySelectorAll('.tab-button');
-        const tabContents = document.querySelectorAll('.tab-content');
-
-        tabButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const targetTab = button.dataset.tab;
-
-                // Remove active class from all buttons and contents
-                tabButtons.forEach(btn => btn.classList.remove('active'));
-                tabContents.forEach(content => content.classList.remove('active'));
-
-                // Add active class to clicked button and corresponding content
-                button.classList.add('active');
-                document.getElementById(targetTab).classList.add('active');
-
-                // Save last active tab to localStorage
-                localStorage.setItem('activeTab', targetTab);
-            });
-        });
-
-        // Restore last active tab on page load
-        window.addEventListener('load', () => {
-            const lastActiveTab = localStorage.getItem('activeTab');
-            if (lastActiveTab) {
-                const button = document.querySelector(`[data-tab="${lastActiveTab}"]`);
-                if (button) {
-                    button.click();
-                }
-            }
-        });
-
-        // Add keyboard navigation
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-                const currentActive = document.querySelector('.tab-button.active');
-                const buttons = Array.from(tabButtons);
-                const currentIndex = buttons.indexOf(currentActive);
-                
-                let newIndex;
-                if (e.key === 'ArrowLeft') {
-                    newIndex = currentIndex > 0 ? currentIndex - 1 : buttons.length - 1;
-                } else {
-                    newIndex = currentIndex < buttons.length - 1 ? currentIndex + 1 : 0;
-                }
-                
-                buttons[newIndex].click();
-            }
-        });
-    </script>
-</body>
-</html>
+<aside class="sidebar"><div class="brand"><span class="brandmark" aria-hidden="true">⌘</span>Link-Sammlung<span style="color:#c9a67d">.</span></div><div class="eyebrow nav-label">Deine Bereiche</div><nav class="nav" aria-label="Link-Bereiche"></nav><div class="side-bottom"><div class="side-note">Ein guter Ort für alles,<br>was du wiederfinden willst.</div><button id="setupButton">⚙ Einrichtung & Hilfe</button></div></aside>
+<main class="main"><div class="topbar"><div class="breadcrumb">Dein Heimathafen &nbsp; / &nbsp; <b id="crumb">Wir</b></div><div class="actions"><button class="btn" id="mobileSetup" aria-label="Einrichtung und Hilfe">⚙</button><button class="btn" id="authButton">♙ &nbsp; Anmelden</button><button class="btn primary" id="addButton" hidden>＋ Link ergänzen</button></div></div>
+<section class="hero"><div><div class="eyebrow">Weniger suchen. Mehr finden.</div><h1>Alles Wichtige.<br><em>Ein guter Platz.</em></h1><p class="intro">Deine Links für Alltag, Arbeit und alles dazwischen.<br>Aufgeräumt. Griffbereit. Zuhause.</p></div><div class="hero-art" aria-hidden="true"><div class="orbit"></div><div class="art-tile">↗</div><span class="spark">✳</span></div></section>
+<div class="toolbar"><label class="sr-only" for="search">Alle Links durchsuchen</label><div class="search"><span aria-hidden="true">⌕</span><input id="search" type="search" placeholder="Alle Links durchsuchen …" autocomplete="off"><kbd>/</kbd></div></div>
+<div class="sectionhead"><h2 id="sectionTitle">Für uns.</h2><span id="resultCount"></span></div><div id="status" class="status" role="status" hidden></div><div id="cards" class="grid"></div><footer class="footer"><span>Deine persönliche Navigation.</span><span id="storageLabel">Deine Links. Immer griffbereit.</span></footer></main>
+<dialog id="loginDialog"><form id="loginForm"><h2>Willkommen zurück.</h2><p>Melde dich an, um deine Links zu ergänzen und zu bearbeiten.</p><label>E-Mail<input name="email" type="email" required autocomplete="username"></label><label>Passwort<input name="password" type="password" required autocomplete="current-password"></label><div id="loginError" class="formerror" role="alert"></div><div class="formactions"><button class="btn" type="button" data-close>Abbrechen</button><button class="btn primary" type="submit">Anmelden</button></div></form></dialog>
+<dialog id="editor"><form id="editForm"><h2 id="editorTitle">Link ergänzen</h2><label>Bezeichnung<input name="title" required maxlength="160"></label><label>Adresse<input name="url" required placeholder="https://… oder shortcuts://…" maxlength="3000"></label><div class="two"><label>Bereich<select name="tab"><option value="wir">Wir</option><option value="financial">Financial</option><option value="carmen">Carmen</option><option value="chris">Chris</option></select></label><label>Link-Symbol<input name="icon" maxlength="16" value="🔗"></label></div><label>Kategorie<input name="category" required list="categories" maxlength="100"></label><datalist id="categories"></datalist><div class="two"><label>Kategorie-Symbol<input name="category_icon" value="📁" maxlength="16"></label><label>Untergruppe (optional)<input name="subgroup" maxlength="160"></label></div><label>Reihenfolge<input name="position" type="number" min="0" max="100000" step="1" value="0" required></label><div id="editError" class="formerror" role="alert"></div><div class="formactions"><button type="button" class="btn danger" id="deleteButton" hidden>Löschen</button><button type="button" class="btn" data-close>Abbrechen</button><button type="submit" class="btn primary">Speichern</button></div></form></dialog>
+<dialog id="setupDialog"><h2>Deine Sammlung, editierbar.</h2><p>Die neue Oberfläche funktioniert sofort mit allen bestehenden Links. Für geräteübergreifende Änderungen richtest du einmal Supabase ein.</p><ol class="setup-list"><li>Supabase-Projekt erstellen. Unter <b>Authentication → Users</b> deinen Benutzer mit E-Mail und Passwort anlegen. Öffentliche Registrierungen deaktivieren.</li><li>Die Benutzer-UUID unten eintragen, das SQL herunterladen und im Supabase SQL Editor ausführen. Es legt eigene Tabellen, die 29 ursprünglichen Links und die Schreibrechte nur für diese UUID an.</li><li>In dieser HTML-Datei bei <span class="code">SUPABASE_URL</span> und <span class="code">SUPABASE_KEY</span> die Projekt-URL und den <b>Publishable Key</b> (alternativ Legacy-Anon-Key) eintragen. Keinen Secret- oder Service-Role-Key verwenden.</li><li>Die Datei auf deiner bestehenden Website ersetzen und über HTTPS öffnen. Danach mit „Anmelden“ bearbeiten.</li></ol><p><b>Sichtbarkeit:</b> Die Links bleiben öffentlich lesbar, einschliesslich der bisherigen Passwort-Hinweise. Das Login schützt ausschliesslich das Bearbeiten.</p><p id="setupState"></p><label for="ownerUid">Deine Benutzer-UUID aus Supabase Auth</label><input id="ownerUid" style="width:100%;padding:11px;margin-top:8px;border:1px solid #d5dae3;border-radius:8px" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"><div id="setupError" class="formerror" role="alert"></div><div class="formactions"><button class="btn" data-close>Schliessen</button><button class="btn primary" id="downloadSql">SQL herunterladen</button></div></dialog>
+<dialog id="discardDialog"><h2>Änderungen verwerfen?</h2><p>Du hast ungespeicherte Eingaben.</p><div class="formactions"><button class="btn" id="keepEditing">Weiter bearbeiten</button><button class="btn primary" id="discardChanges">Änderungen verwerfen</button></div></dialog>
+<div id="toast" class="toast" role="status" hidden></div>
+<script>
+'use strict';
+// Hier einmalig deine öffentlichen Supabase-Verbindungsdaten einsetzen.
+const SUPABASE_URL = 'https://owsagosijlkdgrwbcyzx.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_K3pONj7a9Kxr9mIzKqh65g_Gp5yYpz7';
+const SEED = [{"id": "3e0f6749-23ae-50cf-82f8-89f4b1b1c6c9", "tab": "wir", "category": "Privat & Familie", "category_icon": "🏠", "subgroup": "", "icon": "📄", "title": "Unsere Dokumente & Verträge", "url": "shortcuts://run-shortcut?name=UnsereDokumenteVerträge", "position": 0}, {"id": "f715c815-fb2b-5080-86fb-974afc7781da", "tab": "wir", "category": "Reisen & Ferien", "category_icon": "✈️", "subgroup": "", "icon": "🌍", "title": "Müllers Unterwegs", "url": "http://muellers-unterwegs.ch", "position": 1}, {"id": "6fef3ff3-b818-50c2-8822-73c009d85dc5", "tab": "wir", "category": "Reisen & Ferien", "category_icon": "✈️", "subgroup": "", "icon": "🐧", "title": "FindPenguins", "url": "https://findpenguins.com/muellers-unterwegs", "position": 2}, {"id": "796ff608-7c39-5497-9b6f-768585d4143a", "tab": "financial", "category": "Allgemein", "category_icon": "💡", "subgroup": "", "icon": "🔧", "title": "Defi Tools und Referral Links", "url": "shortcuts://run-shortcut?name=DefiToolsReferralLinks", "position": 3}, {"id": "c0c6670e-23d4-5a1e-950e-e91a5a0ec310", "tab": "financial", "category": "TLN/VOW", "category_icon": "📊", "subgroup": "", "icon": "🏠", "title": "Startseite", "url": "https://letsgofree.me/tlnvow", "position": 4}, {"id": "7d041fb2-9ee7-5101-acd8-62f68c167dab", "tab": "financial", "category": "TLN/VOW", "category_icon": "📊", "subgroup": "", "icon": "🌐", "title": "dApp", "url": "https://tln.dapp.com", "position": 5}, {"id": "7f5b5316-9104-530f-ae80-15580416591d", "tab": "financial", "category": "TLN/VOW", "category_icon": "📊", "subgroup": "", "icon": "✍️", "title": "Unsere Loans, Erfassung", "url": "https://letsgofree.me/tlnvow/private/tlnloans", "position": 6}, {"id": "4b2f5e32-c4fb-56dd-9693-74b70fcfb847", "tab": "financial", "category": "TLN/VOW", "category_icon": "📊", "subgroup": "", "icon": "🎥", "title": "Aufzeichnung Online-Präsentation", "url": "shortcuts://run-shortcut?name=TLN_Online_Präsentation", "position": 7}, {"id": "592ecb38-dd65-535f-97ae-ab6748f58b21", "tab": "financial", "category": "dao1", "category_icon": "🏛️", "subgroup": "", "icon": "🏠", "title": "Startseite", "url": "https://letsgofree.me/dao1", "position": 8}, {"id": "19a51891-9783-54c5-8fd4-f82844d01582", "tab": "financial", "category": "dao1", "category_icon": "🏛️", "subgroup": "", "icon": "📊", "title": "APTMDAO Dashboard", "url": "https://aptmdao.io/dashboard", "position": 9}, {"id": "7090025e-1e30-5f0a-96a6-4b103af65f98", "tab": "financial", "category": "dao1", "category_icon": "🏛️", "subgroup": "", "icon": "🌐", "title": "dApp app.dao1.ai", "url": "https://app.dao1.ai", "position": 10}, {"id": "dea80d4a-276b-5e2e-b355-a96386de848d", "tab": "financial", "category": "dao1", "category_icon": "🏛️", "subgroup": "", "icon": "🪙", "title": "Token-Adressen", "url": "shortcuts://run-shortcut?name=dao1-NotizTokenAdressen", "position": 11}, {"id": "4f3f401e-595c-59ef-9591-ff5979cfe069", "tab": "financial", "category": "dao1", "category_icon": "🏛️", "subgroup": "", "icon": "🖼️", "title": "Übersicht NFT's", "url": "https://nfts.apertum.io", "position": 12}, {"id": "3b368c0c-f445-5600-a02b-121effce9df9", "tab": "financial", "category": "TagMarkets", "category_icon": "💱", "subgroup": "", "icon": "🏠", "title": "Startseite", "url": "https://letsgofree.me/neofx", "position": 13}, {"id": "e0134b23-17a0-544d-bf79-aace2c65892d", "tab": "financial", "category": "TagMarkets", "category_icon": "💱", "subgroup": "", "icon": "🏦", "title": "Portal TagMarkets", "url": "https://portal.tagmarkets.com", "position": 14}, {"id": "0abb8743-e5c5-55b2-b738-ba8d3cdaa8e4", "tab": "financial", "category": "TagMarkets", "category_icon": "💱", "subgroup": "", "icon": "🔐", "title": "IB-Portal", "url": "https://exfusion.ibportal.io", "position": 15}, {"id": "85440bcc-27e7-5788-bf26-ac137e285451", "tab": "financial", "category": "TagMarkets", "category_icon": "💱", "subgroup": "", "icon": "📊", "title": "GoogleSheets Trading-Statistik", "url": "https://docs.google.com/spreadsheets/d/1JseyzsRTi5lNeX6dvGiTKYOM849NJ6fPAO4P57-2BA8/edit?gid=0#gid=0", "position": 16}, {"id": "e6d99a00-eeab-56a4-bf60-5043023bd9f2", "tab": "financial", "category": "TagMarkets", "category_icon": "💱", "subgroup": "", "icon": "📝", "title": "Notizen", "url": "shortcuts://run-shortcut?name=neoFX-Notizen", "position": 17}, {"id": "3530af3b-eadd-508a-ba2b-1163b7cb858c", "tab": "financial", "category": "TagMarkets", "category_icon": "💱", "subgroup": "", "icon": "📚", "title": "Anleitungen", "url": "https://www.letsgofree.me/neofx/manual", "position": 18}, {"id": "383bf7d5-98c6-50df-9096-6e44ee57492f", "tab": "financial", "category": "NEOBank! | OneTrade", "category_icon": "🔷", "subgroup": "", "icon": "🏠", "title": "Startseite", "url": "https://www.letsgofree.me/arbcore/", "position": 19}, {"id": "21a9e394-f248-5b4d-bad6-4467e1032f1c", "tab": "financial", "category": "NEOBank! | OneTrade", "category_icon": "🔷", "subgroup": "", "icon": "🏦", "title": "NEOBank!", "url": "https://neo-b.ltd", "position": 20}, {"id": "92bbf518-ced7-5834-876c-6e68d67ef259", "tab": "financial", "category": "NEOBank! | OneTrade", "category_icon": "🔷", "subgroup": "", "icon": "📱", "title": "App OneTrade", "url": "https://onetrade.ltd/login", "position": 21}, {"id": "1e80b09b-3d64-5285-8df0-42057f7187d0", "tab": "carmen", "category": "Pott&Pott", "category_icon": "🎭", "subgroup": "👤 Face Reading (PW: pott)", "icon": "📁", "title": "Face Reading Aufzeichnungen", "url": "https://mueller-synology.DSCloud.me:5001/d/s/15obaZFYxgDv0ni3568PgcXDnRxSCF8A/64j9SKpTH7B3gLyF7mMamd-h8DwyoqnP-rrvgHZHRxww", "position": 22}, {"id": "dfa49562-a00f-5230-89bf-34d4a7b9769b", "tab": "carmen", "category": "Pott&Pott", "category_icon": "🎭", "subgroup": "📱 Social Media (PW: pott)", "icon": "📁", "title": "Social Media Aufzeichnungen", "url": "https://mueller-synology.DSCloud.me:5001/d/s/15obarrQNQbcUzWGpRTZCy5S59vDtdBf/qLE47qFlGvNNA32m56Z1mIdEKuATC-8l-bbXAcMsm5gw", "position": 23}, {"id": "f8d6defe-bb36-5c3d-899c-d3dc0bf6be1e", "tab": "carmen", "category": "Pott&Pott", "category_icon": "🎭", "subgroup": "🎯 Verkaufs-Training (PW: pott)", "icon": "📁", "title": "Verkaufs-Training Aufzeichnungen", "url": "https://mueller-synology.DSCloud.me:5001/d/s/15obbDGR6WbkDc04ckZKEBBSmVxuWYGH/-RGuFL8ft7-4Z0gy2WCX8FBJegu6i-do-irXgueMm5gw", "position": 24}, {"id": "3b177571-9027-52d4-89b7-0e4fa46d0113", "tab": "chris", "category": "DeFi Coaching", "category_icon": "₿", "subgroup": "", "icon": "🏠", "title": "Startseite", "url": "https://letsgofree.me", "position": 25}, {"id": "ea8410ec-1944-591d-a548-ce388afe4e4d", "tab": "chris", "category": "DeFi Coaching", "category_icon": "₿", "subgroup": "", "icon": "🎓", "title": "Coaching", "url": "https://letsgofree.me/coaching", "position": 26}, {"id": "6c895d7e-80dd-5c40-9e45-359761ae8b96", "tab": "chris", "category": "DeFi Coaching", "category_icon": "₿", "subgroup": "", "icon": "🎁", "title": "Freebies", "url": "https://letsgofree.me/freebies", "position": 27}, {"id": "5919b76b-0cbf-58c1-b7b6-8e98737f545a", "tab": "chris", "category": "Business", "category_icon": "💼", "subgroup": "", "icon": "👥", "title": "StaffKeeping", "url": "https://www.mueller-home.me/staffkeeping", "position": 28}];
+const TABS={wir:{label:'Wir',icon:'⌂',heading:'Für uns.'},financial:{label:'Financial',icon:'↗',heading:'Finanzen im Blick.'},carmen:{label:'Carmen',icon:'◈',heading:'Carmens Sammlung.'},chris:{label:'Chris',icon:'✳',heading:'Chris’ Sammlung.'}};
+const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+function localRead(k,f){try{return JSON.parse(localStorage.getItem(k))??f}catch{return f}}
+function localWrite(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+let links=structuredClone(SEED),active=localRead('links-area','wir'),client=null,user=null,canEdit=false,editingId=null,baseline='',busy=false,onlineReady=false;
+if(!TABS[active])active='wir';
+function node(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n}
+function safeUrl(value){try{return ['https:','http:','shortcuts:'].includes(new URL(value).protocol)}catch{return false}}
+function domain(url){try{const u=new URL(url);return u.protocol==='shortcuts:'?'Apple Kurzbefehl':u.host.replace(/^www\./,'')}catch{return 'Ungültige Adresse'}}
+function notify(msg){$('#toast').textContent=msg;$('#toast').hidden=false;clearTimeout(notify.timer);notify.timer=setTimeout(()=>$('#toast').hidden=true,3800)}
+function status(msg,error=false){$('#status').textContent=msg;$('#status').hidden=!msg;$('#status').classList.toggle('error',error)}
+function render(){
+ const q=$('#search').value.trim().toLocaleLowerCase('de');
+ $('#crumb').textContent=TABS[active].label;
+ const nav=$('.nav');nav.replaceChildren();Object.entries(TABS).forEach(([key,t])=>{const b=node('button',key===active?'active':'');b.append(node('span','nav-icon',t.icon),node('span','',t.label),node('span','count',links.filter(l=>l.tab===key).length));b.setAttribute('aria-current',key===active?'page':'false');b.onclick=()=>{active=key;localWrite('links-area',key);render()};nav.append(b)});
+ const selected=links.filter(l=>(q||l.tab===active)&&(!q||[l.title,l.url,l.category,l.subgroup,TABS[l.tab]?.label].join(' ').toLocaleLowerCase('de').includes(q))).sort((a,b)=>a.position-b.position||a.title.localeCompare(b.title));
+ $('#sectionTitle').textContent=q?'Suchergebnisse in allen Bereichen':TABS[active].heading;
+ $('#resultCount').textContent=selected.length+' '+(selected.length===1?'Link':'Links');
+ const groups=new Map();for(const l of selected){const key=JSON.stringify([l.tab,l.category]);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(l)}
+ const cards=$('#cards');cards.replaceChildren();for(const items of groups.values()){
+ const first=items[0],card=node('section','card'),head=node('div','cardhead'),title=node('div');title.append(node('h3','',first.category),node('small','',TABS[first.tab].label+' · '+items.length+' '+(items.length===1?'Link':'Links')));head.append(node('span','category-icon',first.category_icon),title);card.append(head);
+ let lastGroup='';for(const l of items){if(l.subgroup&&l.subgroup!==lastGroup)card.append(node('div','group',l.subgroup));lastGroup=l.subgroup;const row=node('div','row'),a=node('a','link'),text=node('span','link-text');text.append(node('span','link-title',l.title),node('span','domain',domain(l.url)));a.append(node('span','link-icon',l.icon),text,node('span','arrow','↗'));if(safeUrl(l.url)){a.href=l.url;a.target='_blank';a.rel='noopener noreferrer'}else{a.setAttribute('aria-disabled','true');a.title='Ungültige Adresse'}row.append(a);if(canEdit&&onlineReady){const edit=node('button','edit','✎');edit.setAttribute('aria-label',l.title+' bearbeiten');edit.onclick=()=>openEditor(l);row.append(edit)}card.append(row)}cards.append(card)}
+ if(!selected.length)cards.append(node('div','empty',q?'Keine passenden Links gefunden. Versuche einen anderen Suchbegriff.':'In diesem Bereich gibt es noch keine Links.'));
+ $('#authButton').textContent=user?'Abmelden':'♙  Anmelden';$('#addButton').hidden=!(canEdit&&onlineReady);
+ $('#categories').replaceChildren(...[...new Set(links.map(l=>l.category))].map(c=>{const o=node('option');o.value=c;return o}));
+}
+$('#search').oninput=render;document.addEventListener('keydown',e=>{if(e.key==='/'&&!/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)&&!document.querySelector('dialog[open]')){e.preventDefault();$('#search').focus()}});
+function showSetup(){$('#setupState').textContent=SUPABASE_URL&&SUPABASE_KEY?'Verbindungsdaten sind eingetragen.':'Supabase ist noch nicht verbunden. Die ursprünglichen Links werden angezeigt.';$('#setupDialog').showModal()}
+$('#setupButton').onclick=showSetup;$('#mobileSetup').onclick=showSetup;
+function formState(){return JSON.stringify(Array.from(new FormData($('#editForm')).entries()))}function dirty(){return $('#editor').open&&formState()!==baseline}
+function requestClose(d){if(busy)return;if(d.id==='editor'&&dirty()){$('#discardDialog').showModal();return}d.close()}
+$$('[data-close]').forEach(b=>b.onclick=()=>requestClose(b.closest('dialog')));$$('dialog').forEach(d=>d.addEventListener('cancel',e=>{e.preventDefault();requestClose(d)}));$('#keepEditing').onclick=()=>$('#discardDialog').close();$('#discardChanges').onclick=()=>{$('#discardDialog').close();$('#editor').close()};window.addEventListener('beforeunload',e=>{if(dirty()){e.preventDefault();e.returnValue=''}});
+function openEditor(link){if(!canEdit||!onlineReady)return;const f=$('#editForm');f.reset();editingId=link?.id??null;const values=link??{tab:active,icon:'🔗',category:'',category_icon:'📁',subgroup:'',position:Math.max(0,...links.map(l=>l.position))+1,title:'',url:''};for(const [k,v]of Object.entries(values))if(f.elements.namedItem(k))f.elements.namedItem(k).value=v;$('#editorTitle').textContent=link?'Link bearbeiten':'Link ergänzen';$('#deleteButton').hidden=!link;$('#editError').textContent='';baseline=formState();$('#editor').showModal()}
+$('#addButton').onclick=()=>openEditor();$('#editForm').elements.category.onchange=e=>{const match=links.find(l=>l.tab===$('#editForm').elements.tab.value&&l.category===e.target.value);if(match)$('#editForm').elements.category_icon.value=match.category_icon};
+function setBusy(form,value){busy=value;form.querySelectorAll('button').forEach(b=>b.disabled=value)}
+$('#authButton').onclick=async()=>{if(user){try{const{error}=await client.auth.signOut();if(error)throw error;user=null;canEdit=false;render();notify('Du bist abgemeldet.')}catch{status('Abmelden fehlgeschlagen. Bitte erneut versuchen.',true)}}else if(!client||!onlineReady){showSetup()}else{$('#loginError').textContent='';$('#loginDialog').showModal()}};
+$('#loginForm').onsubmit=async e=>{e.preventDefault();setBusy(e.target,true);$('#loginError').textContent='';try{const f=new FormData(e.target);const{data,error}=await client.auth.signInWithPassword({email:f.get('email').trim(),password:f.get('password')});if(error)throw error;await applyUser(data.user);$('#loginDialog').close();e.target.reset();notify(canEdit?'Angemeldet. Du kannst jetzt bearbeiten.':'Angemeldet, aber ohne Bearbeitungsrechte.')}catch{$('#loginError').textContent='Anmeldung fehlgeschlagen. Prüfe E-Mail, Passwort und Verbindung.'}finally{setBusy(e.target,false)}};
+async function applyUser(u){user=u;canEdit=false;if(user){const{data,error}=await client.from('link_collection_editors').select('user_id').eq('user_id',user.id).maybeSingle();canEdit=!error&&!!data;if(error)status('Bearbeitungsrechte konnten nicht geprüft werden.',true)}render()}
+$('#editForm').onsubmit=async e=>{e.preventDefault();const values=Object.fromEntries(new FormData(e.target));for(const k of ['title','url','category','icon','category_icon','subgroup'])values[k]=values[k].trim();values.position=Number(values.position);if(!values.title||!values.category||!safeUrl(values.url)){$('#editError').textContent='Bitte Bezeichnung, Kategorie und eine gültige Adresse mit https://, http:// oder shortcuts:// eingeben.';return}setBusy(e.target,true);$('#editError').textContent='';try{let result;if(editingId){result=await client.from('link_collection_links').update(values).eq('id',editingId).select().single()}else{result=await client.from('link_collection_links').insert(values).select().single()}if(result.error)throw result.error;if(editingId)links=links.map(l=>l.id===editingId?result.data:l);else links.push(result.data);active=values.tab;baseline=formState();$('#editor').close();render();notify('Link gespeichert.')}catch{$('#editError').textContent='Speichern fehlgeschlagen. Deine Eingaben bleiben erhalten. Prüfe Verbindung und Bearbeitungsrechte.'}finally{setBusy(e.target,false)}};
+$('#deleteButton').onclick=async()=>{if(!editingId||!confirm('Diesen Link dauerhaft löschen?'))return;setBusy($('#editForm'),true);try{const{data,error}=await client.from('link_collection_links').delete().eq('id',editingId).select('id');if(error||data.length!==1)throw Error('delete');links=links.filter(l=>l.id!==editingId);baseline=formState();$('#editor').close();render();notify('Link gelöscht.')}catch{$('#editError').textContent='Löschen fehlgeschlagen. Der Link wurde nicht als gelöscht übernommen.'}finally{setBusy($('#editForm'),false)}};
+async function connect(){if(!SUPABASE_URL||!SUPABASE_KEY)return;status('Sammlung wird geladen …');try{await new Promise((resolve,reject)=>{const script=document.createElement('script');script.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.js';script.onload=resolve;script.onerror=reject;document.head.append(script)});client=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);const{data,error}=await client.from('link_collection_links').select('*').order('position');if(error)throw error;links=data;onlineReady=true;status('');$('#storageLabel').textContent='Mit Supabase verbunden';const{data:sessionData,error:sessionError}=await client.auth.getSession();if(sessionError)throw sessionError;await applyUser(sessionData.session?.user??null);client.auth.onAuthStateChange((event,session)=>{setTimeout(()=>{applyUser(session?.user??null).catch(()=>status('Benutzerstatus konnte nicht aktualisiert werden.',true))},0)});render()}catch{onlineReady=false;canEdit=false;status('Supabase konnte nicht geladen werden. Angezeigt werden die ursprünglichen Links aus der Datei; Bearbeiten ist vorübergehend nicht verfügbar.',true);links=structuredClone(SEED);render()}}
+function sqlQuote(s){return "'"+String(s).replace(/'/g,"''")+"'"}
+$('#downloadSql').onclick=()=>{const uid=$('#ownerUid').value.trim();if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uid)){$('#setupError').textContent='Bitte die vollständige Benutzer-UUID aus Supabase Auth eintragen.';return}const sql=`-- Link-Sammlung: einmalige Einrichtung. Keine bestehenden Tabellen werden gelöscht.
+-- Öffentliche Leserechte. Schreibrechte ausschliesslich für die eingetragene Benutzer-UUID.
+begin;
+create table if not exists public.link_collection_editors (user_id uuid primary key references auth.users(id) on delete cascade);
+alter table public.link_collection_editors enable row level security;
+revoke all on public.link_collection_editors from anon, authenticated;
+grant select on public.link_collection_editors to authenticated;
+drop policy if exists link_editor_self on public.link_collection_editors;
+create policy link_editor_self on public.link_collection_editors for select to authenticated using (user_id=(select auth.uid()));
+insert into public.link_collection_editors(user_id) values (${sqlQuote(uid)}::uuid) on conflict do nothing;
+create table if not exists public.link_collection_links (
+ id uuid primary key default gen_random_uuid(),
+ tab text not null check(tab in ('wir','financial','carmen','chris')),
+ category text not null check(length(trim(category)) between 1 and 100),
+ category_icon text not null default '📁', subgroup text not null default '',
+ icon text not null default '🔗', title text not null check(length(trim(title)) between 1 and 160),
+ url text not null check(url ~* '^(https?://|shortcuts://)' and length(url)<=3000),
+ position integer not null default 0 check(position between 0 and 100000)
+);
+alter table public.link_collection_links enable row level security;
+revoke all on public.link_collection_links from anon, authenticated;
+grant select on public.link_collection_links to anon, authenticated;
+grant insert, update, delete on public.link_collection_links to authenticated;
+drop policy if exists links_public_read on public.link_collection_links;
+create policy links_public_read on public.link_collection_links for select to anon, authenticated using (true);
+drop policy if exists links_owner_insert on public.link_collection_links;
+create policy links_owner_insert on public.link_collection_links for insert to authenticated with check (exists(select 1 from public.link_collection_editors where user_id=(select auth.uid())));
+drop policy if exists links_owner_update on public.link_collection_links;
+create policy links_owner_update on public.link_collection_links for update to authenticated using (exists(select 1 from public.link_collection_editors where user_id=(select auth.uid()))) with check (exists(select 1 from public.link_collection_editors where user_id=(select auth.uid())));
+drop policy if exists links_owner_delete on public.link_collection_links;
+create policy links_owner_delete on public.link_collection_links for delete to authenticated using (exists(select 1 from public.link_collection_editors where user_id=(select auth.uid())));
+insert into public.link_collection_links(id,tab,category,category_icon,subgroup,icon,title,url,position) values
+${SEED.map(l=>'('+[l.id,l.tab,l.category,l.category_icon,l.subgroup,l.icon,l.title,l.url].map(sqlQuote).join(',')+','+l.position+')').join(',\n')}
+on conflict (id) do nothing;
+commit;
+`;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([sql],{type:'text/plain;charset=utf-8'}));a.download='link-sammlung-supabase.sql';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);$('#setupError').textContent='';notify('SQL heruntergeladen. Im Supabase SQL Editor ausführen.');};
+render();connect();
+</script></body></html>
