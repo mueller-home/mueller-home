@@ -10,6 +10,9 @@ window.SK_UI={setAccess(isApproved,isAdmin,reviewState,canTrade=false){demoSigne
 let currentScreen='login', navigationBusy=false;
 async function show(view,updateUrl=true){
   if(navigationBusy)return;
+  if(typeof skDialogRequestClose==='function' && document.getElementById('app-dialog')?.open){
+    if(!(await skDialogRequestClose('navigation:'+view))){if(!updateUrl)history.replaceState({view:currentScreen},'','#'+currentScreen);return;}
+  }
   // Validate the real user with Supabase before changing between protected views.
   // A deleted account may otherwise keep navigating with stale in-memory UI state.
   if(!publicViews.has(view) && (demoSignedIn||skAdmin||skCanProfile)){
@@ -166,7 +169,61 @@ function setView(map){if(map)return;viewMap=false;document.getElementById('list-
 document.getElementById('list-btn').addEventListener('click',()=>setView(false));
 /* Zusätzliche UI-Demoseiten, ohne Backend und ohne dauerhafte Speicherung */
 const dialog=document.getElementById('app-dialog');
-function modal(title,html){document.getElementById('dialog-title').textContent=title;document.getElementById('dialog-body').innerHTML=html;dialog.showModal();}
+const skDialogState={snapshot:'',manualDirty:false,saving:false,allowedClose:false,lastAction:'init'};
+const skDialogFields=()=>{
+ const form=dialog.querySelector('form');
+ if(!form)return '';
+ return JSON.stringify([...form.elements].filter(el=>el.name&&!['submit','button'].includes(el.type))
+  .map(el=>[el.name,el.type==='checkbox'||el.type==='radio'?el.checked:el.value]));
+};
+function skDialogDirty(){return dialog.open && (skDialogState.manualDirty||skDialogFields()!==skDialogState.snapshot);}
+function skDialogTrace(action){skDialogState.lastAction=action;console.info('[SK dialog 0.33.1.6.2]',action,{open:dialog.open,dirty:skDialogDirty(),saving:skDialogState.saving});}
+function skDialogConfirmDiscard(){
+ return new Promise(resolve=>{
+  const prompt=document.createElement('dialog');prompt.setAttribute('aria-label','Ungespeicherte Änderungen');
+  const wrap=document.createElement('div');wrap.style.cssText='padding:20px;max-width:420px';
+  const heading=document.createElement('h2');heading.textContent='Ungespeicherte Änderungen';
+  const msg=document.createElement('p');msg.textContent='Deine Änderungen wurden noch nicht gespeichert. Möchtest du weiter bearbeiten oder sie verwerfen?';
+  const actions=document.createElement('div');actions.style.cssText='display:flex;gap:12px;flex-wrap:wrap';
+  const keep=document.createElement('button');keep.type='button';keep.className='btn';keep.textContent='Weiter bearbeiten';
+  const discard=document.createElement('button');discard.type='button';discard.className='subtle-btn';discard.textContent='Änderungen verwerfen';
+  actions.append(keep,discard);wrap.append(heading,msg,actions);prompt.append(wrap);document.body.append(prompt);
+  let done=false;
+  const finish=answer=>{if(done)return;done=true;prompt.close();prompt.remove();resolve(answer);};
+  keep.addEventListener('click',()=>finish(false));discard.addEventListener('click',()=>finish(true));
+  prompt.addEventListener('cancel',e=>{e.preventDefault();finish(false);});
+  prompt.showModal();keep.focus();
+ });
+}
+async function skDialogRequestClose(origin){
+ if(!dialog.open)return true;
+ skDialogTrace('close-request:'+origin);
+ if(skDialogState.saving){console.warn('[SK dialog] Schliessen während Speicherung blockiert');return false;}
+ if(skDialogDirty() && !(await skDialogConfirmDiscard()))return false;
+ skDialogState.allowedClose=true;skDialogState.lastAction='user-close:'+origin;dialog.close();return true;
+}
+function skDialogSavedClose(){skDialogState.saving=false;skDialogState.allowedClose=true;skDialogState.lastAction='save-success';dialog.close();}
+function modal(title,html){
+ if(dialog.open){console.warn('[SK dialog] Versuch, geöffneten Dialog zu ersetzen',title);return false;}
+ document.getElementById('dialog-title').textContent=title;
+ document.getElementById('dialog-body').innerHTML=html;
+ skDialogState.snapshot=skDialogFields();skDialogState.manualDirty=false;skDialogState.saving=false;
+ skDialogState.allowedClose=false;skDialogState.lastAction='open:'+title;
+ dialog.showModal();return true;
+}
+dialog.addEventListener('cancel',e=>{e.preventDefault();void skDialogRequestClose('escape');});
+dialog.addEventListener('close',()=>{
+ if(!skDialogState.allowedClose){console.warn('[SK dialog] Unerwartetes close-Ereignis',skDialogState.lastAction);
+  // Bei einem unerwarteten programmatischen Schliessen bleibt das Formular im DOM erhalten.
+  if(dialog.isConnected&&!dialog.open){try{dialog.showModal();}catch(err){console.warn('[SK dialog] Wiederherstellung fehlgeschlagen',err);}}
+ }
+ skDialogState.allowedClose=false;
+});
+dialog.addEventListener('input',()=>{if(dialog.open)skDialogTrace('input');});
+dialog.addEventListener('change',()=>{if(dialog.open)skDialogTrace('change');});
+dialog.addEventListener('click',e=>{if(e.target.closest('#sk-edit-location-correct'))skDialogState.manualDirty=true;});
+window.addEventListener('beforeunload',e=>{if(skDialogDirty()||skDialogState.saving){e.preventDefault();e.returnValue='';}});
+
 
 const skBusinessStatusLabels={Freigeschaltet:'Freigeschaltet',Ausstehend:'Freigabe ausstehend',Gesperrt:'Gesperrt',approved:'Genehmigt',submitted:'Zur Prüfung eingereicht',draft:'Entwurf',changes_requested:'Nachbesserung erforderlich',rejected:'Abgelehnt',suspended:'Gesperrt'};
 const skBusinessStatus=s=>skBusinessStatusLabels[s]||'Unbekannter Status';
@@ -205,10 +262,10 @@ document.getElementById('my-businesses-list').addEventListener('click',async e=>
 });
 document.getElementById('dialog-body').addEventListener('submit',async e=>{
  const form=e.target;if(form.id!=='sk-edit-business-form')return;e.preventDefault();if(!form.reportValidity())return;
- const button=form.querySelector('[type="submit"]');button.disabled=true;
+ const button=form.querySelector('[type="submit"]');button.disabled=true;skDialogState.saving=true;
  const val=n=>form.elements.namedItem(n).value.trim();
- try{const coords=window.SK_LOCATION?.editorPosition(form);await window.SK_AUTH.saveBusinessWithLocation({p_profile:{p_business_id:form.dataset.business,p_company_name:val('company_name'),p_vat_id:val('vat_id'),p_industry:val('industry'),p_country:val('country'),p_postal_code:val('postal_code'),p_city:val('city'),p_street:val('street'),p_house_number:val('house_number'),p_address_extra:val('address_extra'),p_contact_name:val('contact_name'),p_contact_email:val('contact_email'),p_contact_phone:val('contact_phone'),p_description:val('description')},p_latitude:coords?.lat??null,p_longitude:coords?.lng??null,p_source:coords?.source??null,p_address_key:coords?.addressKey??null});dialog.close();await loadMyBusinesses();}
- catch(err){document.getElementById('sk-business-edit-feedback').textContent='Nicht gespeichert: '+err.message;button.disabled=false;}
+ try{const coords=window.SK_LOCATION?.editorPosition(form);await window.SK_AUTH.saveBusinessWithLocation({p_profile:{p_business_id:form.dataset.business,p_company_name:val('company_name'),p_vat_id:val('vat_id'),p_industry:val('industry'),p_country:val('country'),p_postal_code:val('postal_code'),p_city:val('city'),p_street:val('street'),p_house_number:val('house_number'),p_address_extra:val('address_extra'),p_contact_name:val('contact_name'),p_contact_email:val('contact_email'),p_contact_phone:val('contact_phone'),p_description:val('description')},p_latitude:coords?.lat??null,p_longitude:coords?.lng??null,p_source:coords?.source??null,p_address_key:coords?.addressKey??null});skDialogSavedClose();await loadMyBusinesses();}
+ catch(err){document.getElementById('sk-business-edit-feedback').textContent='Nicht gespeichert: '+err.message;button.disabled=false;skDialogState.saving=false;}
 });
 document.getElementById('add-business-button').addEventListener('click',()=>{
  modal('Weiteren Betrieb beantragen',`<form id="sk-extra-business-form">
@@ -229,9 +286,9 @@ document.getElementById('add-business-button').addEventListener('click',()=>{
 document.getElementById('dialog-body').addEventListener('submit',async e=>{
  const form=e.target;if(form.id!=='sk-extra-business-form')return;e.preventDefault();
  if(!form.reportValidity())return;
- const get=k=>form.elements.namedItem(k).value.trim(),btn=form.querySelector('[type="submit"]');btn.disabled=true;
- try{const coords=window.SK_LOCATION?.editorPosition(form);await window.SK_AUTH.addAdditionalBusinessWithLocation({p_company_name:get('company_name'),p_vat_id:get('vat_id'),p_industry:get('industry'),p_country:get('country'),p_postal_code:get('postal_code'),p_city:get('city'),p_street:get('street'),p_house_number:get('house_number'),p_contact_name:get('contact_name'),p_contact_phone:get('contact_phone'),p_description:get('description'),p_latitude:coords?.lat??null,p_longitude:coords?.lng??null,p_source:coords?.source??null,p_address_key:coords?.addressKey??null});dialog.close();await loadMyBusinesses();alert('Betrieb zur Prüfung durch Annette eingereicht. Er ist noch nicht für den Marktplatz freigegeben.');}
- catch(err){document.getElementById('sk-extra-business-error').textContent=err.message;btn.disabled=false;}
+ const get=k=>form.elements.namedItem(k).value.trim(),btn=form.querySelector('[type="submit"]');btn.disabled=true;skDialogState.saving=true;
+ try{const coords=window.SK_LOCATION?.editorPosition(form);await window.SK_AUTH.addAdditionalBusinessWithLocation({p_company_name:get('company_name'),p_vat_id:get('vat_id'),p_industry:get('industry'),p_country:get('country'),p_postal_code:get('postal_code'),p_city:get('city'),p_street:get('street'),p_house_number:get('house_number'),p_contact_name:get('contact_name'),p_contact_phone:get('contact_phone'),p_description:get('description'),p_latitude:coords?.lat??null,p_longitude:coords?.lng??null,p_source:coords?.source??null,p_address_key:coords?.addressKey??null});skDialogSavedClose();await loadMyBusinesses();alert('Betrieb zur Prüfung durch Annette eingereicht. Er ist noch nicht für den Marktplatz freigegeben.');}
+ catch(err){document.getElementById('sk-extra-business-error').textContent=err.message;btn.disabled=false;skDialogState.saving=false;}
 });
 async function loadManualAccessAdmin(){
  const root=document.getElementById('sk-admin-manual-access');if(!root)return;
@@ -248,12 +305,13 @@ document.getElementById('sk-admin-manual-access').addEventListener('click',async
 });
 document.getElementById('dialog-body').addEventListener('submit',async e=>{
  const form=e.target;if(form.id!=='sk-manual-access-form')return;e.preventDefault();if(!form.reportValidity())return;
- const btn=form.querySelector('[type="submit"]');btn.disabled=true;
- try{const reason=form.elements.namedItem('category').value+': '+form.elements.namedItem('reason').value.trim();await window.SK_AUTH.adminSetManualAccess(form.dataset.account,true,reason,form.elements.namedItem('until').value);dialog.close();await loadManualAccessAdmin();}
- catch(err){document.getElementById('sk-manual-error').textContent=err.message;btn.disabled=false;}
+ const btn=form.querySelector('[type="submit"]');btn.disabled=true;skDialogState.saving=true;
+ try{const reason=form.elements.namedItem('category').value+': '+form.elements.namedItem('reason').value.trim();await window.SK_AUTH.adminSetManualAccess(form.dataset.account,true,reason,form.elements.namedItem('until').value);skDialogSavedClose();await loadManualAccessAdmin();}
+ catch(err){document.getElementById('sk-manual-error').textContent=err.message;btn.disabled=false;skDialogState.saving=false;}
 });
 
-document.getElementById('dialog-close').addEventListener('click',()=>dialog.close());dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()});
+document.getElementById('dialog-close').addEventListener('click',()=>{void skDialogRequestClose('button');});
+// Ein Klick auf den Overlay-Hintergrund schliesst bearbeitbare Dialoge nicht mehr.
 let chosenListing=1, listTab='inserate';const listingStatus=new Map(listings.map(l=>[l.id,'Aktiv']));
 let ownListings=[];
 let ownBusinessList=[];
@@ -274,10 +332,10 @@ async function saveListing(){
   if(to<from){listingFormField(form,'to').setCustomValidity('Das Bis-Datum muss am oder nach dem Von-Datum liegen.');form.reportValidity();listingFormField(form,'to').setCustomValidity('');return;}
   const payload={type:listingFormField(form,'type').value,category:listingFormField(form,'category').value,title:listingFormField(form,'title').value.trim(),description:listingFormField(form,'description').value.trim(),date_from:from,date_to:to,conditions:listingFormField(form,'conditions').value.trim(),accommodation:listingFormField(form,'accommodation').checked,languages:[...form.querySelectorAll('input[name="languages"]:checked')].map(e=>e.value)};
   const id=form.dataset.edit||null;const businessId=listingFormField(form,'business_id').value;
-  const button=document.getElementById('save-real-listing');button.disabled=true;button.textContent='Wird gespeichert …';ownListingsBusy=true;
-  try{await window.SK_AUTH.saveMyListing(payload,id,businessId);dialog.close();await loadMyListings();}
+  const button=document.getElementById('save-real-listing');button.disabled=true;button.textContent='Wird gespeichert …';ownListingsBusy=true;skDialogState.saving=true;
+  try{await window.SK_AUTH.saveMyListing(payload,id,businessId);skDialogSavedClose();await loadMyListings();}
   catch(error){button.disabled=false;button.textContent='Inserat speichern';const note=form.querySelector('.listing-save-error');if(note)note.textContent='Speichern fehlgeschlagen: '+error.message;}
-  finally{ownListingsBusy=false;}
+  finally{ownListingsBusy=false;skDialogState.saving=false;}
 }
 function listingForm(id){
   const l=ownListings.find(x=>x.id===id);
