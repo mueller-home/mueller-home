@@ -169,6 +169,7 @@
  }
  async function safeEvaluate(){try{await evaluate();}catch(e){msg('auth-message','Prüfung fehlgeschlagen: '+e.message);if(!recoveryMode)ui().logoutView();else showRecovery();}}
  window.SK_AUTH={
+  async listListingDrafts(){const {data,error}=await db.rpc('sk_list_my_listing_drafts');if(error)throw error;return data||[];},
   async readFormDraft(kind,key,businessId){const {data,error}=await db.rpc('sk_get_form_draft',{p_kind:kind,p_key:key,p_business:businessId});if(error)throw error;return data?.[0]||null;},
   async writeFormDraft(kind,key,businessId,payload,revision){const {data,error}=await db.rpc('sk_save_form_draft',{p_kind:kind,p_key:key,p_business:businessId,p_payload:payload,p_expected_revision:revision});if(error)throw error;return Number(data);},
   async discardFormDraft(kind,key,businessId,revision){const {error}=await db.rpc('sk_discard_form_draft',{p_kind:kind,p_key:key,p_business:businessId,p_expected_revision:revision});if(error)throw error;},
