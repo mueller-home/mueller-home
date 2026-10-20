@@ -176,14 +176,14 @@ const skDialogFields=()=>{
  return JSON.stringify([...form.elements].filter(el=>el.name&&!['submit','button'].includes(el.type))
   .map(el=>[el.name,el.type==='checkbox'||el.type==='radio'?el.checked:el.value]));
 };
-function skDialogDirty(){return dialog.open && (skDialogState.manualDirty||skDialogFields()!==skDialogState.snapshot);}
+function skDialogDirty(){const d=window.SK_DRAFTS?.current();return dialog.open && (skDialogState.manualDirty||(d?.unsafe()??false)||(!d&&skDialogFields()!==skDialogState.snapshot));}
 function skDialogTrace(action){skDialogState.lastAction=action;console.info('[SK dialog 0.33.1.6.2]',action,{open:dialog.open,dirty:skDialogDirty(),saving:skDialogState.saving});}
 function skDialogConfirmDiscard(){
  return new Promise(resolve=>{
   const prompt=document.createElement('dialog');prompt.setAttribute('aria-label','Ungespeicherte Änderungen');
   const wrap=document.createElement('div');wrap.style.cssText='padding:20px;max-width:420px';
   const heading=document.createElement('h2');heading.textContent='Ungespeicherte Änderungen';
-  const msg=document.createElement('p');msg.textContent='Deine Änderungen wurden noch nicht gespeichert. Möchtest du weiter bearbeiten oder sie verwerfen?';
+  const msg=document.createElement('p');msg.textContent=window.SK_DRAFTS?.current()?'Ungesicherte Änderungen verwerfen? Bereits auf dem Server gespeicherte private Entwürfe bleiben bestehen und können später wiederhergestellt werden.':'Deine Änderungen wurden noch nicht gespeichert. Möchtest du weiter bearbeiten oder sie verwerfen?';
   const actions=document.createElement('div');actions.style.cssText='display:flex;gap:12px;flex-wrap:wrap';
   const keep=document.createElement('button');keep.type='button';keep.className='btn';keep.textContent='Weiter bearbeiten';
   const discard=document.createElement('button');discard.type='button';discard.className='subtle-btn';discard.textContent='Änderungen verwerfen';
@@ -200,11 +200,13 @@ async function skDialogRequestClose(origin){
  skDialogTrace('close-request:'+origin);
  if(skDialogState.saving){console.warn('[SK dialog] Schliessen während Speicherung blockiert');return false;}
  if(skDialogDirty() && !(await skDialogConfirmDiscard()))return false;
+ window.SK_DRAFTS?.current()?.abandon();
  skDialogState.allowedClose=true;skDialogState.lastAction='user-close:'+origin;dialog.close();return true;
 }
-function skDialogSavedClose(){skDialogState.saving=false;skDialogState.allowedClose=true;skDialogState.lastAction='save-success';dialog.close();}
+function skDialogSavedClose(){window.SK_DRAFTS?.current()?.abandon();skDialogState.saving=false;skDialogState.allowedClose=true;skDialogState.lastAction='save-success';dialog.close();}
 function modal(title,html){
  if(dialog.open){console.warn('[SK dialog] Versuch, geöffneten Dialog zu ersetzen',title);return false;}
+ window.SK_DRAFTS?.current()?.abandon();
  document.getElementById('dialog-title').textContent=title;
  document.getElementById('dialog-body').innerHTML=html;
  skDialogState.snapshot=skDialogFields();skDialogState.manualDirty=false;skDialogState.saving=false;
@@ -257,7 +259,7 @@ function skBusinessForm(b){
 document.getElementById('my-businesses-list').addEventListener('click',async e=>{
  const btn=e.target.closest('[data-edit-business]');if(!btn)return;
  btn.disabled=true;
- try{const all=await window.SK_AUTH.listMyBusinesses(),b=all.find(x=>x.id===btn.dataset.editBusiness);if(!b)throw Error('Betrieb nicht mehr zugeordnet.');modal('Betriebsprofil · '+b.company_name,skBusinessForm(b)); void window.SK_LOCATION?.editBusiness(document.getElementById('sk-edit-business-form'),b);}
+ try{const all=await window.SK_AUTH.listMyBusinesses(),b=all.find(x=>x.id===btn.dataset.editBusiness);if(!b)throw Error('Betrieb nicht mehr zugeordnet.');modal('Betriebsprofil · '+b.company_name,skBusinessForm(b)); const editForm=document.getElementById('sk-edit-business-form'); void window.SK_LOCATION?.editBusiness(editForm,b); if(editForm.querySelector('[type=submit]'))window.SK_DRAFTS?.attach(editForm,'business',b.id,b.id);}
  catch(err){alert('Betriebsprofil konnte nicht geöffnet werden: '+err.message);}finally{btn.disabled=false;}
 });
 document.getElementById('dialog-body').addEventListener('submit',async e=>{
@@ -266,7 +268,7 @@ document.getElementById('dialog-body').addEventListener('submit',async e=>{
  if(!coordsBefore&&!window.confirm('Für diese Adresse ist kein bestätigter Kartenstandort vorhanden.\n\nOK: Adresse trotzdem ohne Standort speichern (Entfernung unbekannt).\nAbbrechen: Weiter bearbeiten und ggf. Marker manuell setzen.'))return;
  const button=form.querySelector('[type="submit"]');button.disabled=true;skDialogState.saving=true;
  const val=n=>form.elements.namedItem(n).value.trim();
- try{const coords=window.SK_LOCATION?.editorPosition(form);await window.SK_AUTH.saveBusinessWithLocation({p_profile:{p_business_id:form.dataset.business,p_company_name:val('company_name'),p_vat_id:val('vat_id'),p_industry:val('industry'),p_country:val('country'),p_postal_code:val('postal_code'),p_city:val('city'),p_street:val('street'),p_house_number:val('house_number'),p_address_extra:val('address_extra'),p_contact_name:val('contact_name'),p_contact_email:val('contact_email'),p_contact_phone:val('contact_phone'),p_description:val('description')},p_latitude:coords?.lat??null,p_longitude:coords?.lng??null,p_source:coords?.source??null,p_address_key:coords?.addressKey??null});skDialogSavedClose();await loadMyBusinesses();}
+ try{const coords=window.SK_LOCATION?.editorPosition(form);await window.SK_AUTH.saveBusinessWithLocation({p_profile:{p_business_id:form.dataset.business,p_company_name:val('company_name'),p_vat_id:val('vat_id'),p_industry:val('industry'),p_country:val('country'),p_postal_code:val('postal_code'),p_city:val('city'),p_street:val('street'),p_house_number:val('house_number'),p_address_extra:val('address_extra'),p_contact_name:val('contact_name'),p_contact_email:val('contact_email'),p_contact_phone:val('contact_phone'),p_description:val('description')},p_latitude:coords?.lat??null,p_longitude:coords?.lng??null,p_source:coords?.source??null,p_address_key:coords?.addressKey??null});const draft=window.SK_DRAFTS?.current();if(draft){try{await draft.finish();}catch(draftErr){console.warn('[SK drafts] Nach Live-Speicherung konnte Entwurf nicht bereinigt werden',draftErr);draft.abandon();}}skDialogSavedClose();await loadMyBusinesses();}
  catch(err){document.getElementById('sk-business-edit-feedback').textContent='Nicht gespeichert: '+err.message;button.disabled=false;skDialogState.saving=false;}
 });
 document.getElementById('add-business-button').addEventListener('click',()=>{
@@ -336,7 +338,7 @@ async function saveListing(){
   const payload={type:listingFormField(form,'type').value,category:listingFormField(form,'category').value,title:listingFormField(form,'title').value.trim(),description:listingFormField(form,'description').value.trim(),date_from:from,date_to:to,conditions:listingFormField(form,'conditions').value.trim(),accommodation:listingFormField(form,'accommodation').checked,languages:[...form.querySelectorAll('input[name="languages"]:checked')].map(e=>e.value)};
   const id=form.dataset.edit||null;const businessId=listingFormField(form,'business_id').value;
   const button=document.getElementById('save-real-listing');button.disabled=true;button.textContent='Wird gespeichert …';ownListingsBusy=true;skDialogState.saving=true;
-  try{await window.SK_AUTH.saveMyListing(payload,id,businessId);skDialogSavedClose();await loadMyListings();}
+  try{await window.SK_AUTH.saveMyListing(payload,id,businessId);const draft=window.SK_DRAFTS?.current();if(draft){try{await draft.finish();}catch(draftErr){console.warn('[SK drafts] Entwurf nach Live-Speichern nicht bereinigt',draftErr);draft.abandon();}}skDialogSavedClose();await loadMyListings();}
   catch(error){button.disabled=false;button.textContent='Inserat speichern';const note=form.querySelector('.listing-save-error');if(note)note.textContent='Speichern fehlgeschlagen: '+error.message;}
   finally{ownListingsBusy=false;skDialogState.saving=false;}
 }
@@ -345,6 +347,8 @@ function listingForm(id){
   const today=skTodayCH();
   const dateFrom=l?.date_from||today,dateTo=l?.date_to||today;
   modal(l?'Inserat bearbeiten':'Neues Inserat',`<form id="listing-form" data-edit="${esc(l?.id||'')}"><label>Betrieb / Einsatzstandort *</label><select name="business_id" required ${l?"disabled":""}>${ownBusinessList.map(b=>`<option value="${esc(b.id)}" ${(l?.business_id||window.SK_SELECTED_BUSINESS||ownBusinessList[0]?.id)===b.id?"selected":""}>${esc(b.company_name)} · ${esc(b.city||"")}</option>`).join("")}</select><div class="field-grid"><div><label>Typ *</label><select name="type" required>${['Suche','Biete'].map(x=>`<option ${l?.type===x?'selected':''}>${x}</option>`).join('')}</select></div><div><label>Kategorie *</label><select name="category" required>${['Küche','Service','Housekeeping','Technik','Animation'].map(x=>`<option ${l?.category===x?'selected':''}>${x}</option>`).join('')}</select></div></div><p class="muted">Ort und Land werden automatisch aus dem freigegebenen Betriebsprofil übernommen.</p><label>Titel (5–80 Zeichen) *</label><input name="title" required minlength="5" maxlength="80" value="${esc(l?.title||'')}"><label>Beschreibung (20–1000 Zeichen) *</label><textarea name="description" required minlength="20" maxlength="1000" rows="3">${esc(l?.description||'')}</textarea><div class="field-grid"><div><label>Von *</label><input name="from" type="date" required value="${esc(dateFrom)}"></div><div><label>Bis *</label><input name="to" type="date" required value="${esc(dateTo)}"></div></div><label>Rahmenbedingungen (max. 500 Zeichen)</label><textarea name="conditions" maxlength="500" rows="2">${esc(l?.conditions||'')}</textarea><label class="check"><input type="checkbox" name="accommodation" ${l?.accommodation?'checked':''}><span>Unterkunft vorhanden</span></label><p class="muted">Sprachen: ${['DE','FR','IT','EN','ES'].map(x=>`<label class="inline-check"><input type="checkbox" name="languages" value="${x}" ${(l?.languages||['DE']).includes(x)?'checked':''}> ${x}</label>`).join(' ')}</p><p class="listing-save-error" role="alert"></p><div class="dialog-actions"><button type="button" class="btn" id="save-real-listing">Inserat speichern</button></div></form>`);
+ const f=document.getElementById('listing-form');const bid=f?.elements.namedItem('business_id')?.value;if(bid)window.SK_DRAFTS?.attach(f,'listing',l?.id||('new:'+bid),bid);
+ if(!l)f?.elements.namedItem('business_id')?.addEventListener('change',()=>{const current=window.SK_DRAFTS?.current();current?.abandon();const next=f.elements.namedItem('business_id').value;if(next)window.SK_DRAFTS?.attach(f,'listing','new:'+next,next);});
 }
 document.getElementById('new-listing').addEventListener('click',()=>listingForm());
 document.querySelectorAll('[data-list-tab]').forEach(b=>b.addEventListener('click',()=>{listTab=b.dataset.listTab;document.querySelectorAll('[data-list-tab]').forEach(x=>x.classList.toggle('active',x===b));renderMyListings()}));
