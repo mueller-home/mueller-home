@@ -203,12 +203,13 @@
       Number.isFinite(Number(lat))&&Number.isFinite(Number(lng))&&Math.abs(Number(lat))<=90&&Math.abs(Number(lng))<=180;
     const sameAddress=addressKey(fields(form))===addressKey(b);
     const state={form,root,status,map:null,marker:null,position:null,addressKey:null,source:null,businessId:b.id||null,
-      initialKey:addressKey(b),serial:0,timer:null,manual:false,loading:false};
+      initialKey:addressKey(b),serial:0,timer:null,manual:false,loading:false,manualMode:false,pendingManual:null};
     if(editor?.timer)clearTimeout(editor.timer);
     editor=state;
     const live=()=>editor===state&&root.isConnected;
     const say=msg=>{if(live())status.textContent=msg;};
-    const clear=()=>{state.position=null;state.addressKey=null;state.source=null;state.manual=false;
+    const clear=()=>{state.position=null;state.addressKey=null;state.source=null;state.manual=false;state.pendingManual=null;state.manualMode=false;
+      const accept=form.querySelector('#sk-edit-location-accept');if(accept)accept.hidden=true;
       if(state.marker)state.marker.setMap(null);state.marker=null;};
     async function markerAt(lat,lng,source,expectedKey){
       lat=Number(lat);lng=Number(lng);
@@ -221,6 +222,72 @@
       state.marker=new maps.Marker({position:{lat,lng},map:state.map,draggable:false,title:'Betriebsstandort'});
       return true;
     }
+    // An address may be legitimate even when Google cannot geocode it. In manual
+    // mode the coarse Google result is used ONLY to centre the map, never as a marker.
+    const manualButton=form.querySelector('#sk-edit-location-correct');
+    const acceptButton=form.querySelector('#sk-edit-location-accept');
+    async function manualMapCenter(){
+      const snapshot=fields(form),expected=addressKey(snapshot),requestSerial=++state.serial;
+      if(!snapshot.country||!snapshot.postal_code||!snapshot.city){
+        say('Für die manuelle Karte bitte zuerst Land, PLZ und Ort erfassen.');return;
+      }
+      state.manualMode=true;state.pendingManual=null;
+      if(acceptButton)acceptButton.hidden=true;
+      say('Manueller Modus: Karte öffnen …');
+      try{
+        const maps=await mapsReady();
+        if(!live()||requestSerial!==state.serial||expected!==addressKey(fields(form)))return;
+        let center=state.position||({CH:{lat:46.8182,lng:8.2275},DE:{lat:51.1657,lng:10.4515},AT:{lat:47.5162,lng:14.5501}}[snapshot.country])||{lat:46.8182,lng:8.2275};
+        try{
+          const {results}=await geocodeWithTimeout(maps,{...snapshot,street:'',house_number:''});
+          if(results?.[0]?.geometry?.location){
+            const loc=results[0].geometry.location;
+            center={lat:loc.lat(),lng:loc.lng()};
+          }
+        }catch(_){/* No geocode: manual map still remains available. */}
+        if(!live()||requestSerial!==state.serial||expected!==addressKey(fields(form)))return;
+        if(!state.map)state.map=new maps.Map(root,{center,zoom:13,streetViewControl:false,mapTypeControl:false});
+        else{state.map.setCenter(center);state.map.setZoom(13);}
+        // Existing verified marker is not implicitly confirmed for a new address.
+        if(state.marker){state.marker.setMap(null);state.marker=null;}
+        state.position=null;state.source=null;state.addressKey=null;state.manual=false;
+        maps.event.clearListeners(state.map,'click');
+        state.map.addListener('click',e=>{
+          if(!live()||!state.manualMode||expected!==addressKey(fields(form)))return;
+          const position={lat:e.latLng.lat(),lng:e.latLng.lng()};
+          state.pendingManual=position;
+          if(state.marker)state.marker.setMap(null);
+          state.marker=new maps.Marker({position,map:state.map,draggable:true,title:'Vorgeschlagener manueller Standort'});
+          state.marker.addListener('dragend',event=>{
+            state.pendingManual={lat:event.latLng.lat(),lng:event.latLng.lng()};
+            say('Marker verschoben. Mit «Position bestätigen» übernehmen.');
+          });
+          if(acceptButton)acceptButton.hidden=false;
+          say('Marker gesetzt. Bei Bedarf verschieben und mit «Position bestätigen» übernehmen.');
+        });
+        say('Manueller Modus: Standort auf der Karte anklicken, Marker bei Bedarf verschieben und Position bestätigen. Die eingegebene Strasse bleibt unverändert.');
+      }catch(e){if(live()&&requestSerial===state.serial)say('Manuelle Karte nicht verfügbar: '+e.message);}
+    }
+    manualButton?.addEventListener('click',()=>{
+      if(disabled||!live())return;
+      if(state.marker&&state.position&&state.addressKey===addressKey(fields(form))){
+        state.marker.setDraggable(true);
+        state.manualMode=true;
+        say('Marker verschieben und mit «Position bestätigen» übernehmen.');
+        if(acceptButton)acceptButton.hidden=false;
+        state.pendingManual={...state.position};
+        state.marker.addListener('dragend',event=>{state.pendingManual={lat:event.latLng.lat(),lng:event.latLng.lng()};say('Marker verschoben. Position bestätigen.');});
+      }else void manualMapCenter();
+    });
+    acceptButton?.addEventListener('click',()=>{
+      if(disabled||!live()||!state.pendingManual)return;
+      const pos=state.pendingManual;
+      state.position={...pos};state.source='manual';state.manual=true;
+      state.addressKey=addressKey(fields(form));state.manualMode=false;state.pendingManual=null;
+      if(state.marker){state.marker.setDraggable(false);state.marker.setTitle('Manuell bestätigter Betriebsstandort');}
+      acceptButton.hidden=true;
+      say('Manueller Standort bestätigt. Die eingegebene Adresse wird unverändert beim Speichern übernommen.');
+    });
     async function geo(force=false){
       if(!live()||disabled)return;
       const snapshot=fields(form),snapshotKey=addressKey(snapshot),serial=++state.serial;
@@ -234,7 +301,7 @@
         const maps=await mapsReady();
         const {results}=await geocodeWithTimeout(maps,snapshot);
         if(!live()||serial!==state.serial||snapshotKey!==addressKey(fields(form)))return;
-        if(!results?.length||!validGeocode(results[0],snapshot))throw Error('Google hat keinen ausreichend genauen Treffer für die eingegebene Adresse geliefert. Bitte Adresse kontrollieren oder Marker nach einer gültigen Ermittlung korrigieren.');
+        if(!results?.length||!validGeocode(results[0],snapshot))throw Error('Google hat keinen ausreichend genauen Treffer geliefert. Du kannst die Adresse dennoch speichern oder über «Marker manuell setzen» eine Position festlegen.');
         const pos=results[0].geometry.location;
         if(await markerAt(pos.lat(),pos.lng(),'geocoded',snapshotKey))say('Standort automatisch ermittelt. Bitte Position prüfen und anschliessend speichern.');
       }catch(e){if(live()&&serial===state.serial)say('Standort konnte nicht ermittelt werden: '+e.message+' Du kannst die Ermittlung erneut starten.');}
@@ -242,6 +309,7 @@
     }
     function scheduleGeo(){
       if(!live())return;
+      if(disabled){say('Dieser Betrieb ist nur lesbar. Eine Standortermittlung ist hier gesperrt.');return;}
       ++state.serial;
       if(state.timer)clearTimeout(state.timer);
       const newKey=addressKey(fields(form));
@@ -254,19 +322,6 @@
     });
     form.querySelector('#sk-edit-location-search')?.addEventListener('click',()=>{
       if(state.timer)clearTimeout(state.timer);void geo(true);
-    });
-    form.querySelector('#sk-edit-location-correct')?.addEventListener('click',()=>{
-      if(!live())return;
-      if(!state.marker)return say('Zuerst Standort ermitteln.');
-      state.marker.setDraggable(true);say('Marker auf der Karte an den richtigen Ort ziehen.');
-      state.marker.addListener('dragend',e=>{
-        if(!live())return;
-        state.serial++;
-        if(state.timer)clearTimeout(state.timer);
-        state.position={lat:e.latLng.lat(),lng:e.latLng.lng()};state.source='manual';state.manual=true;
-        state.addressKey=addressKey(fields(form));state.marker.setDraggable(false);
-        say('Position manuell korrigiert. Diese Position bleibt bis zur nächsten Adressänderung erhalten. Bitte speichern.');
-      });
     });
     if(valid(b.latitude,b.longitude)&&sameAddress){
       try{await markerAt(b.latitude,b.longitude,b.location_source||'geocoded');say('Gespeicherter Standort geladen.');}
