@@ -105,7 +105,7 @@ window.SK_DRAFTS = (() => {
       }
     }
     const existing=await window.SK_AUTH.readFormDraft(kind,key,business);if(state.disposed)return;
-    if(existing){state.revision=Number(existing.revision);if(state.dirty||JSON.stringify(snapshot())!==state.initial){status('Lokale Änderungen vorhanden – gespeicherten Entwurf bitte später erneut öffnen.');return;}status('Gespeicherter privater Entwurf vorhanden.');
+    if(existing){state.revision=Number(existing.revision);if(!state.readOnly&&(state.dirty||JSON.stringify(snapshot())!==state.initial)){status('Lokale Änderungen vorhanden – gespeicherten Entwurf bitte später erneut öffnen.');return;}status('Gespeicherter privater Entwurf vorhanden.');
      if(state.readOnly){apply(form,existing.payload);state.initial=JSON.stringify(snapshot());state.savedSnapshot=state.initial;setReadOnly(true);showTakeover();status('Nur Ansicht: Entwurf wird in einer anderen Sitzung bearbeitet.');return;}
      if(options.restore==='automatic'||(options.restore!=='none'&&window.confirm('Für dieses Formular ist ein privater Entwurf vorhanden. Möchtest du diesen wiederherstellen?\n\nAbbrechen: aktuellen Stand weiter bearbeiten.'))){
        apply(form,existing.payload);state.initial=JSON.stringify(snapshot());state.savedSnapshot=state.initial;status('Privater Entwurf geladen (noch nicht veröffentlicht)');
