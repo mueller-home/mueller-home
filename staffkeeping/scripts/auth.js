@@ -320,7 +320,7 @@
   },
   async saveMyProfile(payload){const {error}=await db.rpc('sk_update_my_business_profile',payload);if(error)throw error;},
   async saveRegistrationLegal(payload){const {error}=await db.rpc('sk_update_my_registration_legal',payload);if(error)throw error;},
-  async saveMyLocation(payload){const {error}=await db.rpc('sk_set_my_business_location',payload);if(error)throw error;},
+  async saveMyLocation(payload){const {error}=await db.rpc('sk_set_business_location_by_id',payload);if(error)throw error;},
   async listBusinessMedia(businessId){
     const result={logo:[],photos:[]};
     for(const [kind,bucket] of [['logo','sk-business-logos'],['photos','sk-business-photos']]){

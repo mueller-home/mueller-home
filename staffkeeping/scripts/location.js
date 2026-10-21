@@ -4,6 +4,11 @@
  const $=id=>document.getElementById(id);
  let sdk=null, map=null, marker=null, activeBusiness=null, writable=false, lastAddress='', request=0, locationBusy=false;
  const cfg=window.SK_MAPS_CONFIG||{};
+ // Auch im bisherigen Einzelbetriebsprofil immer die explizite Betriebs-ID senden.
+ async function savePosition(payload){
+   if(!activeBusiness?.id)throw Error('Kein eindeutiger Betrieb für den Standort ausgewählt.');
+   return window.SK_AUTH.saveMyLocation({...payload,p_business_id:activeBusiness.id});
+ }
  const label={CH:'Schweiz',DE:'Deutschland',AT:'Österreich'};
  const clean=v=>String(v||'').trim();
  const key=b=>[b.country,b.postal_code,b.city,b.street,b.house_number].map(v=>clean(v).toLowerCase()).join('|');
@@ -37,7 +42,7 @@
      map.setCenter(pos);map.setZoom(activeBusiness.location_source==='manual'?16:activeBusiness.street?16:11);
      marker=pin(window.google.maps,map,activeBusiness,false,async(lat,lng)=>{
        const snapshot=current();
-       try{say('Korrigierte Position wird gespeichert …');await window.SK_AUTH.saveMyLocation({p_latitude:lat,p_longitude:lng,p_source:'manual',p_address_key:key(snapshot)});
+       try{say('Korrigierte Position wird gespeichert …');await savePosition({p_latitude:lat,p_longitude:lng,p_source:'manual',p_address_key:key(snapshot)});
          activeBusiness={...activeBusiness,latitude:lat,longitude:lng,location_source:'manual',location_address_key:key(snapshot)};
          marker.setDraggable(false);updateReset();say('Manuell bestätigter Standort gespeichert ✓');
        }catch(e){say('Standort nicht gespeichert: '+e.message);redraw();}
@@ -65,7 +70,7 @@
      const position=found.geometry.location;
      // Die Standort-RPC lehnt Antworten für inzwischen geänderte Adressen ab.
      if(key(current())!==aKey)return;
-     await window.SK_AUTH.saveMyLocation({p_latitude:position.lat(),p_longitude:position.lng(),p_source:'geocoded',p_address_key:aKey});
+     await savePosition({p_latitude:position.lat(),p_longitude:position.lng(),p_source:'geocoded',p_address_key:aKey});
      activeBusiness={...activeBusiness,latitude:position.lat(),longitude:position.lng(),location_source:'geocoded',location_address_key:aKey};
      if(!map)await initMap();redraw();say(b.street?.trim()?'Standort aus Adresse ermittelt ✓':'Ungefährer Standort aus PLZ und Ort ✓');
    }catch(e){say('Standort konnte nicht ermittelt werden: '+e.message);}
@@ -123,14 +128,14 @@
      const point=results[0].geometry.location;
      // Die alte Position bleibt erhalten, wenn Google keine Position findet.
      say('Neue Position ermittelt; sie wird gespeichert …');
-     await window.SK_AUTH.saveMyLocation({p_latitude:null,p_longitude:null,p_source:'reset',p_address_key:addressKey});cleared=true;
-     await window.SK_AUTH.saveMyLocation({p_latitude:point.lat(),p_longitude:point.lng(),p_source:'geocoded',p_address_key:addressKey});
+     await savePosition({p_latitude:null,p_longitude:null,p_source:'reset',p_address_key:addressKey});cleared=true;
+     await savePosition({p_latitude:point.lat(),p_longitude:point.lng(),p_source:'geocoded',p_address_key:addressKey});
      activeBusiness={...activeBusiness,latitude:point.lat(),longitude:point.lng(),location_source:'geocoded',location_address_key:addressKey};
      redraw();say('Position automatisch neu ermittelt und gespeichert ✓');
    }catch(e){
      // Bei Fehler nach dem Reset die bestätigte Altposition bestmöglich wiederherstellen.
      if(cleared){
-       try{await window.SK_AUTH.saveMyLocation({p_latitude:old.latitude,p_longitude:old.longitude,p_source:'manual',p_address_key:addressKey});}
+       try{await savePosition({p_latitude:old.latitude,p_longitude:old.longitude,p_source:'manual',p_address_key:addressKey});}
        catch{say('Speicherfehler: Bitte Seite neu laden und Standort kontrollieren.');return;}
      }
      say('Neue Ermittlung fehlgeschlagen. Bisherige Position bleibt erhalten: '+e.message);
