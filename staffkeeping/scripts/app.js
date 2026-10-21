@@ -178,20 +178,24 @@ const skDialogFields=()=>{
 };
 function skDialogDirty(){const d=window.SK_DRAFTS?.current();return dialog.open && (skDialogState.manualDirty||(d ? d.unsafe() : skDialogFields()!==skDialogState.snapshot));}
 function skDialogTrace(action){skDialogState.lastAction=action;console.info('[SK dialog 0.33.1.6.2]',action,{open:dialog.open,dirty:skDialogDirty(),saving:skDialogState.saving});}
-function skDialogConfirmDiscard(){
+function skDialogConfirmDiscard(allowDraftSave=false){
  return new Promise(resolve=>{
   const prompt=document.createElement('dialog');prompt.setAttribute('aria-label','Ungespeicherte Änderungen');
-  const wrap=document.createElement('div');wrap.style.cssText='padding:20px;max-width:420px';
-  const heading=document.createElement('h2');heading.textContent='Ungespeicherte Änderungen';
-  const msg=document.createElement('p');msg.textContent=window.SK_DRAFTS?.current()?'Ungesicherte Änderungen verwerfen? Bereits auf dem Server gespeicherte private Entwürfe bleiben bestehen und können später wiederhergestellt werden.':'Deine Änderungen wurden noch nicht gespeichert. Möchtest du weiter bearbeiten oder sie verwerfen?';
+  const wrap=document.createElement('div');wrap.style.cssText='padding:20px;max-width:460px';
+  const heading=document.createElement('h2');heading.textContent=allowDraftSave?'Inserat schliessen?':'Ungespeicherte Änderungen';
+  const msg=document.createElement('p');msg.textContent=allowDraftSave
+   ?'Es sind noch nicht gesicherte Änderungen vorhanden. Du kannst den privaten Entwurf speichern, nur die letzten Änderungen verwerfen oder weiter bearbeiten.'
+   :window.SK_DRAFTS?.current()?'Ungesicherte Änderungen verwerfen? Bereits gespeicherte private Entwürfe bleiben bestehen.':'Deine Änderungen wurden noch nicht gespeichert. Möchtest du weiter bearbeiten oder sie verwerfen?';
   const actions=document.createElement('div');actions.style.cssText='display:flex;gap:12px;flex-wrap:wrap';
-  const keep=document.createElement('button');keep.type='button';keep.className='btn';keep.textContent='Weiter bearbeiten';
+  const keep=document.createElement('button');keep.type='button';keep.className='subtle-btn';keep.textContent='Weiter bearbeiten';
   const discard=document.createElement('button');discard.type='button';discard.className='subtle-btn';discard.textContent='Änderungen verwerfen';
-  actions.append(keep,discard);wrap.append(heading,msg,actions);prompt.append(wrap);document.body.append(prompt);
+  actions.append(keep,discard);
+  if(allowDraftSave){const save=document.createElement('button');save.type='button';save.className='btn';save.textContent='Entwurf speichern';save.addEventListener('click',()=>finish('save'));actions.append(save);}
+  wrap.append(heading,msg,actions);prompt.append(wrap);document.body.append(prompt);
   let done=false;
   const finish=answer=>{if(done)return;done=true;prompt.close();prompt.remove();resolve(answer);};
-  keep.addEventListener('click',()=>finish(false));discard.addEventListener('click',()=>finish(true));
-  prompt.addEventListener('cancel',e=>{e.preventDefault();finish(false);});
+  keep.addEventListener('click',()=>finish('keep'));discard.addEventListener('click',()=>finish('discard'));
+  prompt.addEventListener('cancel',e=>{e.preventDefault();finish('keep');});
   prompt.showModal();keep.focus();
  });
 }
@@ -199,8 +203,21 @@ async function skDialogRequestClose(origin){
  if(!dialog.open)return true;
  skDialogTrace('close-request:'+origin);
  if(skDialogState.saving){console.warn('[SK dialog] Schliessen während Speicherung blockiert');return false;}
- if(skDialogDirty() && !(await skDialogConfirmDiscard()))return false;
- window.SK_DRAFTS?.current()?.abandon();
+ const draft=window.SK_DRAFTS?.current();
+ // Eine laufende Auto-Save-Anfrage darf den Entwurf nicht erst nach der Wahl «Verwerfen» sichern.
+ if(draft){draft.pause();await draft.waitForIdle();}
+ if(!dialog.open)return true;
+ if(skDialogDirty()){
+  const canSave=!!dialog.querySelector('#listing-form')&&!!draft;
+  const choice=await skDialogConfirmDiscard(canSave);
+  if(choice==='keep'){draft?.resume();return false;}
+  if(choice==='save'){
+   const saved=await saveListingDraftAndClose();
+   if(!saved)draft?.resume();
+   return saved;
+  }
+ }
+ draft?.abandon();
  skDialogState.allowedClose=true;skDialogState.lastAction='user-close:'+origin;dialog.close();return true;
 }
 function skDialogSavedClose(){window.SK_DRAFTS?.current()?.abandon();skDialogState.saving=false;skDialogState.allowedClose=true;skDialogState.lastAction='save-success';dialog.close();}
@@ -332,10 +349,10 @@ async function loadMyListings(){
   catch(error){root.innerHTML=`<p role="alert">Inserate konnten nicht geladen werden: ${esc(error.message)}</p>`;}
 }
 async function saveListingDraftAndClose(){
- if(ownListingsBusy)return;
+ if(ownListingsBusy)return false;
  const form=document.getElementById('listing-form');
  const draft=window.SK_DRAFTS?.current();
- if(!form||!draft){const note=form?.querySelector('.listing-save-error');if(note)note.textContent='Entwurfssicherung nicht verfügbar. Bitte Formular geöffnet lassen.';return;}
+ if(!form||!draft){const note=form?.querySelector('.listing-save-error');if(note)note.textContent='Entwurfssicherung nicht verfügbar. Bitte Formular geöffnet lassen.';return false;}
  const button=document.getElementById('save-listing-draft');
  const note=form.querySelector('.listing-save-error');
  if(note)note.textContent='';
@@ -346,8 +363,10 @@ async function saveListingDraftAndClose(){
   await draft.saveNow();
   skDialogSavedClose();
   await loadMyListings();
+  return true;
  }catch(error){
   if(note)note.textContent='Entwurf konnte nicht gespeichert werden: '+error.message+' Deine Eingaben bleiben geöffnet.';
+  return false;
  }finally{
   ownListingsBusy=false;skDialogState.saving=false;
   if(button?.isConnected){button.disabled=false;button.textContent='Entwurf speichern';}
@@ -365,12 +384,14 @@ async function saveListing(){
   catch(error){button.disabled=false;button.textContent=id?(ownListings.find(l=>l.id===id)?.status==='Aktiv'?'Änderungen veröffentlichen':'Änderungen speichern'):'Veröffentlichen';const note=form.querySelector('.listing-save-error');if(note)note.textContent='Speichern fehlgeschlagen: '+error.message;}
   finally{ownListingsBusy=false;skDialogState.saving=false;}
 }
-function listingForm(id,preferredBusiness=null,restoreDraft=false){
+function listingForm(id,preferredBusiness=null,restoreDraft=false,draftKey=null){
   const l=ownListings.find(x=>x.id===id);
   const today=skTodayCH();
   const dateFrom=l?.date_from||today,dateTo=l?.date_to||today;
   modal(l?'Inserat bearbeiten':'Neues Inserat',`<form id="listing-form" data-edit="${esc(l?.id||'')}"><label>Betrieb / Einsatzstandort *</label><select name="business_id" required ${l?"disabled":""}>${ownBusinessList.map(b=>`<option value="${esc(b.id)}" ${(l?.business_id||preferredBusiness||window.SK_SELECTED_BUSINESS||ownBusinessList[0]?.id)===b.id?"selected":""}>${esc(b.company_name)} · ${esc(b.city||"")}</option>`).join("")}</select><div class="field-grid"><div><label>Typ *</label><select name="type" required>${['Suche','Biete'].map(x=>`<option ${l?.type===x?'selected':''}>${x}</option>`).join('')}</select></div><div><label>Kategorie *</label><select name="category" required>${['Küche','Service','Housekeeping','Technik','Animation'].map(x=>`<option ${l?.category===x?'selected':''}>${x}</option>`).join('')}</select></div></div><p class="muted">Ort und Land werden automatisch aus dem freigegebenen Betriebsprofil übernommen.</p><label>Titel (5–80 Zeichen) *</label><input name="title" required minlength="5" maxlength="80" value="${esc(l?.title||'')}"><label>Beschreibung (20–1000 Zeichen) *</label><textarea name="description" required minlength="20" maxlength="1000" rows="3">${esc(l?.description||'')}</textarea><div class="field-grid"><div><label>Von *</label><input name="from" type="date" required value="${esc(dateFrom)}"></div><div><label>Bis *</label><input name="to" type="date" required value="${esc(dateTo)}"></div></div><label>Rahmenbedingungen (max. 500 Zeichen)</label><textarea name="conditions" maxlength="500" rows="2">${esc(l?.conditions||'')}</textarea><label class="check"><input type="checkbox" name="accommodation" ${l?.accommodation?'checked':''}><span>Unterkunft vorhanden</span></label><p class="muted">Sprachen: ${['DE','FR','IT','EN','ES'].map(x=>`<label class="inline-check"><input type="checkbox" name="languages" value="${x}" ${(l?.languages||['DE']).includes(x)?'checked':''}> ${x}</label>`).join(' ')}</p><p class="listing-save-error" role="alert"></p><div class="dialog-actions"><button type="button" class="subtle-btn" id="save-listing-draft">Entwurf speichern</button><button type="button" class="btn" id="save-real-listing">${l?(l.status==='Aktiv'?'Änderungen veröffentlichen':'Änderungen speichern'):'Veröffentlichen'}</button></div></form>`);
- const f=document.getElementById('listing-form');const bid=f?.elements.namedItem('business_id')?.value;if(bid)window.SK_DRAFTS?.attach(f,'listing',l?.id||('new:'+bid),bid,{restore:restoreDraft?'automatic':'prompt'});
+ const f=document.getElementById('listing-form');const bid=f?.elements.namedItem('business_id')?.value;
+ // Jeder neue Entwurf bekommt eine eigene ID; alte new:<business_id>-Entwuerfe bleiben ueber die Liste erreichbar.
+ if(bid)window.SK_DRAFTS?.attach(f,'listing',l?.id||draftKey||('new:'+crypto.randomUUID()),bid,{restore:restoreDraft?'automatic':'none'});
  if(!l)f?.elements.namedItem('business_id')?.addEventListener('change',async e=>{
   const select=e.currentTarget, next=select.value, current=window.SK_DRAFTS?.current();
   if(!next || !current || next===current.business)return;
@@ -413,7 +434,7 @@ document.getElementById('my-list-table').addEventListener('click',async e=>{
  }else{
   const existing=ownListings.find(l=>l.id===d.draft_key);
   if(existing)listingForm(existing.id,null,true);
-  else listingForm(null,d.business_id,true);
+  else listingForm(null,d.business_id,true,d.draft_key);
  }
 });
 document.getElementById('my-list-table').addEventListener('click',async e=>{
