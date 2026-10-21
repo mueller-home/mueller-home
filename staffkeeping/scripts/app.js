@@ -342,12 +342,57 @@ window.SK_SELECTED_BUSINESS=null;
 let ownListingsBusy=false;
 const listingFormField=(form,name)=>form.elements.namedItem(name);
 function listingError(error){modal('Inserat nicht gespeichert',`<p>${esc(error?.message||'Unbekannter Fehler')}</p><p>Das Inserat wurde nicht als gespeichert bestätigt. Bitte überprüfe deine Anmeldung und die Datenbankmigration 0.32.1.</p>`);}
-async function loadMyListings(){
+// Refresh only the visible list. Never rerender an open editor or apply stale responses.
+let skListingsRefreshGeneration=0;
+let skListingsRefreshBusy=false;
+let skListingsRefreshPending=false;
+let skListingsLastRefresh=0;
+async function loadMyListings({silent=false}={}){
+  if(currentScreen!=='my-listings')return;
+  if(dialog.open){skListingsRefreshPending=true;return;}
+  if(skListingsRefreshBusy){skListingsRefreshPending=true;return;}
+  const generation=++skListingsRefreshGeneration;
   const root=document.getElementById('my-list-table');
-  root.innerHTML='<p class="muted">Eigene Inserate werden geladen …</p>';
-  try{ownBusinessList=await window.SK_AUTH.listApprovedBusinesses();ownListings=await window.SK_AUTH.listMyListings();ownListingDrafts=await window.SK_AUTH.listListingDrafts();renderMyListings();}
-  catch(error){root.innerHTML=`<p role="alert">Inserate konnten nicht geladen werden: ${esc(error.message)}</p>`;}
+  skListingsRefreshBusy=true;
+  if(!silent)root.innerHTML='<p class="muted">Eigene Inserate werden geladen …</p>';
+  try{
+    // Keep all three results local until a complete, current snapshot is ready.
+    const businesses=await window.SK_AUTH.listApprovedBusinesses();
+    const listings=await window.SK_AUTH.listMyListings();
+    const drafts=await window.SK_AUTH.listListingDrafts();
+    if(generation!==skListingsRefreshGeneration||currentScreen!=='my-listings'||dialog.open){
+      if(dialog.open)skListingsRefreshPending=true;
+      return;
+    }
+    ownBusinessList=businesses;ownListings=listings;ownListingDrafts=drafts;
+    renderMyListings();skListingsLastRefresh=Date.now();
+  }catch(error){
+    if(generation===skListingsRefreshGeneration&&currentScreen==='my-listings'&&!dialog.open){
+      if(!silent)root.innerHTML=`<p role="alert">Inserate konnten nicht geladen werden: ${esc(error.message)}</p>`;
+      else console.warn('[SK listings] Hintergrundaktualisierung fehlgeschlagen',error);
+    }
+  }finally{
+    skListingsRefreshBusy=false;
+    if(skListingsRefreshPending&&currentScreen==='my-listings'&&!dialog.open){
+      skListingsRefreshPending=false;
+      void loadMyListings({silent:true});
+    }
+  }
 }
+function skRefreshVisibleListings(){
+  if(currentScreen!=='my-listings'||document.hidden)return;
+  if(dialog.open){skListingsRefreshPending=true;return;}
+  // Focus and visibilitychange can fire together. Avoid duplicate network requests.
+  if(Date.now()-skListingsLastRefresh<900)return;
+  void loadMyListings({silent:true});
+}
+window.addEventListener('focus',skRefreshVisibleListings);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)skRefreshVisibleListings();});
+dialog.addEventListener('close',()=>{
+  if(currentScreen!=='my-listings')return;
+  skListingsRefreshPending=false;
+  void loadMyListings({silent:true});
+});
 async function saveListingDraftAndClose(){
  if(ownListingsBusy)return false;
  const form=document.getElementById('listing-form');
