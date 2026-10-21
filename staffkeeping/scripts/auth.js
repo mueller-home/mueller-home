@@ -172,6 +172,7 @@
   async listListingDrafts(){const {data,error}=await db.rpc('sk_list_my_listing_drafts');if(error)throw error;return data||[];},
   async readFormDraft(kind,key,businessId){const {data,error}=await db.rpc('sk_get_form_draft',{p_kind:kind,p_key:key,p_business:businessId});if(error)throw error;return data?.[0]||null;},
   async acquireDraftLock(kind,key,businessId,session){const {data,error}=await db.rpc('sk_acquire_form_draft_lock',{p_kind:kind,p_key:key,p_business:businessId,p_session:session});if(error)throw error;return data===true;},
+  async takeoverDraftLock(kind,key,businessId,session){const {data,error}=await db.rpc('sk_takeover_form_draft_lock',{p_kind:kind,p_key:key,p_business:businessId,p_session:session});if(error)throw error;return data===true;},
   async renewDraftLock(kind,key,businessId,session){const {data,error}=await db.rpc('sk_renew_form_draft_lock',{p_kind:kind,p_key:key,p_business:businessId,p_session:session});if(error)throw error;return data===true;},
   async releaseDraftLock(kind,key,businessId,session){const {error}=await db.rpc('sk_release_form_draft_lock',{p_kind:kind,p_key:key,p_business:businessId,p_session:session});if(error)throw error;},
   async writeFormDraft(kind,key,businessId,payload,revision,session=null){
