@@ -171,7 +171,16 @@
  window.SK_AUTH={
   async listListingDrafts(){const {data,error}=await db.rpc('sk_list_my_listing_drafts');if(error)throw error;return data||[];},
   async readFormDraft(kind,key,businessId){const {data,error}=await db.rpc('sk_get_form_draft',{p_kind:kind,p_key:key,p_business:businessId});if(error)throw error;return data?.[0]||null;},
-  async writeFormDraft(kind,key,businessId,payload,revision){const {data,error}=await db.rpc('sk_save_form_draft',{p_kind:kind,p_key:key,p_business:businessId,p_payload:payload,p_expected_revision:revision});if(error)throw error;return Number(data);},
+  async acquireDraftLock(kind,key,businessId,session){const {data,error}=await db.rpc('sk_acquire_form_draft_lock',{p_kind:kind,p_key:key,p_business:businessId,p_session:session});if(error)throw error;return data===true;},
+  async renewDraftLock(kind,key,businessId,session){const {data,error}=await db.rpc('sk_renew_form_draft_lock',{p_kind:kind,p_key:key,p_business:businessId,p_session:session});if(error)throw error;return data===true;},
+  async releaseDraftLock(kind,key,businessId,session){const {error}=await db.rpc('sk_release_form_draft_lock',{p_kind:kind,p_key:key,p_business:businessId,p_session:session});if(error)throw error;},
+  async writeFormDraft(kind,key,businessId,payload,revision,session=null){
+   const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),15000);
+   try{const {data,error}=await db.rpc('sk_save_form_draft',{p_kind:kind,p_key:key,p_business:businessId,p_payload:payload,p_expected_revision:revision,p_session:session}).abortSignal(ctrl.signal);
+    if(error)throw error;return Number(data);
+   }catch(error){if(ctrl.signal.aborted)throw Error('Zeitlimit der Entwurfssicherung überschritten. Speicherstand ungewiss – Entwurf neu öffnen und prüfen.');throw error;
+   }finally{clearTimeout(timer);}
+  },
   async discardFormDraft(kind,key,businessId,revision){const {error}=await db.rpc('sk_discard_form_draft',{p_kind:kind,p_key:key,p_business:businessId,p_expected_revision:revision});if(error)throw error;},
   async getAccountIdentity(){const user=await verifiedCurrentUser();if(!user)throw Error('Bitte anmelden.');return {email:user.email||''};},
   async listMyBusinesses(){
