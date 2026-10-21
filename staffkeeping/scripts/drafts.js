@@ -32,10 +32,16 @@ window.SK_DRAFTS = (() => {
   const listener=()=>schedule();form.addEventListener('input',listener);form.addEventListener('change',listener);
   state.stop=()=>{state.disposed=true;clearTimeout(state.timer);form.removeEventListener('input',listener);form.removeEventListener('change',listener);if(active===state)active=null;};
   state.unsafe=()=>state.dirty||state.pending||state.failed||state.conflicted||JSON.stringify(snapshot())!==state.savedSnapshot;
-  state.flush=async()=>{clearTimeout(state.timer);if(state.dirty)await save();await state.chain;if(state.failed)throw Error('Privater Entwurf konnte nicht gespeichert werden.');};
+  state.flush=async()=>{clearTimeout(state.timer);await state.ready;if(state.dirty)await save();await state.chain;if(state.failed||state.conflicted||state.unsafe())throw Error('Privater Entwurf konnte nicht vollständig gespeichert werden.');};
+  state.saveNow=async()=>{await state.ready;if(state.disposed)throw Error('Formular nicht mehr geöffnet.');
+   // Auch leere / bisher unveränderte Neuentwürfe ausdrücklich auf dem Server anlegen.
+   if(!state.revision)state.dirty=true;
+   state.failed=false;
+   await state.flush();
+  };
   state.finish=async()=>{await state.flush();await window.SK_AUTH.discardFormDraft(kind,key,business,state.revision);state.stop();};
   state.abandon=()=>state.stop();
-  (async()=>{try{const existing=await window.SK_AUTH.readFormDraft(kind,key,business);if(state.disposed)return;
+  state.ready=(async()=>{try{const existing=await window.SK_AUTH.readFormDraft(kind,key,business);if(state.disposed)return;
     if(existing){state.revision=Number(existing.revision);if(state.dirty||JSON.stringify(snapshot())!==state.initial){status('Lokale Änderungen vorhanden – gespeicherten Entwurf bitte später erneut öffnen.');return;}status('Gespeicherter privater Entwurf vorhanden.');
      if(options.restore==='automatic'||window.confirm('Für dieses Formular ist ein privater Entwurf vorhanden. Möchtest du diesen wiederherstellen?\n\nAbbrechen: aktuellen Stand weiter bearbeiten.')){
        apply(form,existing.payload);state.initial=JSON.stringify(snapshot());state.savedSnapshot=state.initial;status('Privater Entwurf geladen (noch nicht veröffentlicht)');

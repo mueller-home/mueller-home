@@ -331,6 +331,28 @@ async function loadMyListings(){
   try{ownBusinessList=await window.SK_AUTH.listApprovedBusinesses();ownListings=await window.SK_AUTH.listMyListings();ownListingDrafts=await window.SK_AUTH.listListingDrafts();renderMyListings();}
   catch(error){root.innerHTML=`<p role="alert">Inserate konnten nicht geladen werden: ${esc(error.message)}</p>`;}
 }
+async function saveListingDraftAndClose(){
+ if(ownListingsBusy)return;
+ const form=document.getElementById('listing-form');
+ const draft=window.SK_DRAFTS?.current();
+ if(!form||!draft){const note=form?.querySelector('.listing-save-error');if(note)note.textContent='Entwurfssicherung nicht verfügbar. Bitte Formular geöffnet lassen.';return;}
+ const button=document.getElementById('save-listing-draft');
+ const note=form.querySelector('.listing-save-error');
+ if(note)note.textContent='';
+ ownListingsBusy=true;skDialogState.saving=true;
+ if(button){button.disabled=true;button.textContent='Entwurf wird gespeichert …';}
+ try{
+  // Keine Pflichtfeldvalidierung: auch unvollständige Entwürfe müssen speicherbar sein.
+  await draft.saveNow();
+  skDialogSavedClose();
+  await loadMyListings();
+ }catch(error){
+  if(note)note.textContent='Entwurf konnte nicht gespeichert werden: '+error.message+' Deine Eingaben bleiben geöffnet.';
+ }finally{
+  ownListingsBusy=false;skDialogState.saving=false;
+  if(button?.isConnected){button.disabled=false;button.textContent='Entwurf speichern';}
+ }
+}
 async function saveListing(){
   if(ownListingsBusy)return;
   const form=document.getElementById('listing-form');if(!form?.reportValidity())return;
@@ -347,7 +369,7 @@ function listingForm(id,preferredBusiness=null,restoreDraft=false){
   const l=ownListings.find(x=>x.id===id);
   const today=skTodayCH();
   const dateFrom=l?.date_from||today,dateTo=l?.date_to||today;
-  modal(l?'Inserat bearbeiten':'Neues Inserat',`<form id="listing-form" data-edit="${esc(l?.id||'')}"><label>Betrieb / Einsatzstandort *</label><select name="business_id" required ${l?"disabled":""}>${ownBusinessList.map(b=>`<option value="${esc(b.id)}" ${(l?.business_id||preferredBusiness||window.SK_SELECTED_BUSINESS||ownBusinessList[0]?.id)===b.id?"selected":""}>${esc(b.company_name)} · ${esc(b.city||"")}</option>`).join("")}</select><div class="field-grid"><div><label>Typ *</label><select name="type" required>${['Suche','Biete'].map(x=>`<option ${l?.type===x?'selected':''}>${x}</option>`).join('')}</select></div><div><label>Kategorie *</label><select name="category" required>${['Küche','Service','Housekeeping','Technik','Animation'].map(x=>`<option ${l?.category===x?'selected':''}>${x}</option>`).join('')}</select></div></div><p class="muted">Ort und Land werden automatisch aus dem freigegebenen Betriebsprofil übernommen.</p><label>Titel (5–80 Zeichen) *</label><input name="title" required minlength="5" maxlength="80" value="${esc(l?.title||'')}"><label>Beschreibung (20–1000 Zeichen) *</label><textarea name="description" required minlength="20" maxlength="1000" rows="3">${esc(l?.description||'')}</textarea><div class="field-grid"><div><label>Von *</label><input name="from" type="date" required value="${esc(dateFrom)}"></div><div><label>Bis *</label><input name="to" type="date" required value="${esc(dateTo)}"></div></div><label>Rahmenbedingungen (max. 500 Zeichen)</label><textarea name="conditions" maxlength="500" rows="2">${esc(l?.conditions||'')}</textarea><label class="check"><input type="checkbox" name="accommodation" ${l?.accommodation?'checked':''}><span>Unterkunft vorhanden</span></label><p class="muted">Sprachen: ${['DE','FR','IT','EN','ES'].map(x=>`<label class="inline-check"><input type="checkbox" name="languages" value="${x}" ${(l?.languages||['DE']).includes(x)?'checked':''}> ${x}</label>`).join(' ')}</p><p class="listing-save-error" role="alert"></p><div class="dialog-actions"><button type="button" class="btn" id="save-real-listing">${l?(l.status==='Aktiv'?'Änderungen veröffentlichen':'Änderungen speichern'):'Veröffentlichen'}</button></div></form>`);
+  modal(l?'Inserat bearbeiten':'Neues Inserat',`<form id="listing-form" data-edit="${esc(l?.id||'')}"><label>Betrieb / Einsatzstandort *</label><select name="business_id" required ${l?"disabled":""}>${ownBusinessList.map(b=>`<option value="${esc(b.id)}" ${(l?.business_id||preferredBusiness||window.SK_SELECTED_BUSINESS||ownBusinessList[0]?.id)===b.id?"selected":""}>${esc(b.company_name)} · ${esc(b.city||"")}</option>`).join("")}</select><div class="field-grid"><div><label>Typ *</label><select name="type" required>${['Suche','Biete'].map(x=>`<option ${l?.type===x?'selected':''}>${x}</option>`).join('')}</select></div><div><label>Kategorie *</label><select name="category" required>${['Küche','Service','Housekeeping','Technik','Animation'].map(x=>`<option ${l?.category===x?'selected':''}>${x}</option>`).join('')}</select></div></div><p class="muted">Ort und Land werden automatisch aus dem freigegebenen Betriebsprofil übernommen.</p><label>Titel (5–80 Zeichen) *</label><input name="title" required minlength="5" maxlength="80" value="${esc(l?.title||'')}"><label>Beschreibung (20–1000 Zeichen) *</label><textarea name="description" required minlength="20" maxlength="1000" rows="3">${esc(l?.description||'')}</textarea><div class="field-grid"><div><label>Von *</label><input name="from" type="date" required value="${esc(dateFrom)}"></div><div><label>Bis *</label><input name="to" type="date" required value="${esc(dateTo)}"></div></div><label>Rahmenbedingungen (max. 500 Zeichen)</label><textarea name="conditions" maxlength="500" rows="2">${esc(l?.conditions||'')}</textarea><label class="check"><input type="checkbox" name="accommodation" ${l?.accommodation?'checked':''}><span>Unterkunft vorhanden</span></label><p class="muted">Sprachen: ${['DE','FR','IT','EN','ES'].map(x=>`<label class="inline-check"><input type="checkbox" name="languages" value="${x}" ${(l?.languages||['DE']).includes(x)?'checked':''}> ${x}</label>`).join(' ')}</p><p class="listing-save-error" role="alert"></p><div class="dialog-actions"><button type="button" class="subtle-btn" id="save-listing-draft">Entwurf speichern</button><button type="button" class="btn" id="save-real-listing">${l?(l.status==='Aktiv'?'Änderungen veröffentlichen':'Änderungen speichern'):'Veröffentlichen'}</button></div></form>`);
  const f=document.getElementById('listing-form');const bid=f?.elements.namedItem('business_id')?.value;if(bid)window.SK_DRAFTS?.attach(f,'listing',l?.id||('new:'+bid),bid,{restore:restoreDraft?'automatic':'prompt'});
  if(!l)f?.elements.namedItem('business_id')?.addEventListener('change',async e=>{
   const select=e.currentTarget, next=select.value, current=window.SK_DRAFTS?.current();
@@ -378,7 +400,7 @@ function renderMyListings(){
    }).join('')+'</tbody></table></div>':'';
 root.innerHTML='<h2>'+(listTab==='inserate'?'Eigene Inserate':'Vergebene Inserate')+'</h2><div class="table-wrap"><table class="data-table"><thead><tr><th>Inserat / Ort</th><th>Typ / Kategorie</th><th>Zeitraum</th><th>Status</th><th>Aktionen</th></tr></thead><tbody>'+rows.map(l=>`<tr><td><strong>${esc(l.title)}</strong><small>${esc(l.city)} · ${esc(l.country)}</small></td><td>${esc(l.type)} · ${esc(l.category)}</td><td>${esc(dateDisplay(l.date_from))} – ${esc(dateDisplay(l.date_to))}</td><td><span class="status-tag sk-list-status ${skListingEffectiveStatus(l)==='Aktiv'?'sk-list-status-active':skListingEffectiveStatus(l)==='Abgelaufen'?'sk-list-status-inactive':'sk-list-status-inactive'}">${esc(skListingEffectiveStatus(l))}</span></td><td class="table-actions sk-own-actions"><button type="button" class="sk-action-edit" data-own="edit" data-id="${esc(l.id)}" aria-label="Inserat bearbeiten" title="Inserat bearbeiten">✎</button><button type="button" class="sk-action-toggle" data-own="toggle" data-id="${esc(l.id)}" ${skListingEffectiveStatus(l)==='Abgelaufen'?'disabled':''} aria-label="${skListingEffectiveStatus(l)==='Abgelaufen'?'Zuerst Enddatum verlängern':l.status==='Aktiv'?'Inserat deaktivieren':'Inserat aktivieren'}" title="${skListingEffectiveStatus(l)==='Abgelaufen'?'Zuerst Enddatum verlängern':l.status==='Aktiv'?'Inserat deaktivieren':'Inserat aktivieren'}">↻</button><button type="button" class="sk-action-delete" data-own="delete" data-id="${esc(l.id)}" aria-label="Inserat dauerhaft löschen" title="Inserat dauerhaft löschen">✕</button></td></tr>`).join('')+'</tbody></table></div>'+(rows.length?'':'<p class="muted">Keine veröffentlichten Inserate in dieser Ansicht.</p>')+draftsMarkup;
 }
-document.getElementById('dialog-body').addEventListener('click',e=>{if(e.target.closest('#save-real-listing'))saveListing();});
+document.getElementById('dialog-body').addEventListener('click',e=>{if(e.target.closest('#save-listing-draft')){void saveListingDraftAndClose();return;}if(e.target.closest('#save-real-listing'))void saveListing();});
 document.getElementById('my-list-table').addEventListener('click',async e=>{
  const btn=e.target.closest('[data-draft]');if(!btn)return;
  const d=ownListingDrafts.find(x=>x.draft_key===btn.dataset.key&&x.business_id===btn.dataset.business);
