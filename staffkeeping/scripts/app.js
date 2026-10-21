@@ -176,7 +176,7 @@ const skDialogFields=()=>{
  return JSON.stringify([...form.elements].filter(el=>el.name&&!['submit','button'].includes(el.type))
   .map(el=>[el.name,el.type==='checkbox'||el.type==='radio'?el.checked:el.value]));
 };
-function skDialogDirty(){const d=window.SK_DRAFTS?.current();return dialog.open && (skDialogState.manualDirty||(d?.unsafe()??false)||(!d&&skDialogFields()!==skDialogState.snapshot));}
+function skDialogDirty(){const d=window.SK_DRAFTS?.current();return dialog.open && (skDialogState.manualDirty||(d ? d.unsafe() : skDialogFields()!==skDialogState.snapshot));}
 function skDialogTrace(action){skDialogState.lastAction=action;console.info('[SK dialog 0.33.1.6.2]',action,{open:dialog.open,dirty:skDialogDirty(),saving:skDialogState.saving});}
 function skDialogConfirmDiscard(){
  return new Promise(resolve=>{
@@ -343,12 +343,12 @@ async function saveListing(){
   catch(error){button.disabled=false;button.textContent=id?(ownListings.find(l=>l.id===id)?.status==='Aktiv'?'Änderungen veröffentlichen':'Änderungen speichern'):'Veröffentlichen';const note=form.querySelector('.listing-save-error');if(note)note.textContent='Speichern fehlgeschlagen: '+error.message;}
   finally{ownListingsBusy=false;skDialogState.saving=false;}
 }
-function listingForm(id,preferredBusiness=null){
+function listingForm(id,preferredBusiness=null,restoreDraft=false){
   const l=ownListings.find(x=>x.id===id);
   const today=skTodayCH();
   const dateFrom=l?.date_from||today,dateTo=l?.date_to||today;
   modal(l?'Inserat bearbeiten':'Neues Inserat',`<form id="listing-form" data-edit="${esc(l?.id||'')}"><label>Betrieb / Einsatzstandort *</label><select name="business_id" required ${l?"disabled":""}>${ownBusinessList.map(b=>`<option value="${esc(b.id)}" ${(l?.business_id||preferredBusiness||window.SK_SELECTED_BUSINESS||ownBusinessList[0]?.id)===b.id?"selected":""}>${esc(b.company_name)} · ${esc(b.city||"")}</option>`).join("")}</select><div class="field-grid"><div><label>Typ *</label><select name="type" required>${['Suche','Biete'].map(x=>`<option ${l?.type===x?'selected':''}>${x}</option>`).join('')}</select></div><div><label>Kategorie *</label><select name="category" required>${['Küche','Service','Housekeeping','Technik','Animation'].map(x=>`<option ${l?.category===x?'selected':''}>${x}</option>`).join('')}</select></div></div><p class="muted">Ort und Land werden automatisch aus dem freigegebenen Betriebsprofil übernommen.</p><label>Titel (5–80 Zeichen) *</label><input name="title" required minlength="5" maxlength="80" value="${esc(l?.title||'')}"><label>Beschreibung (20–1000 Zeichen) *</label><textarea name="description" required minlength="20" maxlength="1000" rows="3">${esc(l?.description||'')}</textarea><div class="field-grid"><div><label>Von *</label><input name="from" type="date" required value="${esc(dateFrom)}"></div><div><label>Bis *</label><input name="to" type="date" required value="${esc(dateTo)}"></div></div><label>Rahmenbedingungen (max. 500 Zeichen)</label><textarea name="conditions" maxlength="500" rows="2">${esc(l?.conditions||'')}</textarea><label class="check"><input type="checkbox" name="accommodation" ${l?.accommodation?'checked':''}><span>Unterkunft vorhanden</span></label><p class="muted">Sprachen: ${['DE','FR','IT','EN','ES'].map(x=>`<label class="inline-check"><input type="checkbox" name="languages" value="${x}" ${(l?.languages||['DE']).includes(x)?'checked':''}> ${x}</label>`).join(' ')}</p><p class="listing-save-error" role="alert"></p><div class="dialog-actions"><button type="button" class="btn" id="save-real-listing">${l?(l.status==='Aktiv'?'Änderungen veröffentlichen':'Änderungen speichern'):'Veröffentlichen'}</button></div></form>`);
- const f=document.getElementById('listing-form');const bid=f?.elements.namedItem('business_id')?.value;if(bid)window.SK_DRAFTS?.attach(f,'listing',l?.id||('new:'+bid),bid);
+ const f=document.getElementById('listing-form');const bid=f?.elements.namedItem('business_id')?.value;if(bid)window.SK_DRAFTS?.attach(f,'listing',l?.id||('new:'+bid),bid,{restore:restoreDraft?'automatic':'prompt'});
  if(!l)f?.elements.namedItem('business_id')?.addEventListener('change',async e=>{
   const select=e.currentTarget, next=select.value, current=window.SK_DRAFTS?.current();
   if(!next || !current || next===current.business)return;
@@ -390,8 +390,8 @@ document.getElementById('my-list-table').addEventListener('click',async e=>{
   catch(err){alert('Entwurf konnte nicht verworfen werden: '+err.message);btn.disabled=false;}
  }else{
   const existing=ownListings.find(l=>l.id===d.draft_key);
-  if(existing)listingForm(existing.id);
-  else listingForm(null,d.business_id);
+  if(existing)listingForm(existing.id,null,true);
+  else listingForm(null,d.business_id,true);
  }
 });
 document.getElementById('my-list-table').addEventListener('click',async e=>{
