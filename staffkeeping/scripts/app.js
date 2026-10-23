@@ -395,7 +395,13 @@ async function skOpenBusinessSensitiveRequest(business){
    confirmation.className='form-feedback';confirmation.setAttribute('role','status');
    confirmation.textContent='Änderungsantrag für „'+business.company_name+'“ eingereicht. Die Änderung wird erst nach Genehmigung durch Annette wirksam.';
    overview.prepend(confirmation);
-  }catch(error){form.querySelector('#sk-sensitive-business-feedback').textContent='Antrag nicht eingereicht: '+error.message;submit.disabled=false;}
+  }catch(error){
+   const duplicate=error?.code==='SK409'||error?.code==='23505'||/sk_change_one_pending|offener Aenderungsantrag|offener Änderungsantrag/i.test(error?.message||'');
+   form.querySelector('#sk-sensitive-business-feedback').textContent=duplicate
+    ?'Für dieses Feld liegt bereits ein offener Änderungsantrag vor. Bitte zuerst die Entscheidung von Annette abwarten. Es wurde kein weiterer Antrag eingereicht.'
+    :'Antrag nicht eingereicht: '+error.message;
+   submit.disabled=false;
+  }
   finally{skDialogState.saving=false;}
  });
 }
