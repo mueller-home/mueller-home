@@ -220,12 +220,49 @@ async function skDialogRequestClose(origin){
  draft?.abandon();
  skDialogState.allowedClose=true;skDialogState.lastAction='user-close:'+origin;dialog.close();return true;
 }
+// Reguläres Schliessen bei Auto-Save-Formularen: erst den privaten Entwurf sichern.
+// X und Escape bleiben ausdrücklich Abbrechen mit Dirty-Guard.
+async function skDialogAutosaveClose(button){
+ if(!dialog.open||skDialogState.saving)return;
+ const draft=window.SK_DRAFTS?.current();
+ if(!draft)return void (await skDialogRequestClose('regular-without-draft'));
+ const form=button.closest('form');
+ const notice=form?.querySelector('.listing-save-error')||form?.querySelector('#sk-business-edit-feedback');
+ button.disabled=true;skDialogState.saving=true;
+ const oldText=button.textContent;button.textContent='Entwurf wird gesichert …';
+ try{
+  await draft.ready;
+  if(draft.readOnly){
+   // Reiner Lesemodus hat keine lokalen Änderungen zu sichern.
+   if(draft.unsafe())throw Error('Ungesicherte Änderungen im Lesemodus.');
+  }else await draft.flush();
+  skDialogSavedClose();
+  if(currentScreen==='my-listings')await loadMyListings();
+  if(currentScreen==='my-businesses')await loadMyBusinesses();
+ }catch(error){
+  if(notice)notice.textContent='Schliessen nicht möglich: '+error.message+' Änderungen bleiben im Formular erhalten.';
+  else console.warn('[SK dialog] Auto-Save vor Schliessen fehlgeschlagen',error);
+ }finally{skDialogState.saving=false;if(button.isConnected){button.disabled=false;button.textContent=oldText;}}
+}
+document.getElementById('dialog-body').addEventListener('click',event=>{
+ const button=event.target.closest('[data-sk-autosave-close]');
+ if(button)void skDialogAutosaveClose(button);
+});
 function skDialogSavedClose(){window.SK_DRAFTS?.current()?.abandon();skDialogState.saving=false;skDialogState.allowedClose=true;skDialogState.lastAction='save-success';dialog.close();}
 function modal(title,html){
  if(dialog.open){console.warn('[SK dialog] Versuch, geöffneten Dialog zu ersetzen',title);return false;}
  window.SK_DRAFTS?.current()?.abandon();
  document.getElementById('dialog-title').textContent=title;
  document.getElementById('dialog-body').innerHTML=html;
+ // Auto-Save-Formulare brauchen einen echten Schliessen-Button statt nur X (= Abbrechen).
+ const autosaveForm=dialog.querySelector('#listing-form, #sk-edit-business-form');
+ if(autosaveForm){
+  const actions=autosaveForm.querySelector('.dialog-actions')||autosaveForm;
+  const closeButton=document.createElement('button');closeButton.type='button';
+  closeButton.className='subtle-btn';closeButton.textContent='Schliessen';
+  closeButton.setAttribute('data-sk-autosave-close','');
+  actions.append(closeButton);
+ }
  skDialogState.snapshot=skDialogFields();skDialogState.manualDirty=false;skDialogState.saving=false;
  skDialogState.allowedClose=false;skDialogState.lastAction='open:'+title;
  dialog.showModal();return true;
@@ -350,8 +387,14 @@ async function skOpenBusinessSensitiveRequest(business){
   if(!confirm('Aenderungsantrag fuer „'+business.company_name+'“ verbindlich an Annette einreichen? Die bestehenden Betriebsdaten bleiben unveraendert.'))return;
   const submit=form.querySelector('[type="submit"]');submit.disabled=true;skDialogState.saving=true;
   try{await window.SK_AUTH.requestBusinessSensitiveChangeById(business.id,field.value,next);
-   form.querySelector('#sk-sensitive-business-feedback').textContent='Antrag eingereicht. Die Aenderung wird erst nach Genehmigung wirksam.';
-   // Dialog bleibt zur Einsicht offen; kein stillschweigendes Aendern der Live-Daten.
+   // Erfolgreiche verbindliche Einreichung ist KEIN ungesicherter Formularzustand.
+   skDialogSavedClose();
+   try{await loadMyBusinesses();}catch(refreshError){console.warn('[SK] Nach Einreichung konnte Betriebsübersicht nicht aktualisiert werden',refreshError);}
+   const overview=document.getElementById('my-businesses-list');
+   const confirmation=document.createElement('p');
+   confirmation.className='form-feedback';confirmation.setAttribute('role','status');
+   confirmation.textContent='Änderungsantrag für „'+business.company_name+'“ eingereicht. Die Änderung wird erst nach Genehmigung durch Annette wirksam.';
+   overview.prepend(confirmation);
   }catch(error){form.querySelector('#sk-sensitive-business-feedback').textContent='Antrag nicht eingereicht: '+error.message;submit.disabled=false;}
   finally{skDialogState.saving=false;}
  });
