@@ -301,6 +301,7 @@
   async submitMyBusiness(){const {error}=await db.rpc('sk_submit_my_business');if(error)throw error;await safeEvaluate();},
   async reviewBusiness(id,action,message){if(!isAdmin)throw Error('Nur Admins');const {error}=await db.rpc('sk_admin_review_business',{p_business_id:id,p_action:action,p_message:message||null});if(error)throw error;},
   async requestSensitiveChange(field,value){const {error}=await db.rpc('sk_request_sensitive_change',{p_field:field,p_new_value:value});if(error)throw error;},
+  async requestBusinessSensitiveChangeById(businessId,field,value){const {error}=await db.rpc('sk_request_business_sensitive_change_by_id',{p_business_id:businessId,p_field:field,p_new_value:value});if(error)throw error;},
   async adminActivity(){if(!isAdmin)throw Error('Nur Admins');const {data,error}=await db.rpc('sk_admin_activity');if(error)throw error;return data;},
   async resolveAllNormalAdminEvents(){if(!isAdmin)throw Error('Nur Admins');const {data,error}=await db.rpc('sk_admin_resolve_normal_events');if(error)throw error;return data;},
   async resolveAdminEvent(id){if(!isAdmin)throw Error('Nur Admins');const {error}=await db.rpc('sk_admin_resolve_event',{p_event_id:id});if(error)throw error;},

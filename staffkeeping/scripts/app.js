@@ -249,7 +249,7 @@ const skBusinessStatus=s=>skBusinessStatusLabels[s]||'Unbekannter Status';
 async function loadMyBusinesses(){
  const root=document.getElementById('my-businesses-list');root.textContent='Betriebe werden geladen …';
  try{const rows=await window.SK_AUTH.listMyBusinesses();
- root.innerHTML=rows.length?rows.map(b=>`<article class="panel sk-business-item"><div><strong>${esc(b.company_name)}</strong><p class="muted">${esc(b.postal_code||'')} ${esc(b.city||'')} · ${esc(b.country||'')}</p><p><span class="status-tag ${b.status==='Freigeschaltet'?'sk-list-status-active':''}">${esc(skBusinessStatus(b.status))}</span> <span class="status-tag">${esc(skBusinessStatus(b.review_state))}</span></p>${b.review_state==='changes_requested'?`<p role="alert">Nachbesserung: ${esc(b.review_message||'Bitte Angaben korrigieren')}</p>`:''}</div><div class="sk-business-actions"><button type="button" class="subtle-btn" data-edit-business="${esc(b.id)}">${b.review_state==='changes_requested'?'Nachbessern':'Betriebsprofil bearbeiten'}</button><button type="button" class="subtle-btn" data-business-media="${esc(b.id)}">Logo &amp; Bilder</button></div></article>`).join(''):'<p>Keine Betriebe zugeordnet.</p>';}
+ root.innerHTML=rows.length?rows.map(b=>`<article class="panel sk-business-item"><div><strong>${esc(b.company_name)}</strong><p class="muted">${esc(b.postal_code||'')} ${esc(b.city||'')} · ${esc(b.country||'')}</p><p><span class="status-tag ${b.status==='Freigeschaltet'?'sk-list-status-active':''}">${esc(skBusinessStatus(b.status))}</span> <span class="status-tag">${esc(skBusinessStatus(b.review_state))}</span></p>${b.review_state==='changes_requested'?`<p role="alert">Nachbesserung: ${esc(b.review_message||'Bitte Angaben korrigieren')}</p>`:''}</div><div class="sk-business-actions"><button type="button" class="subtle-btn" data-edit-business="${esc(b.id)}">${b.review_state==='changes_requested'?'Nachbessern':'Betriebsprofil bearbeiten'}</button><button type="button" class="subtle-btn" data-business-media="${esc(b.id)}">Logo &amp; Bilder</button>${b.member_role==='owner'&&b.status==='Freigeschaltet'&&b.review_state==='approved'?`<button type="button" class="subtle-btn" data-business-sensitive="${esc(b.id)}">Rechtliche Änderungen beantragen</button>`:''}</div></article>`).join(''):'<p>Keine Betriebe zugeordnet.</p>';}
  catch(e){root.textContent='Betriebe konnten nicht geladen werden: '+e.message;}
 }
 function skBusinessForm(b){
@@ -314,7 +314,55 @@ async function skOpenBusinessMedia(business){
  }
  try{await render();}catch(err){feedback().textContent='Medien konnten nicht geladen werden: '+err.message;}
 }
+// 0.33.1.8.6: Sensible Aenderungen werden stets explizit dem gewaehlten Betrieb zugeordnet.
+// Ein Antrag veraendert den Live-Stand nicht; Annette entscheidet separat.
+async function skOpenBusinessSensitiveRequest(business){
+ if(business.member_role!=='owner'||business.status!=='Freigeschaltet'||business.review_state!=='approved'){
+  throw Error('Rechtliche Aenderungsantraege sind fuer diesen Betrieb nicht moeglich.');
+ }
+ if(!modal('Rechtliche Aenderung beantragen · '+business.company_name,`<form id="sk-sensitive-business-form">
+  <p>Firmenname, UID / USt-ID oder Land koennen bei freigeschalteten Betrieben nur nach Genehmigung durch Annette geaendert werden. Der bisherige Wert bleibt bis dahin bestehen.</p>
+  <label for="sk-sensitive-business-field">Zu aendernde Angabe</label>
+  <select id="sk-sensitive-business-field" name="field" required>
+   <option value="company_name">Firmenname</option><option value="vat_id">UID / USt-ID</option><option value="country">Land</option>
+  </select>
+  <label for="sk-sensitive-business-value">Neuer Wert</label>
+  <input id="sk-sensitive-business-value" name="value" required maxlength="160" autocomplete="off">
+  <p class="muted" id="sk-sensitive-business-current"></p>
+  <p class="form-feedback" id="sk-sensitive-business-feedback" role="alert"></p>
+  <button type="submit" class="btn">Antrag einreichen</button>
+ </form>`))return;
+ const form=document.getElementById('sk-sensitive-business-form');
+ const field=form.elements.namedItem('field'),value=form.elements.namedItem('value'),current=form.querySelector('#sk-sensitive-business-current');
+ const currentValue=()=>field.value==='company_name'?business.company_name:field.value==='vat_id'?business.vat_id:business.country;
+ const update=()=>{
+  const map={CH:'Schweiz',DE:'Deutschland',AT:'Oesterreich'};
+  current.textContent='Aktueller Wert: '+String(currentValue()??'–');
+  value.placeholder=field.value==='country'?'CH, DE oder AT':'Neuen Wert eingeben';
+  value.maxLength=field.value==='country'?2:field.value==='vat_id'?64:160;
+  if(field.value==='country')current.textContent+=' · Neuer Wert als Laendercode ('+Object.keys(map).join(', ')+')';
+ };
+ field.addEventListener('change',()=>{value.value='';update();});update();
+ form.addEventListener('submit',async event=>{
+  event.preventDefault();if(!form.reportValidity())return;
+  const next=value.value.trim();
+  if(next===String(currentValue()??'').trim())return void (form.querySelector('#sk-sensitive-business-feedback').textContent='Bitte einen anderen Wert eingeben.');
+  if(!confirm('Aenderungsantrag fuer „'+business.company_name+'“ verbindlich an Annette einreichen? Die bestehenden Betriebsdaten bleiben unveraendert.'))return;
+  const submit=form.querySelector('[type="submit"]');submit.disabled=true;skDialogState.saving=true;
+  try{await window.SK_AUTH.requestBusinessSensitiveChangeById(business.id,field.value,next);
+   form.querySelector('#sk-sensitive-business-feedback').textContent='Antrag eingereicht. Die Aenderung wird erst nach Genehmigung wirksam.';
+   // Dialog bleibt zur Einsicht offen; kein stillschweigendes Aendern der Live-Daten.
+  }catch(error){form.querySelector('#sk-sensitive-business-feedback').textContent='Antrag nicht eingereicht: '+error.message;submit.disabled=false;}
+  finally{skDialogState.saving=false;}
+ });
+}
 document.getElementById('my-businesses-list').addEventListener('click',async e=>{
+ const sensitiveBtn=e.target.closest('[data-business-sensitive]');
+ if(sensitiveBtn){sensitiveBtn.disabled=true;try{
+  const businesses=await window.SK_AUTH.listMyBusinesses();const business=businesses.find(b=>b.id===sensitiveBtn.dataset.businessSensitive);
+  if(!business)throw Error('Betrieb nicht mehr zugeordnet.');
+  await skOpenBusinessSensitiveRequest(business);
+ }catch(err){alert('Aenderungsantrag konnte nicht geoeffnet werden: '+err.message);}finally{sensitiveBtn.disabled=false;}return;}
  const mediaBtn=e.target.closest('[data-business-media]');
  if(mediaBtn){mediaBtn.disabled=true;try{const businesses=await window.SK_AUTH.listMyBusinesses();const business=businesses.find(b=>b.id===mediaBtn.dataset.businessMedia);if(!business)throw Error('Betrieb nicht mehr zugeordnet.');await skOpenBusinessMedia(business);}catch(err){alert('Medien konnten nicht geöffnet werden: '+err.message);}finally{mediaBtn.disabled=false;}return;}
  const btn=e.target.closest('[data-edit-business]');if(!btn)return;
