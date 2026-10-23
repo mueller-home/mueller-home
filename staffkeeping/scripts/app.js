@@ -249,7 +249,7 @@ const skBusinessStatus=s=>skBusinessStatusLabels[s]||'Unbekannter Status';
 async function loadMyBusinesses(){
  const root=document.getElementById('my-businesses-list');root.textContent='Betriebe werden geladen …';
  try{const rows=await window.SK_AUTH.listMyBusinesses();
- root.innerHTML=rows.length?rows.map(b=>`<article class="panel sk-business-item"><div><strong>${esc(b.company_name)}</strong><p class="muted">${esc(b.postal_code||'')} ${esc(b.city||'')} · ${esc(b.country||'')}</p><p><span class="status-tag ${b.status==='Freigeschaltet'?'sk-list-status-active':''}">${esc(skBusinessStatus(b.status))}</span> <span class="status-tag">${esc(skBusinessStatus(b.review_state))}</span></p>${b.review_state==='changes_requested'?`<p role="alert">Nachbesserung: ${esc(b.review_message||'Bitte Angaben korrigieren')}</p>`:''}</div><div class="sk-business-actions"><button type="button" class="subtle-btn" data-edit-business="${esc(b.id)}">${b.review_state==='changes_requested'?'Nachbessern':'Betriebsprofil bearbeiten'}</button></div></article>`).join(''):'<p>Keine Betriebe zugeordnet.</p>';}
+ root.innerHTML=rows.length?rows.map(b=>`<article class="panel sk-business-item"><div><strong>${esc(b.company_name)}</strong><p class="muted">${esc(b.postal_code||'')} ${esc(b.city||'')} · ${esc(b.country||'')}</p><p><span class="status-tag ${b.status==='Freigeschaltet'?'sk-list-status-active':''}">${esc(skBusinessStatus(b.status))}</span> <span class="status-tag">${esc(skBusinessStatus(b.review_state))}</span></p>${b.review_state==='changes_requested'?`<p role="alert">Nachbesserung: ${esc(b.review_message||'Bitte Angaben korrigieren')}</p>`:''}</div><div class="sk-business-actions"><button type="button" class="subtle-btn" data-edit-business="${esc(b.id)}">${b.review_state==='changes_requested'?'Nachbessern':'Betriebsprofil bearbeiten'}</button><button type="button" class="subtle-btn" data-business-media="${esc(b.id)}">Logo &amp; Bilder</button></div></article>`).join(''):'<p>Keine Betriebe zugeordnet.</p>';}
  catch(e){root.textContent='Betriebe konnten nicht geladen werden: '+e.message;}
 }
 function skBusinessForm(b){
@@ -275,7 +275,48 @@ function skBusinessForm(b){
  ${readOnly?'':`<button type="submit" class="btn">${b.review_state==='changes_requested'?'Korrigieren und erneut einreichen':'Änderungen speichern'}</button>`}
  </form>`;
 }
+// 0.33.1.8.4: Existing owner-scoped Storage operations, now reachable per business UUID.
+// Media are saved immediately, independently of the private business-profile draft.
+async function skOpenBusinessMedia(business){
+ const canWrite=business.member_role==='owner'&&(business.status==='Freigeschaltet'||(business.status==='Ausstehend'&&['draft','changes_requested'].includes(business.review_state)));
+ if(!modal('Logo und Bilder · '+business.company_name,`<section id="sk-business-media-panel"><p class="muted">Bilder werden beim Hochladen oder Entfernen sofort gespeichert – unabhängig von Änderungen am Betriebsprofil.</p><div id="sk-business-media-content">Medien werden geladen …</div><p id="sk-business-media-feedback" role="status" aria-live="polite"></p></section>`))return;
+ const panel=document.getElementById('sk-business-media-panel');
+ let busy=false;
+ const feedback=()=>panel.querySelector('#sk-business-media-feedback');
+ function makeButton(title,fn){const button=document.createElement('button');button.type='button';button.className='subtle-btn';button.textContent=title;button.addEventListener('click',fn);return button;}
+ async function act(action,description){
+  if(busy||!panel.isConnected)return;
+  busy=true;skDialogState.saving=true;feedback().textContent=description+' …';
+  try{await action();if(panel.isConnected){await render();feedback().textContent='Änderung gespeichert.';}}
+  catch(err){if(panel.isConnected)feedback().textContent='Nicht gespeichert: '+err.message;}
+  finally{busy=false;skDialogState.saving=false;}
+ }
+ async function render(){
+  const media=await window.SK_AUTH.listBusinessMedia(business.id);
+  if(!panel.isConnected)return;
+  const root=panel.querySelector('#sk-business-media-content');root.replaceChildren();
+  const slots=[{kind:'logo',slot:'logo',title:'Firmenlogo',file:media.logo[0],max:'2 MB'},...Array.from({length:5},(_,i)=>({kind:'photos',slot:i+1,title:'Betriebsbild '+(i+1),file:media.photos.find(f=>f.name.startsWith((i+1)+'.')),max:'5 MB'}))];
+  for(const item of slots){
+   const block=document.createElement('div');block.className='panel';
+   const heading=document.createElement('h3');heading.textContent=item.title;block.append(heading);
+   if(item.file){const img=document.createElement('img');img.src=item.file.url;img.alt=item.title;img.loading='lazy';img.style.cssText='display:block;max-width:100%;max-height:190px;object-fit:contain;margin-bottom:10px';block.append(img);}
+   else{const info=document.createElement('p');info.textContent='Noch kein Bild vorhanden.';block.append(info);}
+   if(canWrite){
+    const label=document.createElement('label');label.textContent=item.file?'Bild ersetzen (JPG, PNG, WebP; max. '+item.max+')':'Bild hochladen (JPG, PNG, WebP; max. '+item.max+')';
+    const input=document.createElement('input');input.type='file';input.accept='image/jpeg,image/png,image/webp';
+    input.setAttribute('aria-label',item.title+' hochladen');
+    input.addEventListener('change',()=>{const file=input.files?.[0];if(file)void act(()=>window.SK_AUTH.uploadBusinessMedia(business.id,item.kind,item.slot,file),'Bild hochladen');});
+    label.append(input);block.append(label);
+    if(item.file)block.append(makeButton('Bild entfernen',()=>{if(confirm(item.title+' wirklich entfernen?'))void act(()=>window.SK_AUTH.removeBusinessMedia(business.id,item.kind,item.slot),'Bild entfernen');}));
+   }root.append(block);
+  }
+  if(!canWrite){const info=document.createElement('p');info.textContent='Dieser Betrieb ist derzeit nur lesbar. Bilder können nicht geändert werden.';root.prepend(info);}
+ }
+ try{await render();}catch(err){feedback().textContent='Medien konnten nicht geladen werden: '+err.message;}
+}
 document.getElementById('my-businesses-list').addEventListener('click',async e=>{
+ const mediaBtn=e.target.closest('[data-business-media]');
+ if(mediaBtn){mediaBtn.disabled=true;try{const businesses=await window.SK_AUTH.listMyBusinesses();const business=businesses.find(b=>b.id===mediaBtn.dataset.businessMedia);if(!business)throw Error('Betrieb nicht mehr zugeordnet.');await skOpenBusinessMedia(business);}catch(err){alert('Medien konnten nicht geöffnet werden: '+err.message);}finally{mediaBtn.disabled=false;}return;}
  const btn=e.target.closest('[data-edit-business]');if(!btn)return;
  btn.disabled=true;
  try{const all=await window.SK_AUTH.listMyBusinesses(),b=all.find(x=>x.id===btn.dataset.editBusiness);if(!b)throw Error('Betrieb nicht mehr zugeordnet.');modal('Betriebsprofil · '+b.company_name,skBusinessForm(b)); const editForm=document.getElementById('sk-edit-business-form'); void window.SK_LOCATION?.editBusiness(editForm,b); if(editForm.querySelector('[type=submit]'))window.SK_DRAFTS?.attach(editForm,'business',b.id,b.id);}
