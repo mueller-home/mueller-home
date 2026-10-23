@@ -186,7 +186,7 @@
   async getAccountIdentity(){const user=await verifiedCurrentUser();if(!user)throw Error('Bitte anmelden.');return {email:user.email||''};},
   async listMyBusinesses(){
     const user=await verifiedCurrentUser();if(!user)throw Error('Bitte anmelden.');
-    const {data:members,error:me}=await db.from('sk_business_members').select('business_id').eq('user_id',user.id);if(me)throw me;
+    const {data:members,error:me}=await db.from('sk_business_members').select('business_id,role').eq('user_id',user.id);if(me)throw me;
     const ids=[...new Set((members||[]).map(m=>m.business_id))];if(!ids.length)return [];
     const {data:businesses,error:be}=await db.from('sk_businesses').select('id,company_name,vat_id,industry,postal_code,city,country,status,review_state,review_message,description,contact_name,contact_email,contact_phone,street,house_number,address_extra,latitude,longitude,location_source,location_address_key,show_street_address,email_notifications_enabled').in('id',ids);if(be)throw be;
     return (businesses||[]).map(b=>({...b,member_role:(members||[]).find(m=>m.business_id===b.id)?.role||null})).sort((a,b)=>a.company_name.localeCompare(b.company_name,'de'));
