@@ -367,9 +367,35 @@ async function skOpenBusinessSensitiveRequest(business){
   <input id="sk-sensitive-business-value" name="value" required maxlength="160" autocomplete="off">
   <p class="muted" id="sk-sensitive-business-current"></p>
   <p class="form-feedback" id="sk-sensitive-business-feedback" role="alert"></p>
-  <button type="submit" class="btn">Antrag einreichen</button>
+  <div class="dialog-actions" id="sk-sensitive-business-actions">
+   <button type="button" class="subtle-btn" id="sk-sensitive-business-cancel">Abbrechen</button>
+   <button type="submit" class="btn">Antrag einreichen</button>
+  </div>
  </form>`))return;
  const form=document.getElementById('sk-sensitive-business-form');
+ const cancelButton=form.querySelector('#sk-sensitive-business-cancel');
+ const cancelRequest=()=>{void skDialogRequestClose('sensitive-request-cancel');};
+ cancelButton.addEventListener('click',cancelRequest);
+ function showAlreadyPending(){
+  // Nach SK409/23505 kann fuer dieses Feld kein weiterer Antrag eingereicht werden.
+  // Die lokalen, nie gespeicherten Eingaben werden verworfen, der Dialog ist nur noch informativ.
+  const submit=form.querySelector('[type="submit"]');
+  form.elements.namedItem('field').disabled=true;
+  form.elements.namedItem('value').disabled=true;
+  submit.hidden=true;
+  submit.disabled=true;
+  cancelButton.textContent='Schliessen';
+  cancelButton.removeEventListener('click',cancelRequest);
+  cancelButton.addEventListener('click',()=>{
+   if(skDialogState.saving)return;
+   skDialogState.allowedClose=true;
+   skDialogState.lastAction='sensitive-request-info-close';
+   dialog.close();
+  });
+  // Der Formularzustand ist nur eine Information; keine unsicheren lokalen Aenderungen behalten.
+  skDialogState.snapshot=skDialogFields();
+  skDialogState.manualDirty=false;
+ }
  const field=form.elements.namedItem('field'),value=form.elements.namedItem('value'),current=form.querySelector('#sk-sensitive-business-current');
  const currentValue=()=>field.value==='company_name'?business.company_name:field.value==='vat_id'?business.vat_id:business.country;
  const update=()=>{
@@ -400,7 +426,8 @@ async function skOpenBusinessSensitiveRequest(business){
    form.querySelector('#sk-sensitive-business-feedback').textContent=duplicate
     ?'Für dieses Feld liegt bereits ein offener Änderungsantrag vor. Bitte zuerst die Entscheidung von Annette abwarten. Es wurde kein weiterer Antrag eingereicht.'
     :'Antrag nicht eingereicht: '+error.message;
-   submit.disabled=false;
+   if(duplicate)showAlreadyPending();
+   else submit.disabled=false;
   }
   finally{skDialogState.saving=false;}
  });
