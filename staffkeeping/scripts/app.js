@@ -754,12 +754,18 @@ document.getElementById('my-list-table').addEventListener('click',async e=>{
   finally{ownListingsBusy=false;}
 });
 let selectedChatId=null, chatThreads=[], chatBusy=false, skChatFilterBusinessId="";
+let skChatSnapshot='',skChatRefreshing=false,skChatRenderVersion=0;
+const skChatThreadsKey=threads=>JSON.stringify((threads||[]).map(t=>[t.id,t.listing_title,t.own_business_id,t.other_business_name,t.last_message_at]));
+const skChatMessagesKey=messages=>JSON.stringify((messages||[]).map(m=>[m.id,m.body,m.sender_business_id,m.created_at]));
+
 const chatStatus=()=>document.getElementById('chat-status');
 async function renderChats(preselect=null){
+ const renderVersion=++skChatRenderVersion;
  const list=document.getElementById('conversation-buttons'),historyBox=document.getElementById('chat-history'),heading=document.getElementById('chat-heading');
  chatStatus().textContent='Unterhaltungen werden geladen …';
  try{
   chatThreads=await window.SK_AUTH.chatThreads();
+  if(renderVersion!==skChatRenderVersion||currentScreen!=='messages')return;
   if(preselect)selectedChatId=preselect;
   const filter=document.getElementById('chat-own-business-filter');
   let names=[];try{names=await window.SK_AUTH.listApprovedBusinesses();}catch(_error){}
@@ -775,10 +781,31 @@ async function renderChats(preselect=null){
   heading.innerHTML=thread?`<strong>${esc(thread.listing_title||'Inserat')}</strong><small>${esc(thread.other_business_name||'Betrieb')}</small>`:'<strong>Unterhaltung auswählen</strong>';
   document.getElementById('chat-form').classList.toggle('hidden',!thread);
   historyBox.innerHTML=thread?'<p class="muted">Nachrichten werden geladen …</p>':'';
-  if(thread){const messages=await window.SK_AUTH.chatMessages(thread.id);if(selectedChatId===thread.id){historyBox.innerHTML=messages.map(m=>`<div class="bubble ${m.sender_business_id===thread.own_business_id?'mine':'other'}">${esc(m.body)}<small style="display:block;opacity:.7">${esc(new Date(m.created_at).toLocaleString('de-CH'))}</small></div>`).join('')||'<p class="muted">Noch keine Nachrichten.</p>';historyBox.scrollTop=historyBox.scrollHeight;}}
-  chatStatus().textContent='';
+  if(thread){const messages=await window.SK_AUTH.chatMessages(thread.id);if(renderVersion===skChatRenderVersion&&currentScreen==='messages'&&selectedChatId===thread.id){historyBox.innerHTML=messages.map(m=>`<div class="bubble ${m.sender_business_id===thread.own_business_id?'mine':'other'}">${esc(m.body)}<small style="display:block;opacity:.7">${esc(new Date(m.created_at).toLocaleString('de-CH'))}</small></div>`).join('')||'<p class="muted">Noch keine Nachrichten.</p>';historyBox.scrollTop=historyBox.scrollHeight;skChatSnapshot=skChatThreadsKey(chatThreads)+'|'+thread.id+'|'+skChatMessagesKey(messages);}}
+  else skChatSnapshot=skChatThreadsKey(chatThreads)+'|';
+  if(renderVersion===skChatRenderVersion)chatStatus().textContent='';
  }catch(e){chatStatus().textContent='Unterhaltungen konnten nicht geladen werden: '+e.message;historyBox.innerHTML='';}
 }
+// Aktualisierung ohne manuelles Neuladen: nur solange der Nachrichtenbereich sichtbar ist.
+// Lesen erfolgt ausschliesslich über die bestehenden, berechtigungsgeschützten RPCs.
+async function skChatCheckUpdates(){
+ if(currentScreen!=='messages'||document.hidden||chatBusy||skChatRefreshing||!window.SK_AUTH)return;
+ skChatRefreshing=true;
+ const inspectedThread=selectedChatId;
+ try{
+  const threads=await window.SK_AUTH.chatThreads();
+  const active=threads.find(t=>t.id===inspectedThread);
+  const messages=active?await window.SK_AUTH.chatMessages(inspectedThread):[];
+  if(currentScreen!=='messages'||document.hidden||selectedChatId!==inspectedThread)return;
+  const signature=skChatThreadsKey(threads)+'|'+(active?inspectedThread+'|'+skChatMessagesKey(messages):'');
+  if(signature!==skChatSnapshot)await renderChats();
+ }catch(error){
+  // Bei Verbindungsproblemen bleibt die bisherige Unterhaltung erhalten.
+  const status=chatStatus();if(status&&currentScreen==='messages')status.textContent='Automatische Aktualisierung vorübergehend nicht möglich: '+error.message;
+ }finally{skChatRefreshing=false;}
+}
+setInterval(()=>{void skChatCheckUpdates();},2000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void skChatCheckUpdates();});
 document.getElementById('chat-own-business-filter').addEventListener('change',e=>{skChatFilterBusinessId=e.target.value;selectedChatId=null;void renderChats();});
 document.getElementById('conversation-buttons').addEventListener('click',e=>{const b=e.target.closest('[data-chat]');if(b){selectedChatId=b.dataset.chat;void renderChats();}});
 document.getElementById('chat-form').addEventListener('submit',async e=>{
