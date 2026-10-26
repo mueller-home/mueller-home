@@ -778,7 +778,7 @@ async function renderChats(preselect=null){
   if(!visible.some(t=>t.id===selectedChatId))selectedChatId=visible[0]?.id||null;
   list.innerHTML=visible.length?visible.map(t=>`<button type="button" class="conversation-btn ${t.id===selectedChatId?'active':''}" data-chat="${esc(t.id)}"><strong>${esc(t.listing_title||'Inserat')}</strong><small>${esc(t.other_business_name||'Betrieb')}</small></button>`).join(''):'<p class="muted">Keine Unterhaltungen für diese Auswahl vorhanden.</p>';
   const thread=visible.find(t=>t.id===selectedChatId);
-  heading.innerHTML=thread?`<strong>${esc(thread.listing_title||'Inserat')}</strong><small>${esc(thread.other_business_name||'Betrieb')}</small>`:'<strong>Unterhaltung auswählen</strong>';
+  heading.innerHTML=thread?`<strong>${esc(thread.listing_title||'Inserat')}</strong><small>${esc(thread.other_business_name||'Betrieb')}</small><button type="button" class="sk-chat-listing-link" data-chat-listing="${esc(thread.listing_id)}">Zum Inserat →</button>`:'<strong>Unterhaltung auswählen</strong>';
   document.getElementById('chat-form').classList.toggle('hidden',!thread);
   historyBox.innerHTML=thread?'<p class="muted">Nachrichten werden geladen …</p>':'';
   if(thread){const messages=await window.SK_AUTH.chatMessages(thread.id);if(renderVersion===skChatRenderVersion&&currentScreen==='messages'&&selectedChatId===thread.id){historyBox.innerHTML=messages.map(m=>`<div class="bubble ${m.sender_business_id===thread.own_business_id?'mine':'other'}">${esc(m.body)}<small style="display:block;opacity:.7">${esc(new Date(m.created_at).toLocaleString('de-CH'))}</small></div>`).join('')||'<p class="muted">Noch keine Nachrichten.</p>';historyBox.scrollTop=historyBox.scrollHeight;skChatSnapshot=skChatThreadsKey(chatThreads)+'|'+thread.id+'|'+skChatMessagesKey(messages);}}
@@ -806,6 +806,26 @@ async function skChatCheckUpdates(){
 }
 setInterval(()=>{void skChatCheckUpdates();},2000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void skChatCheckUpdates();});
+// Direkt aus der Unterhaltung zum zugehörigen Inserat wechseln.
+// Das Inserat wird nur geöffnet, wenn es im berechtigten Marktplatz abrufbar ist.
+document.getElementById('chat-heading').addEventListener('click',async e=>{
+ const button=e.target.closest('[data-chat-listing]');if(!button)return;
+ const id=button.dataset.chatListing;
+ if(!id)return;
+ button.disabled=true;
+ try{
+  let listing=marketplaceListings.find(l=>l.id===id);
+  if(!listing){
+   const latest=await window.SK_AUTH.listMarketplaceListings();
+   marketplaceListings=latest;
+   listing=latest.find(l=>l.id===id);
+  }
+  if(!listing){chatStatus().textContent='Dieses Inserat ist aktuell nicht im Marktplatz verfügbar.';return;}
+  await show('detail');
+  if(currentScreen==='detail')openDetail(id);
+ }catch(error){chatStatus().textContent='Inserat konnte nicht geöffnet werden: '+(error?.message||'Unbekannter Fehler');}
+ finally{button.disabled=false;}
+});
 document.getElementById('chat-own-business-filter').addEventListener('change',e=>{skChatFilterBusinessId=e.target.value;selectedChatId=null;void renderChats();});
 document.getElementById('conversation-buttons').addEventListener('click',e=>{const b=e.target.closest('[data-chat]');if(b){selectedChatId=b.dataset.chat;void renderChats();}});
 document.getElementById('chat-form').addEventListener('submit',async e=>{
