@@ -4,6 +4,10 @@
  const $=id=>document.getElementById(id);
  let sdk=null, map=null, marker=null, activeBusiness=null, writable=false, lastAddress='', request=0, locationBusy=false;
  const cfg=window.SK_MAPS_CONFIG||{};
+ const mapId=()=>cfg.googleMapsMapId||'DEMO_MAP_ID';
+ const drop=m=>{if(m)m.map=null;};
+ const drag=m=>{if(m)m.gmpDraggable=true;};
+ const stopDrag=m=>{if(m)m.gmpDraggable=false;};
  // Auch im bisherigen Einzelbetriebsprofil immer die explizite Betriebs-ID senden.
  async function savePosition(payload){
    if(!activeBusiness?.id)throw Error('Kein eindeutiger Betrieb für den Standort ausgewählt.');
@@ -18,25 +22,25 @@
  function current(){return {...activeBusiness,country:$('pr-country').value,postal_code:$('pr-postal').value,city:$('pr-city').value,street:$('pr-street').value,house_number:$('pr-number').value};}
  function hasCoordinates(b){return b&&Number.isFinite(Number(b.latitude))&&Number.isFinite(Number(b.longitude))&&b.latitude!=null&&b.longitude!=null;}
  function google(){
-   if(window.google?.maps)return Promise.resolve(window.google.maps);
+   if(window.google?.maps?.marker?.AdvancedMarkerElement)return Promise.resolve(window.google.maps);
    if(sdk)return sdk;
    if(!cfg.googleMapsApiKey){return Promise.reject(Error('Google-Maps-Schlüssel fehlt in scripts/maps-config.js.'));}
    sdk=new Promise((resolve,reject)=>{
      const name='skMapsReady'+Date.now();
      window[name]=()=>{delete window[name];resolve(window.google.maps);};
-     const script=document.createElement('script');script.src='https://maps.googleapis.com/maps/api/js?loading=async&key='+encodeURIComponent(cfg.googleMapsApiKey)+'&callback='+name;
+     const script=document.createElement('script');script.src='https://maps.googleapis.com/maps/api/js?loading=async&key='+encodeURIComponent(cfg.googleMapsApiKey)+'&libraries=marker&v=weekly&callback='+name;
      script.async=true;script.onerror=()=>{delete window[name];reject(Error('Google Maps konnte nicht geladen werden.'));};document.head.append(script);
    });return sdk;
  }
  function pin(maps,googleMap,pos,draggable,onDrag){
    const point={lat:Number(pos.latitude),lng:Number(pos.longitude)};
-   const mark=new maps.Marker({position:point,map:googleMap,draggable:draggable,title:'Betriebsstandort'});
+   const mark=new maps.marker.AdvancedMarkerElement({position:point,map:googleMap,gmpDraggable:draggable,title:'Betriebsstandort'});
    if(onDrag)mark.addListener('dragend',e=>onDrag(e.latLng.lat(),e.latLng.lng()));
    return mark;
  }
  function redraw(){
    if(!map||!activeBusiness)return;
-   if(marker){marker.setMap(null);marker=null;}
+   if(marker){drop(marker);marker=null;}
    if(hasCoordinates(activeBusiness)){
      const pos={lat:Number(activeBusiness.latitude),lng:Number(activeBusiness.longitude)};
      map.setCenter(pos);map.setZoom(activeBusiness.location_source==='manual'?16:activeBusiness.street?16:11);
@@ -44,14 +48,14 @@
        const snapshot=current();
        try{say('Korrigierte Position wird gespeichert …');await savePosition({p_latitude:lat,p_longitude:lng,p_source:'manual',p_address_key:key(snapshot)});
          activeBusiness={...activeBusiness,latitude:lat,longitude:lng,location_source:'manual',location_address_key:key(snapshot)};
-         marker.setDraggable(false);updateReset();say('Manuell bestätigter Standort gespeichert ✓');
+         stopDrag(marker);updateReset();say('Manuell bestätigter Standort gespeichert ✓');
        }catch(e){say('Standort nicht gespeichert: '+e.message);redraw();}
      });
    }
  }
  async function initMap(){
    const maps=await google();
-   if(!map){map=new maps.Map($('pr-map'),{center:{lat:47,lng:9},zoom:6,mapTypeControl:false,streetViewControl:false});}
+   if(!map){map=new maps.Map($('pr-map'),{center:{lat:47,lng:9},zoom:6,mapTypeControl:false,mapId:mapId(),streetViewControl:false});}
    redraw();
  }
  async function geocode(force=false){
@@ -100,7 +104,7 @@
    if(!hasCoordinates(b)){state.textContent='Standort noch nicht ermittelt.';root.textContent='Keine Kartenposition hinterlegt.';return;}
    try{const maps=await google();if(!root.isConnected)return;
      const center={lat:Number(b.latitude),lng:Number(b.longitude)};
-     const instance=new maps.Map(root,{center,zoom:b.location_source==='manual'||b.street?16:11,mapTypeControl:false,streetViewControl:false});
+     const instance=new maps.Map(root,{center,zoom:b.location_source==='manual'||b.street?16:11,mapTypeControl:false,mapId:mapId(),streetViewControl:false});
      pin(maps,instance,b,false,null);
      state.textContent=b.location_source==='manual'?'Manuell bestätigte Position':b.street?'Standort aus Adresse':'Ungefährer Standort aus PLZ und Ort';
    }catch(e){state.textContent='Kartenanzeige nicht verfügbar: '+e.message;}
@@ -145,7 +149,7 @@
  $('pr-location-correct').addEventListener('click',async()=>{
    if(!writable)return;
    try{await initMap();if(!marker)return say('Zuerst Standort automatisch ermitteln.');
-     marker.setDraggable(true);say('Marker verschieben. Beim Loslassen wird die Position gespeichert.');
+     drag(marker);say('Marker verschieben. Beim Loslassen wird die Position gespeichert.');
    }catch(e){say(e.message);}
  });
  window.SK_LOCATION={load,addressSaved,showAdmin};
@@ -155,16 +159,20 @@
   const existing=window.SK_LOCATION||{};
   let editor=null;
   const cfg=window.SK_MAPS_CONFIG||{};
+ const mapId=()=>cfg.googleMapsMapId||'DEMO_MAP_ID';
+ const drop=m=>{if(m)m.map=null;};
+ const drag=m=>{if(m)m.gmpDraggable=true;};
+ const stopDrag=m=>{if(m)m.gmpDraggable=false;};
   const norm=v=>String(v??'').trim();
   function addressKey(b){return [b.country,b.postal_code,b.city,b.street,b.house_number].map(v=>norm(v).toLowerCase()).join('|');}
   function fields(form){const v=n=>norm(form.elements.namedItem(n)?.value);return {country:v('country'),postal_code:v('postal_code'),city:v('city'),street:v('street'),house_number:v('house_number')};}
   function address(b){return [([b.street,b.house_number].filter(Boolean).join(' ')),[b.postal_code,b.city].filter(Boolean).join(' '),({CH:'Schweiz',DE:'Deutschland',AT:'Österreich'})[b.country]||b.country].filter(Boolean).join(', ');}
   async function mapsReady(){
-    if(window.google?.maps?.Map)return window.google.maps;
+    if(window.google?.maps?.marker?.AdvancedMarkerElement)return window.google.maps;
     if(!cfg.googleMapsApiKey)throw Error('Google-Maps-Konfiguration fehlt.');
     if(!window.__skMapPromise)window.__skMapPromise=new Promise((resolve,reject)=>{
       const cb='skGoogleMaps'+Date.now();window[cb]=()=>{delete window[cb];resolve(window.google.maps);};
-      const script=document.createElement('script');script.async=true;script.src='https://maps.googleapis.com/maps/api/js?loading=async&key='+encodeURIComponent(cfg.googleMapsApiKey)+'&callback='+cb;
+      const script=document.createElement('script');script.async=true;script.src='https://maps.googleapis.com/maps/api/js?loading=async&key='+encodeURIComponent(cfg.googleMapsApiKey)+'&libraries=marker&v=weekly&callback='+cb;
       script.onerror=()=>reject(Error('Google Maps konnte nicht geladen werden.'));document.head.appendChild(script);
     });
     return window.__skMapPromise;
@@ -215,16 +223,16 @@
     const say=msg=>{if(live())status.textContent=msg;};
     const clear=()=>{state.position=null;state.addressKey=null;state.source=null;state.manual=false;state.pendingManual=null;state.manualMode=false;
       const accept=form.querySelector('#sk-edit-location-accept');if(accept)accept.hidden=true;
-      if(state.marker)state.marker.setMap(null);state.marker=null;};
+      if(state.marker)drop(state.marker);state.marker=null;};
     async function markerAt(lat,lng,source,expectedKey){
       lat=Number(lat);lng=Number(lng);
       if(!valid(lat,lng))throw Error('Ungültige Standortkoordinaten. Bitte Adresse erneut ermitteln.');
       const maps=await mapsReady();if(!live()||(expectedKey&&expectedKey!==addressKey(fields(form))))return false;
-      if(!state.map)state.map=new maps.Map(root,{center:{lat,lng},zoom:16,streetViewControl:false,mapTypeControl:false});
-      if(state.marker)state.marker.setMap(null);
+      if(!state.map)state.map=new maps.Map(root,{center:{lat,lng},zoom:16,streetViewControl:false,mapId:mapId(),mapTypeControl:false});
+      if(state.marker)drop(state.marker);
       state.position={lat,lng};state.source=source;state.addressKey=addressKey(fields(form));state.manual=source==='manual';
       state.map.setCenter({lat,lng});state.map.setZoom(16);
-      state.marker=new maps.Marker({position:{lat,lng},map:state.map,draggable:false,title:'Betriebsstandort'});
+      state.marker=new maps.marker.AdvancedMarkerElement({position:{lat,lng},map:state.map,gmpDraggable:false,title:'Betriebsstandort'});
       return true;
     }
     // An address may be legitimate even when Google cannot geocode it. In manual
@@ -251,18 +259,18 @@
           }
         }catch(_){/* No geocode: manual map still remains available. */}
         if(!live()||requestSerial!==state.serial||expected!==addressKey(fields(form)))return;
-        if(!state.map)state.map=new maps.Map(root,{center,zoom:13,streetViewControl:false,mapTypeControl:false});
+        if(!state.map)state.map=new maps.Map(root,{center,zoom:13,streetViewControl:false,mapId:mapId(),mapTypeControl:false});
         else{state.map.setCenter(center);state.map.setZoom(13);}
         // Existing verified marker is not implicitly confirmed for a new address.
-        if(state.marker){state.marker.setMap(null);state.marker=null;}
+        if(state.marker){drop(state.marker);state.marker=null;}
         state.position=null;state.source=null;state.addressKey=null;state.manual=false;
         maps.event.clearListeners(state.map,'click');
         state.map.addListener('click',e=>{
           if(!live()||!state.manualMode||expected!==addressKey(fields(form)))return;
           const position={lat:e.latLng.lat(),lng:e.latLng.lng()};
           state.pendingManual=position;
-          if(state.marker)state.marker.setMap(null);
-          state.marker=new maps.Marker({position,map:state.map,draggable:true,title:'Vorgeschlagener manueller Standort'});
+          if(state.marker)drop(state.marker);
+          state.marker=new maps.marker.AdvancedMarkerElement({position,map:state.map,gmpDraggable:true,title:'Vorgeschlagener manueller Standort'});
           state.marker.addListener('dragend',event=>{
             state.pendingManual={lat:event.latLng.lat(),lng:event.latLng.lng()};
             say('Marker verschoben. Mit «Position bestätigen» übernehmen.');
@@ -276,7 +284,7 @@
     manualButton?.addEventListener('click',()=>{
       if(disabled||!live())return;
       if(state.marker&&state.position&&state.addressKey===addressKey(fields(form))){
-        state.marker.setDraggable(true);
+        drag(state.marker);
         state.manualMode=true;
         say('Marker verschieben und mit «Position bestätigen» übernehmen.');
         if(acceptButton)acceptButton.hidden=false;
@@ -289,7 +297,7 @@
       const pos=state.pendingManual;
       state.position={...pos};state.source='manual';state.manual=true;
       state.addressKey=addressKey(fields(form));state.manualMode=false;state.pendingManual=null;
-      if(state.marker){state.marker.setDraggable(false);state.marker.setTitle('Manuell bestätigter Betriebsstandort');}
+      if(state.marker){stopDrag(state.marker);state.marker.title='Manuell bestätigter Betriebsstandort';}
       acceptButton.hidden=true;
       say('Manueller Standort bestätigt. Die eingegebene Adresse wird unverändert beim Speichern übernommen.');
     });
@@ -355,10 +363,10 @@
         if(!results?.length||!validGeocode(results[0],b))throw Error('Keine ausreichend genaue Standort-Vorschau für diese Adresse gefunden.');
         lat=results[0].geometry.location.lat();lng=results[0].geometry.location.lng();preview=true;
       }
-      const m=new maps.Map(root,{center:{lat,lng},zoom:b.street?16:11,streetViewControl:false,mapTypeControl:false});
-      new maps.Marker({position:{lat,lng},map:m,title:preview?'Ungeprüfte Vorschau':'Gespeicherter Betriebsstandort'});
+      const m=new maps.Map(root,{center:{lat,lng},zoom:b.street?16:11,streetViewControl:false,mapId:mapId(),mapTypeControl:false});
+      new maps.marker.AdvancedMarkerElement({position:{lat,lng},map:m,title:preview?'Ungeprüfte Vorschau':'Gespeicherter Betriebsstandort'});
       status.textContent=preview?'Nur Karten-Vorschau aus der Adresse – keine gespeicherten oder freigegebenen Koordinaten.':b.location_source==='manual'?'Manuell bestätigter Standort':'Gespeicherter Standort';
     }catch(e){if(same()){status.textContent='Kartenanzeige nicht verfügbar: '+e.message;root.textContent='Standortkarte derzeit nicht verfügbar.';}}
   }
-  window.SK_LOCATION={...existing,editBusiness,editorPosition,showAdmin:adminPreview};
+  window.SK_LOCATION={...existing,editBusiness,editorPosition,showAdmin:adminPreview,mapsReady};
 })();

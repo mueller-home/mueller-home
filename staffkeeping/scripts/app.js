@@ -151,6 +151,7 @@ const listings=[
 {id:4,title:'Küchenteam für Übergangszeit',type:'Personal verfügbar',branch:'Camping',city:'Freiburg',country:'Deutschland',date:'2026-11-01',period:'November – Januar',stay:false,languages:['DE'],desc:'Ein eingespieltes Team für eine befristete Zusammenarbeit.'}
 ];
 const starred=new Set();let favoritesOnly=false,viewMap=false;
+let marketplaceLocations=new Map(), marketplaceMap=null, marketplacePins=[], marketplaceInfo=null, marketplaceMapSerial=0;
 let marketplaceListings=[], marketplaceLoadError='', marketplaceLoading=false, marketplaceDistances=new Map(), marketplaceOriginAvailable=false;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const marketplaceType=t=>t==='Suche'?'Personal gesucht':'Personal verfügbar';
@@ -166,8 +167,10 @@ async function loadMarketplace(){
     const distanceRows=await window.SK_AUTH.listMarketplaceDistances();
     marketplaceDistances=new Map(distanceRows.map(row=>[row.listing_id,row.distance_km]));
     marketplaceOriginAvailable=distanceRows.some(row=>row.origin_available);
+    const locRows=await window.SK_AUTH.listMarketplaceMapLocations();
+    marketplaceLocations=new Map(locRows.map(row=>[row.listing_id,row]));
   }
-  catch(error){marketplaceListings=[];marketplaceDistances=new Map();marketplaceLoadError=error?.message||'Unbekannter Fehler';}
+  catch(error){marketplaceListings=[];marketplaceDistances=new Map();marketplaceLocations=new Map();marketplaceLoadError=error?.message||'Unbekannter Fehler';}
   finally{marketplaceLoading=false;render();}
 }
 function render(){
@@ -197,8 +200,45 @@ function render(){
   grid.querySelectorAll('[data-star]').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.star;starred.has(id)?starred.delete(id):starred.add(id);render()}));
   grid.querySelectorAll('[data-detail]').forEach(b=>b.addEventListener('click',()=>openDetail(b.dataset.detail)));
   document.getElementById('no-results').classList.toggle('hidden',marketplaceLoadError||items.length>0);
-  grid.classList.remove('hidden');document.getElementById('map-placeholder').classList.add('hidden');
+  grid.classList.toggle('hidden',viewMap);document.getElementById('market-map-wrap').classList.toggle('hidden',!viewMap);
+  if(viewMap)void renderMarketMap(items);
 }
+
+async function renderMarketMap(items){
+ const serial=++marketplaceMapSerial,root=document.getElementById('market-map'),status=document.getElementById('market-map-status'),missing=document.getElementById('market-map-missing');
+ if(!root||!viewMap)return;
+ const positioned=items.filter(l=>marketplaceLocations.has(l.id));
+ const without=items.filter(l=>!marketplaceLocations.has(l.id));
+ missing.innerHTML=without.length?`<p class="muted">${without.length} ${without.length===1?'Inserat hat':'Inserate haben'} keinen bestätigten Kartenstandort:</p>`+without.map(l=>`<div class="sk-map-unlocated"><button type="button" data-map-detail="${esc(l.id)}">${esc(l.title)} →</button> · ${esc(l.city)}</div>`).join(''):'';
+ missing.querySelectorAll('[data-map-detail]').forEach(b=>b.addEventListener('click',()=>openDetail(b.dataset.mapDetail)));
+ if(!positioned.length){root.textContent='Keine Inserate mit bestätigtem Kartenstandort für diese Filter verfügbar.';status.textContent='Die Inserate bleiben über «Liste» erreichbar.';return;}
+ status.textContent='Standorte werden geladen …';
+ try{
+  const maps=await window.SK_LOCATION.mapsReady();
+  if(serial!==marketplaceMapSerial||!viewMap||currentScreen!=='market')return;
+  if(!marketplaceMap){root.replaceChildren();marketplaceMap=new maps.Map(root,{center:{lat:46.8,lng:8.2},zoom:7,mapId:window.SK_MAPS_CONFIG?.googleMapsMapId||'DEMO_MAP_ID',streetViewControl:false,mapTypeControl:false});}
+  marketplacePins.forEach(marker=>marker.map=null);marketplacePins=[];
+  if(!marketplaceInfo)marketplaceInfo=new maps.InfoWindow();
+  const bounds=new maps.LatLngBounds();
+  for(const l of positioned){
+   const loc=marketplaceLocations.get(l.id),position={lat:Number(loc.latitude),lng:Number(loc.longitude)};
+   if(!Number.isFinite(position.lat)||!Number.isFinite(position.lng))continue;
+   bounds.extend(position);
+   const marker=new maps.marker.AdvancedMarkerElement({map:marketplaceMap,position,title:l.title});
+   marker.addListener('click',()=>{
+    const card=document.createElement('div');card.style.maxWidth='230px';
+    const title=document.createElement('strong');title.textContent=l.title;
+    const place=document.createElement('p');place.textContent=l.city+' · '+marketplaceType(l.type);
+    const button=document.createElement('button');button.type='button';button.textContent='Inserat ansehen →';button.className='detail-link';button.addEventListener('click',()=>{marketplaceInfo.close();openDetail(l.id)});
+    card.append(title,place,button);marketplaceInfo.setContent(card);marketplaceInfo.open({anchor:marker,map:marketplaceMap});
+   });marketplacePins.push(marker);
+  }
+  if(marketplacePins.length===1){marketplaceMap.setCenter(marketplacePins[0].position);marketplaceMap.setZoom(11);}
+  else if(marketplacePins.length)marketplaceMap.fitBounds(bounds,55);
+  status.textContent=`${marketplacePins.length} ${marketplacePins.length===1?'Inserat':'Inserate'} auf der Karte. Die Positionen sind aus Datenschutzgründen ungefähr (auf zwei Dezimalstellen gerundet).`;
+ }catch(error){if(serial===marketplaceMapSerial)status.textContent='Karte konnte nicht geladen werden: '+error.message;}
+}
+
 let skChatIndex=[];
 async function skRefreshChatIndex(){
  if(!window.SK_AUTH?.chatThreads)return [];
@@ -240,8 +280,9 @@ function openDetail(id){
 ['filter-search','filter-type','filter-branch','filter-date','filter-accommodation','filter-radius'].forEach(id=>document.getElementById(id).addEventListener('input',render));
 document.getElementById('filter-reset').addEventListener('click',()=>{['filter-search','filter-type','filter-branch','filter-date'].forEach(id=>document.getElementById(id).value='');document.getElementById('filter-radius').selectedIndex=0;document.getElementById('filter-accommodation').checked=false;favoritesOnly=false;document.getElementById('bookmarks-only').classList.remove('selected');render()});
 document.getElementById('bookmarks-only').addEventListener('click',e=>{favoritesOnly=!favoritesOnly;e.currentTarget.classList.toggle('selected',favoritesOnly);render()});
-function setView(map){if(map)return;viewMap=false;document.getElementById('list-btn').classList.add('active');render();}
+function setView(map){viewMap=!!map;document.getElementById('list-btn').classList.toggle('active',!viewMap);document.getElementById('map-btn').classList.toggle('active',viewMap);render();}
 document.getElementById('list-btn').addEventListener('click',()=>setView(false));
+document.getElementById('map-btn').addEventListener('click',()=>setView(true));
 /* Zusätzliche UI-Demoseiten, ohne Backend und ohne dauerhafte Speicherung */
 const dialog=document.getElementById('app-dialog');
 const skDialogState={snapshot:'',manualDirty:false,saving:false,allowedClose:false,lastAction:'init'};

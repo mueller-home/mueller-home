@@ -261,6 +261,12 @@
     if(error)throw error;
     return (data||[]).filter(row=>!ownIds.includes(row.business_id));
   },
+  async listMarketplaceMapLocations(){
+    const user=await verifiedCurrentUser();if(!user)throw Error('Bitte erneut anmelden.');
+    const {data,error}=await db.rpc('sk_marketplace_map_locations');
+    if(error)throw error;
+    return data||[];
+  },
   async listMarketplaceDistances(){
     const user=await verifiedCurrentUser();if(!user)throw Error('Bitte erneut anmelden.');
     const {data,error}=await db.rpc('sk_marketplace_distances');
