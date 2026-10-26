@@ -55,7 +55,7 @@ function performShow(view,updateUrl=true){
   if(view==='profile'){void loadSafeBusinessProfile();}
   if(view==='account'){void loadPersonalAccount();}
   if(view==='dashboard')void loadMemberDashboard();
-  if(view==='market')loadMarketplace();
+  if(view==='market'){loadMarketplace();void skLoadSavedSearches();}
   if(view==='my-listings')loadMyListings();
   if(view==='my-businesses')loadMyBusinesses();
   if(view==='messages')renderChats();
@@ -154,6 +154,29 @@ const starred=new Set();let favoritesOnly=false,viewMap=false;
 let marketplaceLocations=new Map(), marketplaceMap=null, marketplacePins=[], marketplaceInfo=null, marketplaceMapSerial=0;
 let marketplaceListings=[], marketplaceLoadError='', marketplaceLoading=false, marketplaceDistances=new Map(), marketplaceOriginAvailable=false;
 let skMarketRefreshQueued=false,skMarketFilterTimer=null,skMarketLastRefresh=0;
+let skSavedSearches=[],skSavedEditId=null,skSavedBusy=false,skSavedLoaded=false;
+const skSavedFilterIds=['filter-search','filter-type','filter-branch','filter-radius','filter-date','filter-accommodation'];
+function skCaptureSearchFilters(){return {keyword:document.getElementById('filter-search').value.trim(),type:document.getElementById('filter-type').value,category:document.getElementById('filter-branch').value,radius:document.getElementById('filter-radius').value,date:document.getElementById('filter-date').value,accommodation:document.getElementById('filter-accommodation').checked};}
+function skApplySearchFilters(f){const fields={'filter-search':'keyword','filter-type':'type','filter-branch':'category','filter-radius':'radius','filter-date':'date'};
+ for(const [id,key] of Object.entries(fields)){const el=document.getElementById(id),v=String(f?.[key]??'');el.value=[...el.options||[]].length&&!Array.from(el.options).some(o=>o.value===v)?'':v;}
+ document.getElementById('filter-accommodation').checked=f?.accommodation===true;
+ favoritesOnly=false;document.getElementById('bookmarks-only').classList.remove('selected');render();skMarketScheduleFilterRefresh();}
+function skSearchFeedback(text,error=false){const el=document.getElementById('saved-searches-feedback');el.textContent=text||'';el.style.color=error?'#af3030':'';}
+function skRenderSavedSearches(){const root=document.getElementById('saved-searches-list');if(!root)return;
+ if(!skSavedSearches.length){root.innerHTML='<p class="muted">Noch keine Suchen gespeichert.</p>';return;}
+ root.innerHTML=skSavedSearches.map(x=>`<div style="border-bottom:1px solid var(--border,#ddd);padding:.65rem 0"><strong style="display:block">${esc(x.name)}</strong><small class="muted">${x.email_enabled?'E-Mail vorgemerkt (noch nicht aktiv)':'Ohne E-Mail'}</small><div style="display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.4rem"><button type="button" class="subtle-btn" data-search-open="${esc(x.id)}">Öffnen</button><button type="button" class="subtle-btn" data-search-edit="${esc(x.id)}">Bearbeiten</button><button type="button" class="subtle-btn" data-search-delete="${esc(x.id)}">Löschen</button></div></div>`).join('');
+ root.querySelectorAll('[data-search-open]').forEach(el=>el.addEventListener('click',()=>{const found=skSavedSearches.find(x=>x.id===el.dataset.searchOpen);if(found){skApplySearchFilters(found.filters);skSearchFeedback(`Suche «${found.name}» geöffnet.`);}}));
+ root.querySelectorAll('[data-search-edit]').forEach(el=>el.addEventListener('click',()=>{const found=skSavedSearches.find(x=>x.id===el.dataset.searchEdit);if(!found)return;skSavedEditId=found.id;skApplySearchFilters(found.filters);document.getElementById('saved-search-name').value=found.name;document.getElementById('saved-search-email').checked=!!found.email_enabled;document.getElementById('saved-search-form').classList.remove('hidden');skSearchFeedback('Du bearbeitest die ausgewählte Suche. Änderungen werden erst beim Speichern übernommen.');}));
+ root.querySelectorAll('[data-search-delete]').forEach(el=>el.addEventListener('click',async()=>{const found=skSavedSearches.find(x=>x.id===el.dataset.searchDelete);if(!found||!confirm(`Gespeicherte Suche «${found.name}» löschen?`))return;try{await window.SK_AUTH.deleteSavedSearch(found.id);await skLoadSavedSearches();skSearchFeedback('Gespeicherte Suche gelöscht.');}catch(e){skSearchFeedback('Löschen fehlgeschlagen: '+e.message,true);}}));
+}
+async function skLoadSavedSearches(){try{skSavedSearches=await window.SK_AUTH.listSavedSearches();skSavedLoaded=true;skRenderSavedSearches();}catch(e){skSearchFeedback('Gespeicherte Suchen konnten nicht geladen werden: '+e.message,true);}}
+document.getElementById('saved-search-new').addEventListener('click',()=>{skSavedEditId=null;document.getElementById('saved-search-name').value='';document.getElementById('saved-search-email').checked=false;document.getElementById('saved-search-form').classList.remove('hidden');document.getElementById('saved-search-name').focus();});
+document.getElementById('saved-search-cancel').addEventListener('click',()=>{skSavedEditId=null;document.getElementById('saved-search-form').classList.add('hidden');});
+document.getElementById('saved-search-form').addEventListener('submit',async e=>{e.preventDefault();if(skSavedBusy)return;skSavedBusy=true;
+ try{await window.SK_AUTH.saveSavedSearch(skSavedEditId,document.getElementById('saved-search-name').value.trim(),skCaptureSearchFilters(),document.getElementById('saved-search-email').checked);skSavedEditId=null;document.getElementById('saved-search-form').classList.add('hidden');await skLoadSavedSearches();skSearchFeedback('Suche gespeichert.');}
+ catch(error){skSearchFeedback('Speichern fehlgeschlagen: '+error.message,true);}finally{skSavedBusy=false;}
+});
+
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const marketplaceType=t=>t==='Suche'?'Personal gesucht':'Personal verfügbar';
 const skTodayCH=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Zurich',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
