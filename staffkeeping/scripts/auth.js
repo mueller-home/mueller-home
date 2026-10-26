@@ -171,6 +171,8 @@
  window.SK_AUTH={
   async chatStart(listingId,businessId,body){const {data,error}=await db.rpc('sk_chat_start',{p_listing_id:listingId,p_sender_business_id:businessId,p_body:body});if(error)throw error;return data;},
   async chatThreads(){const {data,error}=await db.rpc('sk_chat_threads');if(error)throw error;return data||[];},
+  async chatUnreadCounts(){const {data,error}=await db.rpc('sk_chat_unread_counts');if(error)throw error;return data||[];},
+  async chatMarkRead(id,businessId,lastId){const {error}=await db.rpc('sk_chat_mark_read',{p_thread_id:id,p_business_id:businessId,p_last_message_id:lastId});if(error)throw error;},
   async chatMessages(id){const {data,error}=await db.rpc('sk_chat_messages',{p_thread_id:id});if(error)throw error;return data||[];},
   async chatSend(id,businessId,body){const {data,error}=await db.rpc('sk_chat_send',{p_thread_id:id,p_sender_business_id:businessId,p_body:body});if(error)throw error;return data;},
   async listListingDrafts(){const {data,error}=await db.rpc('sk_list_my_listing_drafts');if(error)throw error;return data||[];},

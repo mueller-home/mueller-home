@@ -78,17 +78,21 @@ async function loadMemberDashboard(){
   window.SK_AUTH.listMyBusinesses(),
   window.SK_AUTH.chatThreads(),
   window.SK_AUTH.listListingDrafts(),
-  window.SK_AUTH.listNewBusinessDrafts()
+  window.SK_AUTH.listNewBusinessDrafts(),
+  window.SK_AUTH.chatUnreadCounts()
  ]);
  if(version!==skDashboardLoadVersion||currentScreen!=='dashboard')return;
  const value=i=>results[i].status==='fulfilled'&&Array.isArray(results[i].value)?results[i].value:null;
  const [items,businesses,threads,listingDrafts,businessDrafts]=[0,1,2,3,4].map(value);
+ const unread=results[5]?.status==='fulfilled'&&Array.isArray(results[5].value)?results[5].value:null;
+ const unreadTotal=unread===null?null:unread.reduce((n,r)=>n+Number(r.unread_count||0),0);
  const count=v=>v===null?'–':String(v);
  const expired=items?.filter(x=>skListingEffectiveStatus(x)==='Abgelaufen')||[];
  const ending=items?.filter(x=>x.status==='Aktiv'&&x.date_to>=skTodayCH()&&x.date_to<=skDateOffsetCH(7))||[];
  const pending=businesses?.filter(x=>['submitted','changes_requested','rejected'].includes(x.review_state)||x.status==='Ausstehend')||[];
  const cards=[
-  ['Unterhaltungen',count(threads?.length??null),'messages','Nachrichten öffnen'],
+  ['Ungelesene Nachrichten',count(unreadTotal),'messages','Nachrichten öffnen'],
+  ['Unterhaltungen',count(threads?.length??null),'messages','Chats öffnen'],
   ['Aktive Inserate',count(items?.filter(x=>skListingEffectiveStatus(x)==='Aktiv').length??null),'my-listings','Inserate verwalten'],
   ['Abgelaufene Inserate',count(items===null?null:expired.length),'my-listings','Inserate prüfen'],
   ['Betriebe mit Prüfstatus',count(businesses===null?null:pending.length),'my-businesses','Meine Betriebe']
@@ -101,11 +105,11 @@ async function loadMemberDashboard(){
  for(const b of pending.slice(0,5))alerts.push(notice(b.company_name||'Betrieb',skBusinessStatus(b.review_state||b.status),'my-businesses'));
  if(listingDrafts?.length)alerts.push(notice(`${listingDrafts.length} private Inserateentwürfe`,'Noch nicht veröffentlicht','my-listings'));
  if(businessDrafts?.length)alerts.push(notice(`${businessDrafts.length} private Betriebsentwürfe`,'Noch nicht eingereicht','my-businesses'));
- const failed=results.map((r,i)=>r.status==='rejected'?['Inserate','Betriebe','Unterhaltungen','Inserateentwürfe','Betriebsentwürfe'][i]:null).filter(Boolean);
+ const failed=results.map((r,i)=>r.status==='rejected'?['Inserate','Betriebe','Unterhaltungen','Inserateentwürfe','Betriebsentwürfe','Lesestatus'][i]:null).filter(Boolean);
  root.innerHTML=`<div class="sk-dash-cards">${cardsHtml}</div>
  <section class="panel sk-dash-panel"><h2>Aktuelles und Aufgaben</h2>${alerts.length?`<ul class="sk-dash-alerts">${alerts.join('')}</ul>`:'<p class="muted">Keine anstehenden Aufgaben aus den verfügbaren Daten.</p>'}</section>
  <section class="panel sk-dash-panel"><h2>Direkt starten</h2><div class="sk-dash-actions"><button type="button" class="btn" data-view="market">Marktplatz durchsuchen</button><button type="button" class="btn btn-outline" data-view="my-listings">Meine Inserate</button><button type="button" class="btn btn-outline" data-view="messages">Nachrichten</button><button type="button" class="btn btn-outline" data-view="my-businesses">Meine Betriebe</button></div></section>
- <section class="panel sk-dash-panel"><h2>Geplante Erweiterungen</h2><p class="muted">Ungelesene Nachrichten: Ein serverseitiger Lesestatus wird noch ergänzt. Bis dahin zeigen wir die Anzahl der Unterhaltungen, nicht angeblich ungelesene Nachrichten.</p><p class="muted">Neue Treffer gespeicherter Suchen: verfügbar, sobald die gespeicherten Suchen und die Trefferprüfung umgesetzt sind.</p><p class="muted">Mitgliedschaft: Ablaufhinweise folgen, sobald die verbindlichen Laufzeitdaten und Regeln definiert sind.</p></section>
+ <section class="panel sk-dash-panel"><h2>Geplante Erweiterungen</h2><p class="muted">Ungelesene Nachrichten werden pro Benutzer und Unterhaltung gezählt. Beim Öffnen werden angezeigte Nachrichten als gelesen markiert.</p><p class="muted">Neue Treffer gespeicherter Suchen: verfügbar, sobald die gespeicherten Suchen und die Trefferprüfung umgesetzt sind.</p><p class="muted">Mitgliedschaft: Ablaufhinweise folgen, sobald die verbindlichen Laufzeitdaten und Regeln definiert sind.</p></section>
  ${failed.length?`<p role="alert">Einige Daten konnten nicht geladen werden: ${esc(failed.join(', '))}. Es werden keine Ersatzwerte angezeigt.</p>`:''}`;
 }
 function skDateOffsetCH(days){
@@ -829,7 +833,9 @@ document.getElementById('my-list-table').addEventListener('click',async e=>{
   finally{ownListingsBusy=false;}
 });
 let selectedChatId=null, chatThreads=[], chatBusy=false, skChatFilterBusinessId="", skChatListingFilterId=null;
-let skChatSnapshot='',skChatRefreshing=false,skChatRenderVersion=0;
+let skChatSnapshot='',skChatRefreshing=false,skChatRenderVersion=0,skChatUnread=new Map();
+async function skChatLoadUnread(){const rows=await window.SK_AUTH.chatUnreadCounts();skChatUnread=new Map(rows.map(x=>[x.thread_id,Number(x.unread_count||0)]));}
+async function skChatMarkVisible(thread,messages){if(!thread||!messages?.length||document.hidden||currentScreen!=='messages')return;const last=messages[messages.length-1];await window.SK_AUTH.chatMarkRead(thread.id,thread.own_business_id,last.id);skChatUnread.set(thread.id,0);const button=document.querySelector(`[data-chat="${thread.id}"]`);if(button){button.querySelector('.sk-chat-unread')?.remove();}}
 const skChatThreadsKey=threads=>JSON.stringify((threads||[]).map(t=>[t.id,t.listing_title,t.own_business_id,t.other_business_name,t.last_message_at]));
 const skChatMessagesKey=messages=>JSON.stringify((messages||[]).map(m=>[m.id,m.body,m.sender_business_id,m.created_at]));
 
@@ -840,6 +846,7 @@ async function renderChats(preselect=null){
  chatStatus().textContent='Unterhaltungen werden geladen …';
  try{
   chatThreads=await window.SK_AUTH.chatThreads();
+  try{await skChatLoadUnread();}catch(e){skChatUnread=new Map();console.warn('[StaffKeeping Lesestatus]',e.message);}
   if(renderVersion!==skChatRenderVersion||currentScreen!=='messages')return;
   if(preselect)selectedChatId=preselect;
   const filter=document.getElementById('chat-own-business-filter');
@@ -853,12 +860,12 @@ async function renderChats(preselect=null){
   const clear=document.getElementById('chat-clear-listing-filter');
   clear.classList.toggle('hidden',!skChatListingFilterId);
   if(!visible.some(t=>t.id===selectedChatId))selectedChatId=visible[0]?.id||null;
-  list.innerHTML=visible.length?visible.map(t=>`<button type="button" class="conversation-btn ${t.id===selectedChatId?'active':''}" data-chat="${esc(t.id)}"><strong>${esc(t.listing_title||'Inserat')}</strong><small>${esc(t.other_business_name||'Betrieb')}</small></button>`).join(''):'<p class="muted">Keine Unterhaltungen für diese Auswahl vorhanden.</p>';
+  list.innerHTML=visible.length?visible.map(t=>`<button type="button" class="conversation-btn ${t.id===selectedChatId?'active':''}" data-chat="${esc(t.id)}"><strong>${esc(t.listing_title||'Inserat')}</strong><small>${esc(t.other_business_name||'Betrieb')}</small>${(skChatUnread.get(t.id)||0)>0?`<span class="sk-chat-unread" aria-label="${skChatUnread.get(t.id)} ungelesene Nachrichten">${skChatUnread.get(t.id)} neu</span>`:''}</button>`).join(''):'<p class="muted">Keine Unterhaltungen für diese Auswahl vorhanden.</p>';
   const thread=visible.find(t=>t.id===selectedChatId);
   heading.innerHTML=thread?`<strong>${esc(thread.listing_title||'Inserat')}</strong><small>${esc(thread.other_business_name||'Betrieb')}</small><button type="button" class="sk-chat-listing-link" data-chat-listing="${esc(thread.listing_id)}">Zum Inserat →</button>`:'<strong>Unterhaltung auswählen</strong>';
   document.getElementById('chat-form').classList.toggle('hidden',!thread);
   historyBox.innerHTML=thread?'<p class="muted">Nachrichten werden geladen …</p>':'';
-  if(thread){const messages=await window.SK_AUTH.chatMessages(thread.id);if(renderVersion===skChatRenderVersion&&currentScreen==='messages'&&selectedChatId===thread.id){historyBox.innerHTML=messages.map(m=>`<div class="bubble ${m.sender_business_id===thread.own_business_id?'mine':'other'}">${esc(m.body)}<small style="display:block;opacity:.7">${esc(new Date(m.created_at).toLocaleString('de-CH'))}</small></div>`).join('')||'<p class="muted">Noch keine Nachrichten.</p>';historyBox.scrollTop=historyBox.scrollHeight;skChatSnapshot=skChatThreadsKey(chatThreads)+'|'+thread.id+'|'+skChatMessagesKey(messages);}}
+  if(thread){const messages=await window.SK_AUTH.chatMessages(thread.id);if(renderVersion===skChatRenderVersion&&currentScreen==='messages'&&selectedChatId===thread.id){historyBox.innerHTML=messages.map(m=>`<div class="bubble ${m.sender_business_id===thread.own_business_id?'mine':'other'}">${esc(m.body)}<small style="display:block;opacity:.7">${esc(new Date(m.created_at).toLocaleString('de-CH'))}</small></div>`).join('')||'<p class="muted">Noch keine Nachrichten.</p>';historyBox.scrollTop=historyBox.scrollHeight;skChatSnapshot=skChatThreadsKey(chatThreads)+'|'+thread.id+'|'+skChatMessagesKey(messages);try{await skChatMarkVisible(thread,messages);}catch(e){console.warn('[StaffKeeping Gelesen]',e.message);}}}
   else skChatSnapshot=skChatThreadsKey(chatThreads)+'|';
   if(renderVersion===skChatRenderVersion)chatStatus().textContent='';
  }catch(e){chatStatus().textContent='Unterhaltungen konnten nicht geladen werden: '+e.message;historyBox.innerHTML='';}
@@ -873,9 +880,11 @@ async function skChatCheckUpdates(){
   const threads=await window.SK_AUTH.chatThreads();
   const active=threads.find(t=>t.id===inspectedThread);
   const messages=active?await window.SK_AUTH.chatMessages(inspectedThread):[];
+  try{await skChatLoadUnread();}catch(_error){}
   if(currentScreen!=='messages'||document.hidden||selectedChatId!==inspectedThread)return;
   const signature=skChatThreadsKey(threads)+'|'+(active?inspectedThread+'|'+skChatMessagesKey(messages):'');
   if(signature!==skChatSnapshot)await renderChats();
+  else if(active&&messages.length){try{await skChatMarkVisible(active,messages);}catch(_error){}}
  }catch(error){
   // Bei Verbindungsproblemen bleibt die bisherige Unterhaltung erhalten.
   const status=chatStatus();if(status&&currentScreen==='messages')status.textContent='Automatische Aktualisierung vorübergehend nicht möglich: '+error.message;
