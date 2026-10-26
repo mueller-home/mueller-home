@@ -174,6 +174,8 @@
   async chatUnreadCounts(){const {data,error}=await db.rpc('sk_chat_unread_counts');if(error)throw error;return data||[];},
   async chatMarkRead(id,businessId,lastId){const {error}=await db.rpc('sk_chat_mark_read',{p_thread_id:id,p_business_id:businessId,p_last_message_id:lastId});if(error)throw error;},
   async chatMessages(id){const {data,error}=await db.rpc('sk_chat_messages',{p_thread_id:id});if(error)throw error;return data||[];},
+  async chatClose(id,businessId){const {error}=await db.rpc('sk_chat_close',{p_thread_id:id,p_business_id:businessId});if(error)throw error;},
+  async deleteOrDeactivateListing(id,businessId){const selected=await this.myListingBusiness(businessId);const {data,error}=await db.rpc('sk_delete_or_deactivate_listing',{p_listing_id:id,p_business_id:selected});if(error)throw error;return data;},
   async chatSend(id,businessId,body){const {data,error}=await db.rpc('sk_chat_send',{p_thread_id:id,p_sender_business_id:businessId,p_body:body});if(error)throw error;return data;},
   async listListingDrafts(){const {data,error}=await db.rpc('sk_list_my_listing_drafts');if(error)throw error;return data||[];},
   async readFormDraft(kind,key,businessId){const {data,error}=await db.rpc('sk_get_form_draft',{p_kind:kind,p_key:key,p_business:businessId});if(error)throw error;return data?.[0]||null;},

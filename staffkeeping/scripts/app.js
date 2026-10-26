@@ -92,7 +92,7 @@ async function loadMemberDashboard(){
  const pending=businesses?.filter(x=>['submitted','changes_requested','rejected'].includes(x.review_state)||x.status==='Ausstehend')||[];
  const cards=[
   ['Ungelesene Nachrichten',count(unreadTotal),'messages','Nachrichten öffnen'],
-  ['Unterhaltungen',count(threads?.length??null),'messages','Chats öffnen'],
+  ['Unterhaltungen',count(threads===null?null:threads.filter(t=>!t.closed_at&&!t.archived_at).length),'messages','Chats öffnen'],
   ['Aktive Inserate',count(items?.filter(x=>skListingEffectiveStatus(x)==='Aktiv').length??null),'my-listings','Inserate verwalten'],
   ['Abgelaufene Inserate',count(items===null?null:expired.length),'my-listings','Inserate prüfen'],
   ['Betriebe mit Prüfstatus',count(businesses===null?null:pending.length),'my-businesses','Meine Betriebe']
@@ -211,7 +211,7 @@ async function skOpenListingChats(listingId){
   if(!threads.some(t=>t.listing_id===listingId)){
    alert('Für dieses Inserat sind keine zugänglichen Unterhaltungen vorhanden.');return;
   }
-  skChatListingFilterId=listingId;selectedChatId=threads.find(t=>t.listing_id===listingId)?.id||null;
+  skChatListingFilterId=listingId;const linked=threads.filter(t=>t.listing_id===listingId);skChatShowArchived=!linked.some(t=>!t.closed_at&&!t.archived_at);selectedChatId=linked.find(t=>skChatShowArchived?!!(t.closed_at||t.archived_at):!(t.closed_at||t.archived_at))?.id||null;
   skChatFilterBusinessId='';
   await show('messages');
   if(currentScreen==='messages')await renderChats(selectedChatId);
@@ -823,20 +823,20 @@ document.getElementById('my-list-table').addEventListener('click',async e=>{
   if(b.dataset.own==='chats'){await skOpenListingChats(id);return;}
   if(b.dataset.own==='edit'){listingForm(id);return;}
   if(b.dataset.own==='toggle'&&skListingEffectiveStatus(l)==='Abgelaufen'){alert('Inserat abgelaufen: Bitte zuerst das Enddatum verlängern und speichern.');return;}
-  if(b.dataset.own==='delete'&&!confirm('Dieses Inserat dauerhaft löschen?'))return;
+  if(b.dataset.own==='delete'&&!confirm('Inserat entfernen? Mit vorhandenen Unterhaltungen wird es nur deaktiviert; sämtliche Gespräche werden archiviert. Ohne Unterhaltungen wird es endgültig gelöscht.'))return;
   ownListingsBusy=true;b.disabled=true;
   try{
     if(b.dataset.own==='toggle')await window.SK_AUTH.setMyListingStatus(id,l.status==='Aktiv'?'Inaktiv':'Aktiv',l.business_id);
-    else if(b.dataset.own==='delete')await window.SK_AUTH.deleteMyListing(id,l.business_id);
+    else if(b.dataset.own==='delete'){const outcome=await window.SK_AUTH.deleteOrDeactivateListing(id,l.business_id);if(outcome==='deaktiviert')alert('Inserat deaktiviert. Alle zugehörigen Unterhaltungen wurden archiviert.');}
     await loadMyListings();
   }catch(error){alert('Aktion fehlgeschlagen: '+error.message);b.disabled=false;}
   finally{ownListingsBusy=false;}
 });
-let selectedChatId=null, chatThreads=[], chatBusy=false, skChatFilterBusinessId="", skChatListingFilterId=null;
+let selectedChatId=null, chatThreads=[], chatBusy=false, skChatFilterBusinessId="", skChatListingFilterId=null, skChatShowArchived=false;
 let skChatSnapshot='',skChatRefreshing=false,skChatRenderVersion=0,skChatUnread=new Map();
 async function skChatLoadUnread(){const rows=await window.SK_AUTH.chatUnreadCounts();skChatUnread=new Map(rows.map(x=>[x.thread_id,Number(x.unread_count||0)]));}
 async function skChatMarkVisible(thread,messages){if(!thread||!messages?.length||document.hidden||currentScreen!=='messages')return;const last=messages[messages.length-1];await window.SK_AUTH.chatMarkRead(thread.id,thread.own_business_id,last.id);skChatUnread.set(thread.id,0);const button=document.querySelector(`[data-chat="${thread.id}"]`);if(button){button.querySelector('.sk-chat-unread')?.remove();}}
-const skChatThreadsKey=threads=>JSON.stringify((threads||[]).map(t=>[t.id,t.listing_title,t.own_business_id,t.other_business_name,t.last_message_at]));
+const skChatThreadsKey=threads=>JSON.stringify((threads||[]).map(t=>[t.id,t.listing_title,t.own_business_id,t.other_business_name,t.last_message_at,t.closed_at,t.archived_at]));
 const skChatMessagesKey=messages=>JSON.stringify((messages||[]).map(m=>[m.id,m.body,m.sender_business_id,m.created_at]));
 
 const chatStatus=()=>document.getElementById('chat-status');
@@ -856,14 +856,16 @@ async function renderChats(preselect=null){
   filter.innerHTML='<option value="">Alle meine Betriebe</option>'+choices.map(([id,name])=>`<option value="${esc(id)}">${esc(name)}</option>`).join('');
   if(skChatFilterBusinessId && !choices.some(([id])=>id===skChatFilterBusinessId))skChatFilterBusinessId='';
   filter.value=skChatFilterBusinessId;
-  const visible=chatThreads.filter(t=>(!skChatFilterBusinessId||t.own_business_id===skChatFilterBusinessId)&&(!skChatListingFilterId||t.listing_id===skChatListingFilterId));
+  const visible=chatThreads.filter(t=>(!skChatFilterBusinessId||t.own_business_id===skChatFilterBusinessId)&&(!skChatListingFilterId||t.listing_id===skChatListingFilterId)&&(skChatShowArchived?!!(t.closed_at||t.archived_at):!(t.closed_at||t.archived_at)));
+  document.getElementById('chat-archive-toggle').textContent=skChatShowArchived?'Aktive Unterhaltungen anzeigen':'Archivierte und abgeschlossene anzeigen';
   const clear=document.getElementById('chat-clear-listing-filter');
   clear.classList.toggle('hidden',!skChatListingFilterId);
   if(!visible.some(t=>t.id===selectedChatId))selectedChatId=visible[0]?.id||null;
-  list.innerHTML=visible.length?visible.map(t=>`<button type="button" class="conversation-btn ${t.id===selectedChatId?'active':''}" data-chat="${esc(t.id)}"><strong>${esc(t.listing_title||'Inserat')}</strong><small>${esc(t.other_business_name||'Betrieb')}</small>${(skChatUnread.get(t.id)||0)>0?`<span class="sk-chat-unread" aria-label="${skChatUnread.get(t.id)} ungelesene Nachrichten">${skChatUnread.get(t.id)} neu</span>`:''}</button>`).join(''):'<p class="muted">Keine Unterhaltungen für diese Auswahl vorhanden.</p>';
+  list.innerHTML=visible.length?visible.map(t=>`<button type="button" class="conversation-btn ${t.id===selectedChatId?'active':''}" data-chat="${esc(t.id)}"><strong>${esc(t.listing_title||'Inserat')}</strong><small>${esc(t.other_business_name||'Betrieb')}</small>${(t.archived_at||t.closed_at)?'<small>Abgeschlossen / archiviert</small>':''}${(skChatUnread.get(t.id)||0)>0?`<span class="sk-chat-unread" aria-label="${skChatUnread.get(t.id)} ungelesene Nachrichten">${skChatUnread.get(t.id)} neu</span>`:''}</button>`).join(''):'<p class="muted">Keine Unterhaltungen für diese Auswahl vorhanden.</p>';
   const thread=visible.find(t=>t.id===selectedChatId);
   heading.innerHTML=thread?`<strong>${esc(thread.listing_title||'Inserat')}</strong><small>${esc(thread.other_business_name||'Betrieb')}</small><button type="button" class="sk-chat-listing-link" data-chat-listing="${esc(thread.listing_id)}">Zum Inserat →</button>`:'<strong>Unterhaltung auswählen</strong>';
-  document.getElementById('chat-form').classList.toggle('hidden',!thread);
+  document.getElementById('chat-form').classList.toggle('hidden',!thread||!!(thread.closed_at||thread.archived_at));
+  document.getElementById('chat-close').classList.toggle('hidden',!thread||!!(thread.closed_at||thread.archived_at));
   historyBox.innerHTML=thread?'<p class="muted">Nachrichten werden geladen …</p>':'';
   if(thread){const messages=await window.SK_AUTH.chatMessages(thread.id);if(renderVersion===skChatRenderVersion&&currentScreen==='messages'&&selectedChatId===thread.id){historyBox.innerHTML=messages.map(m=>`<div class="bubble ${m.sender_business_id===thread.own_business_id?'mine':'other'}">${esc(m.body)}<small style="display:block;opacity:.7">${esc(new Date(m.created_at).toLocaleString('de-CH'))}</small></div>`).join('')||'<p class="muted">Noch keine Nachrichten.</p>';historyBox.scrollTop=historyBox.scrollHeight;skChatSnapshot=skChatThreadsKey(chatThreads)+'|'+thread.id+'|'+skChatMessagesKey(messages);try{await skChatMarkVisible(thread,messages);}catch(e){console.warn('[StaffKeeping Gelesen]',e.message);}}}
   else skChatSnapshot=skChatThreadsKey(chatThreads)+'|';
@@ -912,6 +914,8 @@ document.getElementById('chat-heading').addEventListener('click',async e=>{
  }catch(error){chatStatus().textContent='Inserat konnte nicht geöffnet werden: '+(error?.message||'Unbekannter Fehler');}
  finally{button.disabled=false;}
 });
+document.getElementById('chat-archive-toggle').addEventListener('click',()=>{skChatShowArchived=!skChatShowArchived;selectedChatId=null;void renderChats();});
+document.getElementById('chat-close').addEventListener('click',async()=>{const t=chatThreads.find(x=>x.id===selectedChatId);if(!t||!confirm('Unterhaltung für beide Seiten abschliessen? Sie bleibt im Archiv lesbar.'))return;try{await window.SK_AUTH.chatClose(t.id,t.own_business_id);selectedChatId=null;await renderChats();}catch(e){chatStatus().textContent='Unterhaltung konnte nicht abgeschlossen werden: '+e.message;}});
 document.getElementById('chat-clear-listing-filter').addEventListener('click',()=>{skChatListingFilterId=null;void renderChats();});
 document.getElementById('chat-own-business-filter').addEventListener('change',e=>{skChatFilterBusinessId=e.target.value;selectedChatId=null;void renderChats();});
 document.getElementById('conversation-buttons').addEventListener('click',e=>{const b=e.target.closest('[data-chat]');if(b){selectedChatId=b.dataset.chat;void renderChats();}});
