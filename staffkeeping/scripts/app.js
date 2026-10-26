@@ -1,12 +1,12 @@
 /* StaffKeeping 0.33.1.4 – separate business profiles, consistent administration */
 'use strict';
-const screens=['login','register','reset','pending','market','profile','account','my-listings','my-businesses','detail','messages','reviews','admin-businesses','admin-listings','admin-dashboard','admin-docs','admin-home','admin-activity','admin-deletions','help'];
+const screens=['dashboard','login','register','reset','pending','market','profile','account','my-listings','my-businesses','detail','messages','reviews','admin-businesses','admin-listings','admin-dashboard','admin-docs','admin-home','admin-activity','admin-deletions','help'];
 const navOnly=document.querySelectorAll('.nav-only'), guests=document.querySelectorAll('.guest-only');
 const publicViews=new Set(['login','register','reset','pending','help']);
 let demoSignedIn=false;
 let skAdmin=false;
 let skPending=false;let skCanProfile=false;let skCanTrade=false;
-window.SK_UI={setAccess(isApproved,isAdmin,reviewState,canTrade=false){demoSignedIn=!!isApproved;skAdmin=!!isAdmin;skCanTrade=!!canTrade;skPending=!isApproved;skCanProfile=!!reviewState;performShow(isAdmin?'admin-home':isApproved?'market':(reviewState==='draft'||reviewState==='changes_requested')?'profile':'pending',false);},show,logoutView(){demoSignedIn=false;skAdmin=false;skPending=false;skCanProfile=false;skCanTrade=false;performShow('login',false);}};
+window.SK_UI={setAccess(isApproved,isAdmin,reviewState,canTrade=false){demoSignedIn=!!isApproved;skAdmin=!!isAdmin;skCanTrade=!!canTrade;skPending=!isApproved;skCanProfile=!!reviewState;performShow(isAdmin?'admin-home':isApproved?'dashboard':(reviewState==='draft'||reviewState==='changes_requested')?'profile':'pending',false);},show,logoutView(){demoSignedIn=false;skAdmin=false;skPending=false;skCanProfile=false;skCanTrade=false;performShow('login',false);}};
 let currentScreen='login', navigationBusy=false;
 async function show(view,updateUrl=true){
   if(navigationBusy)return;
@@ -36,9 +36,9 @@ function performShow(view,updateUrl=true){
   if(!screens.includes(view))view='login';
   // Demo-Ansicht: Nur ein explizit gestarteter Demo-Zugang darf interne Seiten sehen.
   if(!demoSignedIn && !skAdmin && !publicViews.has(view) && !(['profile','account'].includes(view)&&skCanProfile))view=skPending?'pending':'login';
-  if(!skAdmin && view.startsWith('admin-'))view=demoSignedIn?'market':skCanProfile?'profile':'login';
+  if(!skAdmin && view.startsWith('admin-'))view=demoSignedIn?'dashboard':skCanProfile?'profile':'login';
   if(!skCanTrade && ['my-listings','my-businesses','messages','reviews'].includes(view))view=skAdmin?'market':skCanProfile?'profile':'login';
-  if(demoSignedIn && view==='login')view='market';
+  if(demoSignedIn && view==='login')view='dashboard';
   if(currentScreen==='admin-docs'&&view!=='admin-docs')window.SK_DOCS?.close();
   currentScreen=view;
   screens.forEach(v=>document.getElementById('view-'+v).classList.toggle('hidden',v!==view));
@@ -54,6 +54,7 @@ function performShow(view,updateUrl=true){
   window.scrollTo(0,0);
   if(view==='profile'){void loadSafeBusinessProfile();}
   if(view==='account'){void loadPersonalAccount();}
+  if(view==='dashboard')void loadMemberDashboard();
   if(view==='market')loadMarketplace();
   if(view==='my-listings')loadMyListings();
   if(view==='my-businesses')loadMyBusinesses();
@@ -66,6 +67,51 @@ function performShow(view,updateUrl=true){
   if(view==='help')window.SK_HELP?.load();
 }
 
+let skDashboardLoadVersion=0;
+async function loadMemberDashboard(){
+ const version=++skDashboardLoadVersion;
+ const root=document.getElementById('member-dashboard-body');
+ if(!root)return;
+ root.innerHTML='<p class="muted" role="status">Übersicht wird geladen …</p>';
+ const results=await Promise.allSettled([
+  window.SK_AUTH.listMyListings(),
+  window.SK_AUTH.listMyBusinesses(),
+  window.SK_AUTH.chatThreads(),
+  window.SK_AUTH.listListingDrafts(),
+  window.SK_AUTH.listNewBusinessDrafts()
+ ]);
+ if(version!==skDashboardLoadVersion||currentScreen!=='dashboard')return;
+ const value=i=>results[i].status==='fulfilled'&&Array.isArray(results[i].value)?results[i].value:null;
+ const [items,businesses,threads,listingDrafts,businessDrafts]=[0,1,2,3,4].map(value);
+ const count=v=>v===null?'–':String(v);
+ const expired=items?.filter(x=>skListingEffectiveStatus(x)==='Abgelaufen')||[];
+ const ending=items?.filter(x=>x.status==='Aktiv'&&x.date_to>=skTodayCH()&&x.date_to<=skDateOffsetCH(7))||[];
+ const pending=businesses?.filter(x=>['submitted','changes_requested','rejected'].includes(x.review_state)||x.status==='Ausstehend')||[];
+ const cards=[
+  ['Unterhaltungen',count(threads?.length??null),'messages','Nachrichten öffnen'],
+  ['Aktive Inserate',count(items?.filter(x=>skListingEffectiveStatus(x)==='Aktiv').length??null),'my-listings','Inserate verwalten'],
+  ['Abgelaufene Inserate',count(items===null?null:expired.length),'my-listings','Inserate prüfen'],
+  ['Betriebe mit Prüfstatus',count(businesses===null?null:pending.length),'my-businesses','Meine Betriebe']
+ ];
+ const cardsHtml=cards.map(([label,num,view,action])=>`<article class="sk-dash-card"><span>${esc(label)}</span><strong>${esc(num)}</strong><button type="button" data-view="${view}">${esc(action)} →</button></article>`).join('');
+ const notice=(title,subtitle,view)=>`<li><div><strong>${esc(title)}</strong><small>${esc(subtitle)}</small></div><button type="button" class="subtle-btn" data-view="${view}">Öffnen →</button></li>`;
+ let alerts=[];
+ for(const l of expired.slice(0,5))alerts.push(notice(l.title,'Inserat abgelaufen · Enddatum prüfen','my-listings'));
+ for(const l of ending.slice(0,5))alerts.push(notice(l.title,'Inserat läuft innerhalb von 7 Tagen ab','my-listings'));
+ for(const b of pending.slice(0,5))alerts.push(notice(b.company_name||'Betrieb',skBusinessStatus(b.review_state||b.status),'my-businesses'));
+ if(listingDrafts?.length)alerts.push(notice(`${listingDrafts.length} private Inserateentwürfe`,'Noch nicht veröffentlicht','my-listings'));
+ if(businessDrafts?.length)alerts.push(notice(`${businessDrafts.length} private Betriebsentwürfe`,'Noch nicht eingereicht','my-businesses'));
+ const failed=results.map((r,i)=>r.status==='rejected'?['Inserate','Betriebe','Unterhaltungen','Inserateentwürfe','Betriebsentwürfe'][i]:null).filter(Boolean);
+ root.innerHTML=`<div class="sk-dash-cards">${cardsHtml}</div>
+ <section class="panel sk-dash-panel"><h2>Aktuelles und Aufgaben</h2>${alerts.length?`<ul class="sk-dash-alerts">${alerts.join('')}</ul>`:'<p class="muted">Keine anstehenden Aufgaben aus den verfügbaren Daten.</p>'}</section>
+ <section class="panel sk-dash-panel"><h2>Direkt starten</h2><div class="sk-dash-actions"><button type="button" class="btn" data-view="market">Marktplatz durchsuchen</button><button type="button" class="btn btn-outline" data-view="my-listings">Meine Inserate</button><button type="button" class="btn btn-outline" data-view="messages">Nachrichten</button><button type="button" class="btn btn-outline" data-view="my-businesses">Meine Betriebe</button></div></section>
+ <section class="panel sk-dash-panel"><h2>Geplante Erweiterungen</h2><p class="muted">Ungelesene Nachrichten: Ein serverseitiger Lesestatus wird noch ergänzt. Bis dahin zeigen wir die Anzahl der Unterhaltungen, nicht angeblich ungelesene Nachrichten.</p><p class="muted">Neue Treffer gespeicherter Suchen: verfügbar, sobald die gespeicherten Suchen und die Trefferprüfung umgesetzt sind.</p><p class="muted">Mitgliedschaft: Ablaufhinweise folgen, sobald die verbindlichen Laufzeitdaten und Regeln definiert sind.</p></section>
+ ${failed.length?`<p role="alert">Einige Daten konnten nicht geladen werden: ${esc(failed.join(', '))}. Es werden keine Ersatzwerte angezeigt.</p>`:''}`;
+}
+function skDateOffsetCH(days){
+ const day=new Date();day.setUTCDate(day.getUTCDate()+days);
+ return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Zurich',year:'numeric',month:'2-digit',day:'2-digit'}).format(day);
+}
 async function loadPersonalAccount(){
  const email=document.getElementById('account-login-email'),info=document.getElementById('account-status');
  try{const user=await window.SK_AUTH.getAccountIdentity();email.textContent=user?.email||'Keine Anmeldeadresse gefunden';info.textContent='';}
