@@ -149,6 +149,24 @@ function render(){
   document.getElementById('no-results').classList.toggle('hidden',marketplaceLoadError||items.length>0);
   grid.classList.remove('hidden');document.getElementById('map-placeholder').classList.add('hidden');
 }
+let skChatIndex=[];
+async function skRefreshChatIndex(){
+ if(!window.SK_AUTH?.chatThreads)return [];
+ skChatIndex=await window.SK_AUTH.chatThreads();
+ return skChatIndex;
+}
+async function skOpenListingChats(listingId){
+ try{
+  const threads=await skRefreshChatIndex();
+  if(!threads.some(t=>t.listing_id===listingId)){
+   alert('Für dieses Inserat sind keine zugänglichen Unterhaltungen vorhanden.');return;
+  }
+  skChatListingFilterId=listingId;selectedChatId=threads.find(t=>t.listing_id===listingId)?.id||null;
+  skChatFilterBusinessId='';
+  await show('messages');
+  if(currentScreen==='messages')await renderChats(selectedChatId);
+ }catch(error){alert('Unterhaltungen konnten nicht geladen werden: '+error.message);}
+}
 function openDetail(id){
   const l=marketplaceListings.find(x=>x.id===id);if(!l)return;
   document.getElementById('detail-title').textContent=l.title;
@@ -158,8 +176,16 @@ function openDetail(id){
   document.getElementById('detail-conditions').textContent=l.conditions||'Keine zusätzlichen Rahmenbedingungen angegeben.';
   document.getElementById('detail-features').innerHTML=`${l.accommodation?'<span class="status-tag">Unterkunft vorhanden</span>':'<span class="status-tag">Keine Unterkunft angegeben</span>'} ${(l.languages||[]).map(x=>`<span class="status-tag">${esc(x)}</span>`).join(' ')}`;
   document.getElementById('detail-company').textContent='Betrieb in '+l.city;
-  const contact=document.getElementById('detail-contact');contact.disabled=false;contact.textContent='Kontakt aufnehmen →';contact.dataset.listingId=l.id;
+  const contact=document.getElementById('detail-contact');contact.disabled=false;contact.textContent='Kontakt aufnehmen →';contact.dataset.listingId=l.id;contact.dataset.existingChat='0';
+  document.getElementById('detail-contact-form').classList.add('hidden');
   show('detail');
+  // Berechtigungsgeprüfte Liste, keine direkte Abfrage privater Tabellen.
+  void skRefreshChatIndex().then(threads=>{
+   if(currentScreen!=='detail'||contact.dataset.listingId!==l.id)return;
+   const exists=threads.some(t=>t.listing_id===l.id);
+   contact.textContent=exists?'Zum Chat →':'Kontakt aufnehmen →';
+   contact.dataset.existingChat=exists?'1':'0';
+  }).catch(()=>{contact.dataset.existingChat='0';});
 }
 ['filter-search','filter-type','filter-branch','filter-date','filter-accommodation','filter-radius'].forEach(id=>document.getElementById(id).addEventListener('input',render));
 document.getElementById('filter-reset').addEventListener('click',()=>{['filter-search','filter-type','filter-branch','filter-date'].forEach(id=>document.getElementById(id).value='');document.getElementById('filter-radius').selectedIndex=0;document.getElementById('filter-accommodation').checked=false;favoritesOnly=false;document.getElementById('bookmarks-only').classList.remove('selected');render()});
@@ -621,6 +647,8 @@ async function loadMyListings({silent=false}={}){
       return;
     }
     ownBusinessList=businesses;ownListings=listings;ownListingDrafts=drafts;
+    try{await skRefreshChatIndex();}catch(error){skChatIndex=[];console.warn('Chat-Verknüpfungen nicht verfügbar',error);}
+    if(generation!==skListingsRefreshGeneration||currentScreen!=='my-listings')return;
     renderMyListings();skListingsLastRefresh=Date.now();
   }catch(error){
     if(generation===skListingsRefreshGeneration&&currentScreen==='my-listings'&&!dialog.open){
@@ -721,7 +749,7 @@ function renderMyListings(){
      const existing=(!String(d.draft_key).startsWith('new:'))?ownListings.find(l=>l.id===d.draft_key):null;
      return `<tr><td><strong>${esc(title)}</strong><small>${existing?'Änderungen an veröffentlichtem Inserat':'Neues Inserat · privat'}</small></td><td>${esc(business?.company_name||'Betrieb')}</td><td>${esc(new Date(d.updated_at).toLocaleString('de-CH'))}</td><td class="table-actions"><button type="button" data-draft="edit" data-key="${esc(d.draft_key)}" data-business="${esc(d.business_id)}">Bearbeiten</button><button type="button" data-draft="delete" data-key="${esc(d.draft_key)}" data-business="${esc(d.business_id)}">Verwerfen</button></td></tr>`;
    }).join('')+'</tbody></table></div>':'';
-root.innerHTML='<h2>'+(listTab==='inserate'?'Eigene Inserate':'Vergebene Inserate')+'</h2><div class="table-wrap"><table class="data-table"><thead><tr><th>Inserat / Ort</th><th>Typ / Kategorie</th><th>Zeitraum</th><th>Status</th><th>Aktionen</th></tr></thead><tbody>'+rows.map(l=>`<tr><td><strong>${esc(l.title)}</strong><small>${esc(l.city)} · ${esc(l.country)}</small></td><td>${esc(l.type)} · ${esc(l.category)}</td><td>${esc(dateDisplay(l.date_from))} – ${esc(dateDisplay(l.date_to))}</td><td><span class="status-tag sk-list-status ${skListingEffectiveStatus(l)==='Aktiv'?'sk-list-status-active':skListingEffectiveStatus(l)==='Abgelaufen'?'sk-list-status-inactive':'sk-list-status-inactive'}">${esc(skListingEffectiveStatus(l))}</span></td><td class="table-actions sk-own-actions"><button type="button" class="sk-action-edit" data-own="edit" data-id="${esc(l.id)}" aria-label="Inserat bearbeiten" title="Inserat bearbeiten">✎</button><button type="button" class="sk-action-toggle" data-own="toggle" data-id="${esc(l.id)}" ${skListingEffectiveStatus(l)==='Abgelaufen'?'disabled':''} aria-label="${skListingEffectiveStatus(l)==='Abgelaufen'?'Zuerst Enddatum verlängern':l.status==='Aktiv'?'Inserat deaktivieren':'Inserat aktivieren'}" title="${skListingEffectiveStatus(l)==='Abgelaufen'?'Zuerst Enddatum verlängern':l.status==='Aktiv'?'Inserat deaktivieren':'Inserat aktivieren'}">↻</button><button type="button" class="sk-action-delete" data-own="delete" data-id="${esc(l.id)}" aria-label="Inserat dauerhaft löschen" title="Inserat dauerhaft löschen">✕</button></td></tr>`).join('')+'</tbody></table></div>'+(rows.length?'':'<p class="muted">Keine veröffentlichten Inserate in dieser Ansicht.</p>')+draftsMarkup;
+root.innerHTML='<h2>'+(listTab==='inserate'?'Eigene Inserate':'Vergebene Inserate')+'</h2><div class="table-wrap"><table class="data-table"><thead><tr><th>Inserat / Ort</th><th>Typ / Kategorie</th><th>Zeitraum</th><th>Status</th><th>Aktionen</th></tr></thead><tbody>'+rows.map(l=>`<tr><td><strong>${esc(l.title)}</strong><small>${esc(l.city)} · ${esc(l.country)}</small>${skChatIndex.some(t=>t.listing_id===l.id)?`<button type="button" class="sk-listing-chat-link" data-own="chats" data-id="${esc(l.id)}">${skChatIndex.filter(t=>t.listing_id===l.id).length} ${skChatIndex.filter(t=>t.listing_id===l.id).length===1?'Unterhaltung':'Unterhaltungen'} ansehen →</button>`:''}</td><td>${esc(l.type)} · ${esc(l.category)}</td><td>${esc(dateDisplay(l.date_from))} – ${esc(dateDisplay(l.date_to))}</td><td><span class="status-tag sk-list-status ${skListingEffectiveStatus(l)==='Aktiv'?'sk-list-status-active':skListingEffectiveStatus(l)==='Abgelaufen'?'sk-list-status-inactive':'sk-list-status-inactive'}">${esc(skListingEffectiveStatus(l))}</span></td><td class="table-actions sk-own-actions"><button type="button" class="sk-action-edit" data-own="edit" data-id="${esc(l.id)}" aria-label="Inserat bearbeiten" title="Inserat bearbeiten">✎</button><button type="button" class="sk-action-toggle" data-own="toggle" data-id="${esc(l.id)}" ${skListingEffectiveStatus(l)==='Abgelaufen'?'disabled':''} aria-label="${skListingEffectiveStatus(l)==='Abgelaufen'?'Zuerst Enddatum verlängern':l.status==='Aktiv'?'Inserat deaktivieren':'Inserat aktivieren'}" title="${skListingEffectiveStatus(l)==='Abgelaufen'?'Zuerst Enddatum verlängern':l.status==='Aktiv'?'Inserat deaktivieren':'Inserat aktivieren'}">↻</button><button type="button" class="sk-action-delete" data-own="delete" data-id="${esc(l.id)}" aria-label="Inserat dauerhaft löschen" title="Inserat dauerhaft löschen">✕</button></td></tr>`).join('')+'</tbody></table></div>'+(rows.length?'':'<p class="muted">Keine veröffentlichten Inserate in dieser Ansicht.</p>')+draftsMarkup;
 }
 document.getElementById('dialog-body').addEventListener('click',e=>{if(e.target.closest('#save-listing-draft')){void saveListingDraftAndClose();return;}if(e.target.closest('#save-real-listing'))void saveListing();});
 document.getElementById('my-list-table').addEventListener('click',async e=>{
@@ -742,6 +770,7 @@ document.getElementById('my-list-table').addEventListener('click',async e=>{
 document.getElementById('my-list-table').addEventListener('click',async e=>{
   const b=e.target.closest('[data-own]');if(!b||ownListingsBusy)return;
   const id=b.dataset.id,l=ownListings.find(x=>x.id===id);if(!l)return;
+  if(b.dataset.own==='chats'){await skOpenListingChats(id);return;}
   if(b.dataset.own==='edit'){listingForm(id);return;}
   if(b.dataset.own==='toggle'&&skListingEffectiveStatus(l)==='Abgelaufen'){alert('Inserat abgelaufen: Bitte zuerst das Enddatum verlängern und speichern.');return;}
   if(b.dataset.own==='delete'&&!confirm('Dieses Inserat dauerhaft löschen?'))return;
@@ -753,7 +782,7 @@ document.getElementById('my-list-table').addEventListener('click',async e=>{
   }catch(error){alert('Aktion fehlgeschlagen: '+error.message);b.disabled=false;}
   finally{ownListingsBusy=false;}
 });
-let selectedChatId=null, chatThreads=[], chatBusy=false, skChatFilterBusinessId="";
+let selectedChatId=null, chatThreads=[], chatBusy=false, skChatFilterBusinessId="", skChatListingFilterId=null;
 let skChatSnapshot='',skChatRefreshing=false,skChatRenderVersion=0;
 const skChatThreadsKey=threads=>JSON.stringify((threads||[]).map(t=>[t.id,t.listing_title,t.own_business_id,t.other_business_name,t.last_message_at]));
 const skChatMessagesKey=messages=>JSON.stringify((messages||[]).map(m=>[m.id,m.body,m.sender_business_id,m.created_at]));
@@ -774,7 +803,9 @@ async function renderChats(preselect=null){
   filter.innerHTML='<option value="">Alle meine Betriebe</option>'+choices.map(([id,name])=>`<option value="${esc(id)}">${esc(name)}</option>`).join('');
   if(skChatFilterBusinessId && !choices.some(([id])=>id===skChatFilterBusinessId))skChatFilterBusinessId='';
   filter.value=skChatFilterBusinessId;
-  const visible=chatThreads.filter(t=>!skChatFilterBusinessId||t.own_business_id===skChatFilterBusinessId);
+  const visible=chatThreads.filter(t=>(!skChatFilterBusinessId||t.own_business_id===skChatFilterBusinessId)&&(!skChatListingFilterId||t.listing_id===skChatListingFilterId));
+  const clear=document.getElementById('chat-clear-listing-filter');
+  clear.classList.toggle('hidden',!skChatListingFilterId);
   if(!visible.some(t=>t.id===selectedChatId))selectedChatId=visible[0]?.id||null;
   list.innerHTML=visible.length?visible.map(t=>`<button type="button" class="conversation-btn ${t.id===selectedChatId?'active':''}" data-chat="${esc(t.id)}"><strong>${esc(t.listing_title||'Inserat')}</strong><small>${esc(t.other_business_name||'Betrieb')}</small></button>`).join(''):'<p class="muted">Keine Unterhaltungen für diese Auswahl vorhanden.</p>';
   const thread=visible.find(t=>t.id===selectedChatId);
@@ -826,6 +857,7 @@ document.getElementById('chat-heading').addEventListener('click',async e=>{
  }catch(error){chatStatus().textContent='Inserat konnte nicht geöffnet werden: '+(error?.message||'Unbekannter Fehler');}
  finally{button.disabled=false;}
 });
+document.getElementById('chat-clear-listing-filter').addEventListener('click',()=>{skChatListingFilterId=null;void renderChats();});
 document.getElementById('chat-own-business-filter').addEventListener('change',e=>{skChatFilterBusinessId=e.target.value;selectedChatId=null;void renderChats();});
 document.getElementById('conversation-buttons').addEventListener('click',e=>{const b=e.target.closest('[data-chat]');if(b){selectedChatId=b.dataset.chat;void renderChats();}});
 document.getElementById('chat-form').addEventListener('submit',async e=>{
@@ -839,6 +871,7 @@ const contactStatus=document.getElementById('detail-contact-status');
 document.getElementById('detail-contact-cancel').addEventListener('click',()=>{contactForm.classList.add('hidden');contactStatus.textContent='';});
 document.getElementById('detail-contact').addEventListener('click',async ()=>{
  const id=document.getElementById('detail-contact').dataset.listingId;
+ if(document.getElementById('detail-contact').dataset.existingChat==='1'){await skOpenListingChats(id);return;}
  contactStatus.textContent='Betriebe werden geladen …';contactForm.classList.remove('hidden');
  let businesses;try{businesses=await window.SK_AUTH.listApprovedBusinesses();}catch(e){contactStatus.textContent='Betriebe konnten nicht geladen werden: '+e.message;return;}
  const listing=marketplaceListings.find(l=>l.id===id);
