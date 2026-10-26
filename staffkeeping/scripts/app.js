@@ -153,26 +153,51 @@ const listings=[
 const starred=new Set();let favoritesOnly=false,viewMap=false;
 let marketplaceLocations=new Map(), marketplaceMap=null, marketplacePins=[], marketplaceInfo=null, marketplaceMapSerial=0;
 let marketplaceListings=[], marketplaceLoadError='', marketplaceLoading=false, marketplaceDistances=new Map(), marketplaceOriginAvailable=false;
+let skMarketRefreshQueued=false,skMarketFilterTimer=null,skMarketLastRefresh=0;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const marketplaceType=t=>t==='Suche'?'Personal gesucht':'Personal verfügbar';
 const skTodayCH=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Zurich',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const skListingEffectiveStatus=l=>l.date_to<skTodayCH()?'Abgelaufen':l.status;
 const marketplaceDate=d=>/^\d{4}-\d{2}-\d{2}$/.test(String(d||''))?`${d.slice(8,10)}.${d.slice(5,7)}.${d.slice(0,4)}`:'–';
-async function loadMarketplace(){
-  if(marketplaceLoading)return;
-  marketplaceLoading=true;marketplaceLoadError='';
-  document.getElementById('listing-grid').innerHTML='<p class="muted" role="status">Inserate werden geladen …</p>';
+async function loadMarketplace({silent=false}={}){
+  if(marketplaceLoading){skMarketRefreshQueued=true;return;}
+  marketplaceLoading=true;
+  if(!silent){marketplaceLoadError='';document.getElementById('listing-grid').innerHTML='<p class="muted" role="status">Inserate werden geladen …</p>';}
   try{
-    marketplaceListings=await window.SK_AUTH.listMarketplaceListings();
-    const distanceRows=await window.SK_AUTH.listMarketplaceDistances();
+    // Daten gemeinsam übernehmen: Bei einem Teilfehler bleibt der letzte konsistente Stand erhalten.
+    const [freshListings,distanceRows,locRows]=await Promise.all([
+      window.SK_AUTH.listMarketplaceListings(),
+      window.SK_AUTH.listMarketplaceDistances(),
+      window.SK_AUTH.listMarketplaceMapLocations()
+    ]);
+    marketplaceListings=freshListings;
     marketplaceDistances=new Map(distanceRows.map(row=>[row.listing_id,row.distance_km]));
     marketplaceOriginAvailable=distanceRows.some(row=>row.origin_available);
-    const locRows=await window.SK_AUTH.listMarketplaceMapLocations();
     marketplaceLocations=new Map(locRows.map(row=>[row.listing_id,row]));
+    marketplaceLoadError='';skMarketLastRefresh=Date.now();
+    if(currentScreen==='market')render();
+  }catch(error){
+    if(!silent){marketplaceLoadError=error?.message||'Unbekannter Fehler';if(currentScreen==='market')render();}
+    else console.warn('[StaffKeeping Marktplatz] Hintergrundaktualisierung fehlgeschlagen:',error);
+  }finally{
+    marketplaceLoading=false;
+    if(skMarketRefreshQueued){skMarketRefreshQueued=false;if(currentScreen==='market'&&!document.hidden)void loadMarketplace({silent:true});}
   }
-  catch(error){marketplaceListings=[];marketplaceDistances=new Map();marketplaceLocations=new Map();marketplaceLoadError=error?.message||'Unbekannter Fehler';}
-  finally{marketplaceLoading=false;render();}
 }
+function skMarketScheduleFilterRefresh(){
+  clearTimeout(skMarketFilterTimer);
+  skMarketFilterTimer=setTimeout(()=>{
+    if(currentScreen==='market'&&!document.hidden)void loadMarketplace({silent:true});
+  },450);
+}
+// Alle 30 Sekunden einen neuen Datenstand abfragen, solange der Marktplatz sichtbar ist.
+setInterval(()=>{
+ if(currentScreen==='market'&&!document.hidden&&!marketplaceLoading&&Date.now()-skMarketLastRefresh>=30000)void loadMarketplace({silent:true});
+},5000);
+document.addEventListener('visibilitychange',()=>{
+ if(!document.hidden&&currentScreen==='market')void loadMarketplace({silent:true});
+});
+
 function render(){
   const q=document.getElementById('filter-search').value.trim().toLocaleLowerCase('de');
   const type=document.getElementById('filter-type').value;
@@ -277,10 +302,10 @@ function openDetail(id){
    contact.dataset.existingChat=exists?'1':'0';
   }).catch(()=>{contact.dataset.existingChat='0';});
 }
-['filter-search','filter-type','filter-branch','filter-date','filter-accommodation','filter-radius'].forEach(id=>document.getElementById(id).addEventListener('input',render));
-document.getElementById('filter-reset').addEventListener('click',()=>{['filter-search','filter-type','filter-branch','filter-date'].forEach(id=>document.getElementById(id).value='');document.getElementById('filter-radius').selectedIndex=0;document.getElementById('filter-accommodation').checked=false;favoritesOnly=false;document.getElementById('bookmarks-only').classList.remove('selected');render()});
-document.getElementById('bookmarks-only').addEventListener('click',e=>{favoritesOnly=!favoritesOnly;e.currentTarget.classList.toggle('selected',favoritesOnly);render()});
-function setView(map){viewMap=!!map;document.getElementById('list-btn').classList.toggle('active',!viewMap);document.getElementById('map-btn').classList.toggle('active',viewMap);render();}
+['filter-search','filter-type','filter-branch','filter-date','filter-accommodation','filter-radius'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{render();skMarketScheduleFilterRefresh();}));
+document.getElementById('filter-reset').addEventListener('click',()=>{['filter-search','filter-type','filter-branch','filter-date'].forEach(id=>document.getElementById(id).value='');document.getElementById('filter-radius').selectedIndex=0;document.getElementById('filter-accommodation').checked=false;favoritesOnly=false;document.getElementById('bookmarks-only').classList.remove('selected');render();skMarketScheduleFilterRefresh()});
+document.getElementById('bookmarks-only').addEventListener('click',e=>{favoritesOnly=!favoritesOnly;e.currentTarget.classList.toggle('selected',favoritesOnly);render();skMarketScheduleFilterRefresh()});
+function setView(map){viewMap=!!map;document.getElementById('list-btn').classList.toggle('active',!viewMap);document.getElementById('map-btn').classList.toggle('active',viewMap);render();if(currentScreen==='market')void loadMarketplace({silent:true});}
 document.getElementById('list-btn').addEventListener('click',()=>setView(false));
 document.getElementById('map-btn').addEventListener('click',()=>setView(true));
 /* Zusätzliche UI-Demoseiten, ohne Backend und ohne dauerhafte Speicherung */
