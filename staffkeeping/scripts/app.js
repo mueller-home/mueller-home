@@ -176,13 +176,13 @@ const skDialogFields=()=>{
  return JSON.stringify([...form.elements].filter(el=>el.name&&!['submit','button'].includes(el.type))
   .map(el=>[el.name,el.type==='checkbox'||el.type==='radio'?el.checked:el.value]));
 };
-function skDialogDirty(){const d=window.SK_DRAFTS?.current();return dialog.open && (skDialogState.manualDirty||(d ? d.unsafe() : skDialogFields()!==skDialogState.snapshot));}
+function skDialogDirty(){const d=window.SK_DRAFTS?.current();const n=window.SK_NEW_BUSINESS_DRAFT;return dialog.open && (n?.active ? n.unsafe() : (skDialogState.manualDirty||(d ? d.unsafe() : skDialogFields()!==skDialogState.snapshot)));}
 function skDialogTrace(action){skDialogState.lastAction=action;console.info('[SK dialog 0.33.1.6.2]',action,{open:dialog.open,dirty:skDialogDirty(),saving:skDialogState.saving});}
 function skDialogConfirmDiscard(allowDraftSave=false){
  return new Promise(resolve=>{
   const prompt=document.createElement('dialog');prompt.setAttribute('aria-label','Ungespeicherte Änderungen');
   const wrap=document.createElement('div');wrap.style.cssText='padding:20px;max-width:460px';
-  const heading=document.createElement('h2');heading.textContent=allowDraftSave?'Inserat schliessen?':'Ungespeicherte Änderungen';
+  const heading=document.createElement('h2');heading.textContent=allowDraftSave?(dialog.querySelector('#sk-extra-business-form')?'Neuen Betriebsentwurf schliessen?':'Inserat schliessen?'):'Ungespeicherte Änderungen';
   const msg=document.createElement('p');msg.textContent=allowDraftSave
    ?'Es sind noch nicht gesicherte Änderungen vorhanden. Du kannst den privaten Entwurf speichern, nur die letzten Änderungen verwerfen oder weiter bearbeiten.'
    :window.SK_DRAFTS?.current()?'Ungesicherte Änderungen verwerfen? Bereits gespeicherte private Entwürfe bleiben bestehen.':'Deine Änderungen wurden noch nicht gespeichert. Möchtest du weiter bearbeiten oder sie verwerfen?';
@@ -203,6 +203,12 @@ async function skDialogRequestClose(origin){
  if(!dialog.open)return true;
  skDialogTrace('close-request:'+origin);
  if(skDialogState.saving){console.warn('[SK dialog] Schliessen während Speicherung blockiert');return false;}
+ const nd=window.SK_NEW_BUSINESS_DRAFT;
+ if(nd?.active){
+  nd.pause();await nd.waitForIdle();
+  if(nd.unsafe()){const choice=await skDialogConfirmDiscard(true);if(choice==='keep'){nd.resume();return false;}if(choice==='save'){try{await nd.saveNow();nd.dispose();skDialogState.allowedClose=true;dialog.close();await loadMyBusinesses();return true;}catch(e){nd.resume();alert('Entwurf nicht gespeichert: '+e.message);return false;}}}
+  nd.dispose();skDialogState.allowedClose=true;dialog.close();return true;
+ }
  const draft=window.SK_DRAFTS?.current();
  // Eine laufende Auto-Save-Anfrage darf den Entwurf nicht erst nach der Wahl «Verwerfen» sichern.
  if(draft){draft.pause();await draft.waitForIdle();}
@@ -252,6 +258,7 @@ function skDialogSavedClose(){window.SK_DRAFTS?.current()?.abandon();skDialogSta
 function modal(title,html){
  if(dialog.open){console.warn('[SK dialog] Versuch, geöffneten Dialog zu ersetzen',title);return false;}
  window.SK_DRAFTS?.current()?.abandon();
+ window.SK_NEW_BUSINESS_DRAFT?.dispose();
  document.getElementById('dialog-title').textContent=title;
  document.getElementById('dialog-body').innerHTML=html;
  // Auto-Save-Formulare brauchen einen echten Schliessen-Button statt nur X (= Abbrechen).
@@ -286,7 +293,14 @@ const skBusinessStatus=s=>skBusinessStatusLabels[s]||'Unbekannter Status';
 async function loadMyBusinesses(){
  const root=document.getElementById('my-businesses-list');root.textContent='Betriebe werden geladen …';
  try{const rows=await window.SK_AUTH.listMyBusinesses();
- root.innerHTML=rows.length?rows.map(b=>`<article class="panel sk-business-item"><div><strong>${esc(b.company_name)}</strong><p class="muted">${esc(b.postal_code||'')} ${esc(b.city||'')} · ${esc(b.country||'')}</p><p><span class="status-tag ${b.status==='Freigeschaltet'?'sk-list-status-active':''}">${esc(skBusinessStatus(b.status))}</span> <span class="status-tag">${esc(skBusinessStatus(b.review_state))}</span></p>${b.review_state==='changes_requested'?`<p role="alert">Nachbesserung: ${esc(b.review_message||'Bitte Angaben korrigieren')}</p>`:''}</div><div class="sk-business-actions"><button type="button" class="subtle-btn" data-edit-business="${esc(b.id)}">${b.review_state==='changes_requested'?'Nachbessern':'Betriebsprofil bearbeiten'}</button><button type="button" class="subtle-btn" data-business-media="${esc(b.id)}">Logo &amp; Bilder</button>${b.member_role==='owner'&&b.status==='Freigeschaltet'&&b.review_state==='approved'?`<button type="button" class="subtle-btn" data-business-sensitive="${esc(b.id)}">Rechtliche Änderungen beantragen</button>`:''}${b.member_role==='owner'&&b.status==='Ausstehend'&&['draft','changes_requested'].includes(b.review_state)?`<button type="button" class="subtle-btn" data-business-submit="${esc(b.id)}">Zur Freischaltung einreichen</button>`:''}${b.member_role==='owner'&&b.status!=='Gesperrt'?`<button type="button" class="subtle-btn" data-business-deletion="${esc(b.id)}">Löschung beantragen</button>`:''}</div></article>`).join(''):'<p>Keine Betriebe zugeordnet.</p>';}
+ root.innerHTML=rows.length?rows.map(b=>`<article class="panel sk-business-item"><div><strong>${esc(b.company_name)}</strong><p class="muted">${esc(b.postal_code||'')} ${esc(b.city||'')} · ${esc(b.country||'')}</p><p><span class="status-tag ${b.status==='Freigeschaltet'?'sk-list-status-active':''}">${esc(skBusinessStatus(b.status))}</span> <span class="status-tag">${esc(skBusinessStatus(b.review_state))}</span></p>${b.review_state==='changes_requested'?`<p role="alert">Nachbesserung: ${esc(b.review_message||'Bitte Angaben korrigieren')}</p>`:''}</div><div class="sk-business-actions"><button type="button" class="subtle-btn" data-edit-business="${esc(b.id)}">${b.review_state==='changes_requested'?'Nachbessern':'Betriebsprofil bearbeiten'}</button><button type="button" class="subtle-btn" data-business-media="${esc(b.id)}">Logo &amp; Bilder</button>${b.member_role==='owner'&&b.status==='Freigeschaltet'&&b.review_state==='approved'?`<button type="button" class="subtle-btn" data-business-sensitive="${esc(b.id)}">Rechtliche Änderungen beantragen</button>`:''}${b.member_role==='owner'&&b.status==='Ausstehend'&&['draft','changes_requested'].includes(b.review_state)?`<button type="button" class="subtle-btn" data-business-submit="${esc(b.id)}">Zur Freischaltung einreichen</button>`:''}${b.member_role==='owner'&&b.status!=='Gesperrt'?`<button type="button" class="subtle-btn" data-business-deletion="${esc(b.id)}">Löschung beantragen</button>`:''}</div></article>`).join(''):'<p>Keine Betriebe zugeordnet.</p>';
+ const draftRows=await window.SK_AUTH.listNewBusinessDrafts();
+ if(draftRows.length){
+  const holder=document.createElement('section');holder.className='panel';
+  holder.innerHTML='<h3>Private Entwürfe für neue Betriebe</h3><p class="muted">Noch nicht eingereicht – es wurde kein Betrieb angelegt.</p>'+draftRows.map(d=>'<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0"><strong>'+esc(d.payload?.company_name||'Unbenannter Betrieb')+'</strong><button class="subtle-btn" type="button" data-new-business-resume="'+esc(d.draft_id)+'">Entwurf fortsetzen</button><button class="subtle-btn" type="button" data-new-business-delete="'+esc(d.draft_id)+'">Entwurf löschen</button></div>').join('');
+  root.prepend(holder);
+ }
+}
  catch(e){root.textContent='Betriebe konnten nicht geladen werden: '+e.message;}
 }
 function skBusinessForm(b){
@@ -494,8 +508,40 @@ document.getElementById('dialog-body').addEventListener('submit',async e=>{
  try{const coords=window.SK_LOCATION?.editorPosition(form);await window.SK_AUTH.saveBusinessWithPreferencesAndLocation({p_profile:{p_email_notifications_enabled:form.elements.namedItem('email_notifications_enabled').checked,p_show_street_address:form.elements.namedItem('show_street_address').checked,p_business_id:form.dataset.business,p_company_name:val('company_name'),p_vat_id:val('vat_id'),p_industry:val('industry'),p_country:val('country'),p_postal_code:val('postal_code'),p_city:val('city'),p_street:val('street'),p_house_number:val('house_number'),p_address_extra:val('address_extra'),p_contact_name:val('contact_name'),p_contact_email:val('contact_email'),p_contact_phone:val('contact_phone'),p_description:val('description')},p_latitude:coords?.lat??null,p_longitude:coords?.lng??null,p_source:coords?.source??null,p_address_key:coords?.addressKey??null});const draft=window.SK_DRAFTS?.current();if(draft){try{await draft.finish();}catch(draftErr){console.warn('[SK drafts] Nach Live-Speicherung konnte Entwurf nicht bereinigt werden',draftErr);draft.abandon();}}skDialogSavedClose();await loadMyBusinesses();}
  catch(err){document.getElementById('sk-business-edit-feedback').textContent='Nicht gespeichert: '+err.message;button.disabled=false;skDialogState.saving=false;}
 });
-document.getElementById('add-business-button').addEventListener('click',()=>{
- modal('Weiteren Betrieb beantragen',`<form id="sk-extra-business-form">
+document.getElementById('my-businesses-list').addEventListener('click',async e=>{
+ const resume=e.target.closest('[data-new-business-resume]'),remove=e.target.closest('[data-new-business-delete]');if(!resume&&!remove)return;
+ const button=resume||remove;button.disabled=true;
+ try{const draft=(await window.SK_AUTH.listNewBusinessDrafts()).find(d=>d.draft_id===(resume?resume.dataset.newBusinessResume:remove.dataset.newBusinessDelete));if(!draft)throw Error('Entwurf nicht mehr vorhanden.');
+  if(remove){if(window.confirm('Privaten Entwurf «'+(draft.payload?.company_name||'Unbenannter Betrieb')+'» unwiderruflich löschen?')){await window.SK_AUTH.deleteNewBusinessDraft(draft.draft_id,Number(draft.revision));await loadMyBusinesses();}}
+  else skOpenAdditionalBusiness(draft);
+ }catch(error){alert('Entwurf: '+error.message);}finally{button.disabled=false;}
+});
+let skNewBusinessDraftController=null;
+window.SK_NEW_BUSINESS_DRAFT={get active(){return !!skNewBusinessDraftController?.active;},unsafe(){return skNewBusinessDraftController?.unsafe()||false;},pause(){skNewBusinessDraftController?.pause();},resume(){skNewBusinessDraftController?.resume();},waitForIdle(){return skNewBusinessDraftController?.waitForIdle()||Promise.resolve();},saveNow(){return skNewBusinessDraftController?.saveNow();},dispose(){skNewBusinessDraftController?.dispose();}};
+function skAttachNewBusinessDraft(form,existing){
+ const id=existing?.draft_id||crypto.randomUUID();let rev=Number(existing?.revision||0),active=true,dirty=false,failed=false,paused=false,timer=null,chain=Promise.resolve();
+ const line=form.querySelector('#sk-new-business-draft-status');
+ const serialize=()=>{const p={};for(const el of form.elements){if(!el.name||['button','submit','file'].includes(el.type))continue;p[el.name]=el.type==='checkbox'?el.checked:el.value;}const loc=window.SK_LOCATION?.editorPosition(form);p._latitude=loc?.lat??null;p._longitude=loc?.lng??null;p._source=loc?.source??null;p._address_key=loc?.addressKey??null;return p;};
+ let saved=JSON.stringify(existing?.payload||serialize());
+ const report=message=>{if(active)line.textContent=message;};
+ const queue=async()=>{clearTimeout(timer);const value=serialize(),str=JSON.stringify(value);if(!dirty&&str===saved&&rev)return;dirty=false;report('Privater Entwurf wird gespeichert …');
+  chain=chain.catch(()=>{}).then(async()=>{if(!active)return;try{const next=await window.SK_AUTH.saveNewBusinessDraft(id,value,rev);rev=next;saved=str;failed=false;report('Privater Entwurf gespeichert – kein Betrieb eingereicht.');if(JSON.stringify(serialize())!==str){dirty=true;if(!paused)schedule();}}catch(error){failed=true;dirty=true;report('Entwurf nicht gespeichert: '+error.message);throw error;}});await chain;
+ };
+ const schedule=()=>{dirty=true;failed=false;report('Nicht gesicherte Änderungen …');clearTimeout(timer);if(!paused)timer=setTimeout(()=>{void queue().catch(()=>{});},1100);};
+ const onInput=()=>schedule();form.addEventListener('input',onInput);form.addEventListener('change',onInput);
+ const controller={active:true,unsafe:()=>dirty||failed||JSON.stringify(serialize())!==saved,pause(){paused=true;clearTimeout(timer);},resume(){paused=false;if(dirty)schedule();},async waitForIdle(){try{await chain;}catch{}},async saveNow(){clearTimeout(timer);paused=true;await controller.waitForIdle();if(!active)throw Error('Formular geschlossen.');if(!rev||dirty||JSON.stringify(serialize())!==saved){dirty=true;await queue();}if(failed||controller.unsafe())throw Error('Entwurf konnte nicht vollständig gespeichert werden.');},dispose(){active=false;controller.active=false;clearTimeout(timer);form.removeEventListener('input',onInput);form.removeEventListener('change',onInput);if(skNewBusinessDraftController===controller)skNewBusinessDraftController=null;},id,get revision(){return rev;}};
+ skNewBusinessDraftController=controller;report(existing?'Gespeicherter privater Entwurf geladen.':'Noch kein privater Entwurf gespeichert.');
+}
+document.getElementById('dialog-body').addEventListener('click',async e=>{
+ const save=e.target.closest('[data-new-business-draft-save]'),close=e.target.closest('[data-new-business-draft-close]');if(!save&&!close)return;
+ const controller=skNewBusinessDraftController;if(!controller||skDialogState.saving)return;
+ const button=save||close;button.disabled=true;skDialogState.saving=true;
+ try{await controller.saveNow();if(close){controller.dispose();skDialogState.allowedClose=true;dialog.close();await loadMyBusinesses();}else{controller.resume();}}
+ catch(error){const message=document.getElementById('sk-extra-business-error');if(message)message.textContent='Entwurf nicht gespeichert: '+error.message;controller.resume();}
+ finally{skDialogState.saving=false;if(button.isConnected)button.disabled=false;}
+});
+function skOpenAdditionalBusiness(existing=null){
+ if(!modal('Weiteren Betrieb beantragen',`<form id="sk-extra-business-form">
  <p>Der neue Betrieb wird unabhängig geprüft. Er erhält kein automatisch gemeinsames Abonnement.</p>
  <label>Firmenname *</label><input name="company_name" required minlength="2" maxlength="160">
  <label>UID / USt-ID *</label><input name="vat_id" required minlength="2" maxlength="64">
@@ -507,16 +553,21 @@ document.getElementById('add-business-button').addEventListener('click',()=>{
  <label>Kontaktperson *</label><input name="contact_name" required minlength="2" maxlength="160">
  <label>Telefon *</label><input name="contact_phone" required minlength="5" maxlength="60"><label>Beschreibung des Betriebs *</label><textarea name="description" required minlength="30" maxlength="1000"></textarea>
  <label class="check"><input type="checkbox" name="terms" required><span>Ich akzeptiere die geltenden Nutzungsbedingungen auch für diesen Betrieb.</span></label>
- <p id="sk-extra-business-error" role="alert"></p><button class="btn" type="submit">Betrieb zur Prüfung erfassen</button></form>`);
- void window.SK_LOCATION?.editBusiness(document.getElementById('sk-extra-business-form'),{});
-});
+ <p id="sk-extra-business-error" role="alert"></p><p id="sk-new-business-draft-status" role="status"></p><div class="dialog-actions"><button class="subtle-btn" type="button" data-new-business-draft-save>Entwurf speichern</button><button class="subtle-btn" type="button" data-new-business-draft-close>Schliessen</button><button class="btn" type="submit">Betrieb zur Prüfung erfassen</button></div></form>`))return;
+ const form=document.getElementById('sk-extra-business-form');
+ const payload=existing?.payload||{};
+ for(const el of form.elements){if(!el.name||!(el.name in payload))continue;if(el.type==='checkbox')el.checked=!!payload[el.name];else el.value=payload[el.name]??'';}
+ void window.SK_LOCATION?.editBusiness(form,{...payload,latitude:payload._latitude??null,longitude:payload._longitude??null,location_source:payload._source||null,location_address_key:payload._address_key||null});
+ skAttachNewBusinessDraft(form,existing);
+}
+document.getElementById('add-business-button').addEventListener('click',()=>skOpenAdditionalBusiness());
 document.getElementById('dialog-body').addEventListener('submit',async e=>{
  const form=e.target;if(form.id!=='sk-extra-business-form')return;e.preventDefault();
  if(!form.reportValidity())return;
  if(!window.SK_LOCATION?.editorPosition(form)&&!window.confirm('Kein Kartenstandort bestätigt.\n\nOK: Betrieb ohne Standort einreichen.\nAbbrechen: Marker manuell setzen oder Adresse weiter bearbeiten.'))return;
- const get=k=>form.elements.namedItem(k).value.trim(),btn=form.querySelector('[type="submit"]');btn.disabled=true;skDialogState.saving=true;
- try{const coords=window.SK_LOCATION?.editorPosition(form);await window.SK_AUTH.addAdditionalBusinessWithLocation({p_company_name:get('company_name'),p_vat_id:get('vat_id'),p_industry:get('industry'),p_country:get('country'),p_postal_code:get('postal_code'),p_city:get('city'),p_street:get('street'),p_house_number:get('house_number'),p_contact_name:get('contact_name'),p_contact_phone:get('contact_phone'),p_description:get('description'),p_latitude:coords?.lat??null,p_longitude:coords?.lng??null,p_source:coords?.source??null,p_address_key:coords?.addressKey??null});skDialogSavedClose();await loadMyBusinesses();alert('Betrieb zur Prüfung durch Annette eingereicht. Er ist noch nicht für den Marktplatz freigegeben.');}
- catch(err){document.getElementById('sk-extra-business-error').textContent=err.message;btn.disabled=false;skDialogState.saving=false;}
+ const get=k=>form.elements.namedItem(k).value.trim(),btn=form.querySelector('[type="submit"]');btn.disabled=true;skDialogState.saving=true;const draftBeforeSubmit=skNewBusinessDraftController;draftBeforeSubmit?.pause();if(draftBeforeSubmit)await draftBeforeSubmit.waitForIdle();
+ try{const coords=window.SK_LOCATION?.editorPosition(form);await window.SK_AUTH.addAdditionalBusinessWithLocation({p_company_name:get('company_name'),p_vat_id:get('vat_id'),p_industry:get('industry'),p_country:get('country'),p_postal_code:get('postal_code'),p_city:get('city'),p_street:get('street'),p_house_number:get('house_number'),p_contact_name:get('contact_name'),p_contact_phone:get('contact_phone'),p_description:get('description'),p_latitude:coords?.lat??null,p_longitude:coords?.lng??null,p_source:coords?.source??null,p_address_key:coords?.addressKey??null});const nd=skNewBusinessDraftController;if(nd){nd.pause();await nd.waitForIdle();if(nd.revision){try{await window.SK_AUTH.deleteNewBusinessDraft(nd.id,nd.revision);}catch(e){console.warn('[SK neuer Betrieb] Eingereichter Entwurf konnte nicht bereinigt werden:',e.message);}}nd.dispose();}skDialogSavedClose();await loadMyBusinesses();alert('Betrieb zur Prüfung durch Annette eingereicht. Er ist noch nicht für den Marktplatz freigegeben.');}
+ catch(err){document.getElementById('sk-extra-business-error').textContent=err.message;btn.disabled=false;skDialogState.saving=false;draftBeforeSubmit?.resume();}
 });
 async function loadManualAccessAdmin(){
  const root=document.getElementById('sk-admin-manual-access');if(!root)return;

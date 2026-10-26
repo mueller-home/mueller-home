@@ -203,6 +203,15 @@
     if(!approved.some(b=>b.id===selected))throw Error('Für diesen Betrieb besteht keine aktive Berechtigung.');
     return selected;
   },
+  async listNewBusinessDrafts(){
+    const {data,error}=await db.rpc('sk_list_new_business_drafts');if(error)throw error;return data||[];
+  },
+  async saveNewBusinessDraft(id,payload,revision){
+    const {data,error}=await db.rpc('sk_save_new_business_draft',{p_draft_id:id,p_payload:payload,p_expected_revision:revision});if(error)throw error;return Number(data);
+  },
+  async deleteNewBusinessDraft(id,revision){
+    const {error}=await db.rpc('sk_delete_new_business_draft',{p_draft_id:id,p_expected_revision:revision});if(error)throw error;
+  },
   async addAdditionalBusiness(payload){
     const user=await verifiedCurrentUser();if(!user||!user.email_confirmed_at)throw Error('Bestätigtes Benutzerkonto erforderlich.');
     const {data,error}=await db.rpc('sk_add_business',{...payload,p_contact_email:user.email,p_terms_accepted:true});if(error)throw error;return data;
