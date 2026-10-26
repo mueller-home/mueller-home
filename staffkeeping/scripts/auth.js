@@ -169,6 +169,10 @@
  }
  async function safeEvaluate(){try{await evaluate();}catch(e){msg('auth-message','Prüfung fehlgeschlagen: '+e.message);if(!recoveryMode)ui().logoutView();else showRecovery();}}
  window.SK_AUTH={
+  async chatStart(listingId,businessId,body){const {data,error}=await db.rpc('sk_chat_start',{p_listing_id:listingId,p_sender_business_id:businessId,p_body:body});if(error)throw error;return data;},
+  async chatThreads(){const {data,error}=await db.rpc('sk_chat_threads');if(error)throw error;return data||[];},
+  async chatMessages(id){const {data,error}=await db.rpc('sk_chat_messages',{p_thread_id:id});if(error)throw error;return data||[];},
+  async chatSend(id,businessId,body){const {data,error}=await db.rpc('sk_chat_send',{p_thread_id:id,p_sender_business_id:businessId,p_body:body});if(error)throw error;return data;},
   async listListingDrafts(){const {data,error}=await db.rpc('sk_list_my_listing_drafts');if(error)throw error;return data||[];},
   async readFormDraft(kind,key,businessId){const {data,error}=await db.rpc('sk_get_form_draft',{p_kind:kind,p_key:key,p_business:businessId});if(error)throw error;return data?.[0]||null;},
   async acquireDraftLock(kind,key,businessId,session){const {data,error}=await db.rpc('sk_acquire_form_draft_lock',{p_kind:kind,p_key:key,p_business:businessId,p_session:session});if(error)throw error;return data===true;},
