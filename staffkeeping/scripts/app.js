@@ -857,7 +857,12 @@ async function renderChats(preselect=null){
   if(skChatFilterBusinessId && !choices.some(([id])=>id===skChatFilterBusinessId))skChatFilterBusinessId='';
   filter.value=skChatFilterBusinessId;
   const visible=chatThreads.filter(t=>(!skChatFilterBusinessId||t.own_business_id===skChatFilterBusinessId)&&(!skChatListingFilterId||t.listing_id===skChatListingFilterId)&&(skChatShowArchived?!!(t.closed_at||t.archived_at):!(t.closed_at||t.archived_at)));
-  document.getElementById('chat-archive-toggle').textContent=skChatShowArchived?'Aktive Unterhaltungen anzeigen':'Archivierte und abgeschlossene anzeigen';
+  const archivedCount=chatThreads.filter(t=>(!skChatFilterBusinessId||t.own_business_id===skChatFilterBusinessId)&&(!skChatListingFilterId||t.listing_id===skChatListingFilterId)&&!!(t.closed_at||t.archived_at)).length;
+  const archiveToggle=document.getElementById('chat-archive-toggle');
+  archiveToggle.classList.toggle('hidden',!skChatShowArchived&&archivedCount===0);
+  document.getElementById('chat-archive-label').textContent=skChatShowArchived?'Aktive Unterhaltungen':`Archivierte Unterhaltungen (${archivedCount})`;
+  archiveToggle.setAttribute('aria-label',skChatShowArchived?'Aktive Unterhaltungen anzeigen':`${archivedCount} archivierte Unterhaltungen anzeigen`);
+  archiveToggle.lastElementChild.textContent=skChatShowArchived?'‹':'›';
   const clear=document.getElementById('chat-clear-listing-filter');
   clear.classList.toggle('hidden',!skChatListingFilterId);
   if(!visible.some(t=>t.id===selectedChatId))selectedChatId=visible[0]?.id||null;
