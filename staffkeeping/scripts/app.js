@@ -6,8 +6,43 @@ const publicViews=new Set(['login','register','reset','pending','help']);
 let demoSignedIn=false;
 let skAdmin=false;
 let skPending=false;let skCanProfile=false;let skCanTrade=false;
-window.SK_UI={setAccess(isApproved,isAdmin,reviewState,canTrade=false){demoSignedIn=!!isApproved;skAdmin=!!isAdmin;skCanTrade=!!canTrade;skPending=!isApproved;skCanProfile=!!reviewState;performShow(isAdmin?'admin-home':isApproved?'dashboard':(reviewState==='draft'||reviewState==='changes_requested')?'profile':'pending',false);},show,logoutView(){demoSignedIn=false;skAdmin=false;skPending=false;skCanProfile=false;skCanTrade=false;performShow('login',false);}};
+window.SK_UI={setAccess(isApproved,isAdmin,reviewState,canTrade=false){demoSignedIn=!!isApproved;skAdmin=!!isAdmin;skCanTrade=!!canTrade;skPending=!isApproved;skCanProfile=!!reviewState;performShow(isAdmin?'admin-home':isApproved?'dashboard':(reviewState==='draft'||reviewState==='changes_requested')?'profile':'pending',false);void skRefreshActiveBusiness();},show,logoutView(){demoSignedIn=false;skAdmin=false;skPending=false;skCanProfile=false;skCanTrade=false;performShow('login',false);void skRefreshActiveBusiness();}};
 let currentScreen='login', navigationBusy=false;
+let skActiveBusinessId=null,skActiveBusinesses=[],skActiveBusinessUser=null,skBusinessContextSeq=0;
+window.SK_SELECTED_BUSINESS=null;
+function skGetActiveBusinessId(){return skActiveBusinessId;}
+async function skRefreshActiveBusiness(){
+ const seq=++skBusinessContextSeq;
+ const wrap=document.getElementById('sk-active-business-wrap'),selector=document.getElementById('sk-active-business-select');
+ if(!demoSignedIn||!skCanTrade){skActiveBusinessId=null;skActiveBusinesses=[];window.SK_SELECTED_BUSINESS=null;wrap.classList.add('hidden');return;}
+ try{
+  const [identity,businesses]=await Promise.all([window.SK_AUTH.getAccountIdentity(),window.SK_AUTH.listApprovedBusinesses()]);
+  if(seq!==skBusinessContextSeq)return;
+  const key='sk-active-business:'+identity.id;
+  skActiveBusinessUser=key;skActiveBusinesses=businesses;
+  const stored=localStorage.getItem(key);
+  const chosen=(businesses.some(b=>b.id===skActiveBusinessId)?skActiveBusinessId:null)||(businesses.some(b=>b.id===stored)?stored:null)||businesses[0]?.id||null;
+  skSetActiveBusiness(chosen,{skipRefresh:true});
+  selector.replaceChildren();
+  businesses.forEach(b=>{const opt=document.createElement('option');opt.value=b.id;opt.textContent=b.company_name;selector.append(opt);});
+  selector.value=skActiveBusinessId||'';
+  wrap.classList.toggle('hidden',businesses.length<=1);
+ }catch(error){console.warn('[StaffKeeping aktiver Betrieb]',error);wrap.classList.add('hidden');}
+}
+function skSetActiveBusiness(id,{skipRefresh=false}={}){
+ if(id!==null&&!skActiveBusinesses.some(b=>b.id===id))return false;
+ const changed=skActiveBusinessId!==id;
+ skActiveBusinessId=id;window.SK_SELECTED_BUSINESS=id;
+ if(skActiveBusinessUser&&id)localStorage.setItem(skActiveBusinessUser,id);
+ if(changed&&!skipRefresh){
+  if(currentScreen==='market')void loadMarketplace({silent:true});
+  if(currentScreen==='messages'){skChatFilterBusinessId=id||'';selectedChatId=null;void renderChats();}
+  if(currentScreen==='my-listings')void loadMyListings();
+ }
+ return true;
+}
+document.getElementById('sk-active-business-select').addEventListener('change',e=>skSetActiveBusiness(e.target.value));
+
 async function show(view,updateUrl=true){
   if(navigationBusy)return;
   if(typeof skDialogRequestClose==='function' && document.getElementById('app-dialog')?.open){
@@ -55,10 +90,10 @@ function performShow(view,updateUrl=true){
   if(view==='profile'){void loadSafeBusinessProfile();}
   if(view==='account'){void loadPersonalAccount();}
   if(view==='dashboard')void loadMemberDashboard();
-  if(view==='market'){loadMarketplace();void skLoadSavedSearches();}
-  if(view==='my-listings')loadMyListings();
+  if(view==='market'){void skRefreshActiveBusiness().then(()=>loadMarketplace());void skLoadSavedSearches();}
+  if(view==='my-listings'){void skRefreshActiveBusiness();loadMyListings();}
   if(view==='my-businesses')loadMyBusinesses();
-  if(view==='messages')renderChats();
+  if(view==='messages'){void skRefreshActiveBusiness();renderChats();}
   if(view==='admin-businesses'){renderBusinesses();loadManualAccessAdmin();}
   if(view==='admin-deletions')window.SK_DELETION?.refreshAdmin();
   if(view==='admin-listings')renderAdminListings();
@@ -156,15 +191,15 @@ let marketplaceListings=[], marketplaceLoadError='', marketplaceLoading=false, m
 let skMarketRefreshQueued=false,skMarketFilterTimer=null,skMarketLastRefresh=0;
 let skSavedSearches=[],skSavedEditId=null,skSavedBusy=false,skSavedLoaded=false;
 const skSavedFilterIds=['filter-search','filter-type','filter-branch','filter-radius','filter-date','filter-accommodation'];
-function skCaptureSearchFilters(){return {keyword:document.getElementById('filter-search').value.trim(),type:document.getElementById('filter-type').value,category:document.getElementById('filter-branch').value,radius:document.getElementById('filter-radius').value,date:document.getElementById('filter-date').value,accommodation:document.getElementById('filter-accommodation').checked};}
-function skApplySearchFilters(f){const fields={'filter-search':'keyword','filter-type':'type','filter-branch':'category','filter-radius':'radius','filter-date':'date'};
+function skCaptureSearchFilters(){return {origin_business_id:skGetActiveBusinessId()||'',keyword:document.getElementById('filter-search').value.trim(),type:document.getElementById('filter-type').value,category:document.getElementById('filter-branch').value,radius:document.getElementById('filter-radius').value,date:document.getElementById('filter-date').value,accommodation:document.getElementById('filter-accommodation').checked};}
+function skApplySearchFilters(f){if(f?.origin_business_id && skActiveBusinesses.some(b=>b.id===f.origin_business_id)){skSetActiveBusiness(f.origin_business_id);document.getElementById('sk-active-business-select').value=f.origin_business_id;}else if(f?.origin_business_id){skSearchFeedback('Der Ausgangsbetrieb ist nicht mehr freigegeben. Bitte Betrieb prüfen.',true);return;}const fields={'filter-search':'keyword','filter-type':'type','filter-branch':'category','filter-radius':'radius','filter-date':'date'};
  for(const [id,key] of Object.entries(fields)){const el=document.getElementById(id),v=String(f?.[key]??'');el.value=[...el.options||[]].length&&!Array.from(el.options).some(o=>o.value===v)?'':v;}
  document.getElementById('filter-accommodation').checked=f?.accommodation===true;
  favoritesOnly=false;document.getElementById('bookmarks-only').classList.remove('selected');render();skMarketScheduleFilterRefresh();}
 function skSearchFeedback(text,error=false){const el=document.getElementById('saved-searches-feedback');el.textContent=text||'';el.style.color=error?'#af3030':'';}
 function skRenderSavedSearches(){const root=document.getElementById('saved-searches-list');if(!root)return;
  if(!skSavedSearches.length){root.innerHTML='<p class="muted">Noch keine Suchen gespeichert.</p>';return;}
- root.innerHTML=skSavedSearches.map(x=>`<div style="border-bottom:1px solid var(--border,#ddd);padding:.65rem 0"><strong style="display:block">${esc(x.name)}</strong><small class="muted">${x.email_enabled?'E-Mail vorgemerkt (noch nicht aktiv)':'Ohne E-Mail'}</small><div style="display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.4rem"><button type="button" class="subtle-btn" data-search-open="${esc(x.id)}">Öffnen</button><button type="button" class="subtle-btn" data-search-edit="${esc(x.id)}">Bearbeiten</button><button type="button" class="subtle-btn" data-search-delete="${esc(x.id)}">Löschen</button></div></div>`).join('');
+ root.innerHTML=skSavedSearches.map(x=>`<div style="border-bottom:1px solid var(--border,#ddd);padding:.65rem 0"><strong style="display:block">${esc(x.name)}</strong><small class="muted">${esc(skActiveBusinesses.find(b=>b.id===x.filters?.origin_business_id)?.company_name||'Betrieb nicht zugeordnet')} · ${x.email_enabled?'E-Mail vorgemerkt (noch nicht aktiv)':'Ohne E-Mail'}</small><div style="display:flex;flex-wrap:wrap;gap:.35rem;margin-top:.4rem"><button type="button" class="subtle-btn" data-search-open="${esc(x.id)}">Öffnen</button><button type="button" class="subtle-btn" data-search-edit="${esc(x.id)}">Bearbeiten</button><button type="button" class="subtle-btn" data-search-delete="${esc(x.id)}">Löschen</button></div></div>`).join('');
  root.querySelectorAll('[data-search-open]').forEach(el=>el.addEventListener('click',()=>{const found=skSavedSearches.find(x=>x.id===el.dataset.searchOpen);if(found){skApplySearchFilters(found.filters);skSearchFeedback(`Suche «${found.name}» geöffnet.`);}}));
  root.querySelectorAll('[data-search-edit]').forEach(el=>el.addEventListener('click',()=>{const found=skSavedSearches.find(x=>x.id===el.dataset.searchEdit);if(!found)return;skSavedEditId=found.id;skApplySearchFilters(found.filters);document.getElementById('saved-search-name').value=found.name;document.getElementById('saved-search-email').checked=!!found.email_enabled;document.getElementById('saved-search-form').classList.remove('hidden');skSearchFeedback('Du bearbeitest die ausgewählte Suche. Änderungen werden erst beim Speichern übernommen.');}));
  root.querySelectorAll('[data-search-delete]').forEach(el=>el.addEventListener('click',async()=>{const found=skSavedSearches.find(x=>x.id===el.dataset.searchDelete);if(!found||!confirm(`Gespeicherte Suche «${found.name}» löschen?`))return;try{await window.SK_AUTH.deleteSavedSearch(found.id);await skLoadSavedSearches();skSearchFeedback('Gespeicherte Suche gelöscht.');}catch(e){skSearchFeedback('Löschen fehlgeschlagen: '+e.message,true);}}));
@@ -190,7 +225,7 @@ async function loadMarketplace({silent=false}={}){
     // Daten gemeinsam übernehmen: Bei einem Teilfehler bleibt der letzte konsistente Stand erhalten.
     const [freshListings,distanceRows,locRows]=await Promise.all([
       window.SK_AUTH.listMarketplaceListings(),
-      window.SK_AUTH.listMarketplaceDistances(),
+      window.SK_AUTH.listMarketplaceDistances(skGetActiveBusinessId()),
       window.SK_AUTH.listMarketplaceMapLocations()
     ]);
     marketplaceListings=freshListings;
@@ -924,7 +959,7 @@ document.getElementById('my-list-table').addEventListener('click',async e=>{
   }catch(error){alert('Aktion fehlgeschlagen: '+error.message);b.disabled=false;}
   finally{ownListingsBusy=false;}
 });
-let selectedChatId=null, chatThreads=[], chatBusy=false, skChatFilterBusinessId="", skChatListingFilterId=null, skChatShowArchived=false;
+let selectedChatId=null, chatThreads=[], chatBusy=false, skChatFilterBusinessId=skGetActiveBusinessId()||"", skChatListingFilterId=null, skChatShowArchived=false;
 let skChatSnapshot='',skChatRefreshing=false,skChatRenderVersion=0,skChatUnread=new Map();
 async function skChatLoadUnread(){const rows=await window.SK_AUTH.chatUnreadCounts();skChatUnread=new Map(rows.map(x=>[x.thread_id,Number(x.unread_count||0)]));}
 async function skChatMarkVisible(thread,messages){if(!thread||!messages?.length||document.hidden||currentScreen!=='messages')return;const last=messages[messages.length-1];await window.SK_AUTH.chatMarkRead(thread.id,thread.own_business_id,last.id);skChatUnread.set(thread.id,0);const button=document.querySelector(`[data-chat="${thread.id}"]`);if(button){button.querySelector('.sk-chat-unread')?.remove();}}
@@ -1037,6 +1072,7 @@ document.getElementById('detail-contact').addEventListener('click',async ()=>{
  const select=document.getElementById('detail-contact-business');
  select.replaceChildren();
  for(const business of own){const option=document.createElement('option');option.value=business.id;option.textContent=business.company_name||'Betrieb';select.append(option);}
+ if(own.some(b=>b.id===skGetActiveBusinessId()))select.value=skGetActiveBusinessId();
  document.getElementById('detail-contact-business-wrap').classList.toggle('hidden',own.length===1);
  contactStatus.textContent='';document.getElementById('detail-contact-message').focus();
 });
@@ -1047,7 +1083,7 @@ contactForm.addEventListener('submit',async e=>{
  if(!selected||!body)return;
  skContactBusy=true;document.getElementById('detail-contact-submit').disabled=true;
  contactStatus.textContent='Nachricht wird gesendet …';
- try{const threadId=await window.SK_AUTH.chatStart(skContactListingId,selected,body);selectedChatId=threadId;skChatFilterBusinessId='';contactForm.reset();contactForm.classList.add('hidden');await show('messages');await renderChats(threadId);}
+ try{const threadId=await window.SK_AUTH.chatStart(skContactListingId,selected,body);selectedChatId=threadId;skChatFilterBusinessId=selected;contactForm.reset();contactForm.classList.add('hidden');await show('messages');await renderChats(threadId);}
  catch(error){contactStatus.textContent='Kontaktaufnahme fehlgeschlagen: '+error.message;}
  finally{skContactBusy=false;document.getElementById('detail-contact-submit').disabled=false;}
 });

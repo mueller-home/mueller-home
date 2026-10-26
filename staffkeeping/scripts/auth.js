@@ -191,7 +191,7 @@
    }finally{clearTimeout(timer);}
   },
   async discardFormDraft(kind,key,businessId,revision){const {error}=await db.rpc('sk_discard_form_draft',{p_kind:kind,p_key:key,p_business:businessId,p_expected_revision:revision});if(error)throw error;},
-  async getAccountIdentity(){const user=await verifiedCurrentUser();if(!user)throw Error('Bitte anmelden.');return {email:user.email||''};},
+  async getAccountIdentity(){const user=await verifiedCurrentUser();if(!user)throw Error('Bitte anmelden.');return {id:user.id,email:user.email||''};},
   async listMyBusinesses(){
     const user=await verifiedCurrentUser();if(!user)throw Error('Bitte anmelden.');
     const {data:members,error:me}=await db.from('sk_business_members').select('business_id,role').eq('user_id',user.id);if(me)throw me;
@@ -270,9 +270,9 @@
     if(error)throw error;
     return data||[];
   },
-  async listMarketplaceDistances(){
+  async listMarketplaceDistances(businessId=null){
     const user=await verifiedCurrentUser();if(!user)throw Error('Bitte erneut anmelden.');
-    const {data,error}=await db.rpc('sk_marketplace_distances');
+    const {data,error}=await db.rpc('sk_marketplace_distances_for_business',{p_business_id:businessId});
     if(error)throw error;
     return data||[];
   },
