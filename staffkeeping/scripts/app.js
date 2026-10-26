@@ -286,7 +286,7 @@ const skBusinessStatus=s=>skBusinessStatusLabels[s]||'Unbekannter Status';
 async function loadMyBusinesses(){
  const root=document.getElementById('my-businesses-list');root.textContent='Betriebe werden geladen …';
  try{const rows=await window.SK_AUTH.listMyBusinesses();
- root.innerHTML=rows.length?rows.map(b=>`<article class="panel sk-business-item"><div><strong>${esc(b.company_name)}</strong><p class="muted">${esc(b.postal_code||'')} ${esc(b.city||'')} · ${esc(b.country||'')}</p><p><span class="status-tag ${b.status==='Freigeschaltet'?'sk-list-status-active':''}">${esc(skBusinessStatus(b.status))}</span> <span class="status-tag">${esc(skBusinessStatus(b.review_state))}</span></p>${b.review_state==='changes_requested'?`<p role="alert">Nachbesserung: ${esc(b.review_message||'Bitte Angaben korrigieren')}</p>`:''}</div><div class="sk-business-actions"><button type="button" class="subtle-btn" data-edit-business="${esc(b.id)}">${b.review_state==='changes_requested'?'Nachbessern':'Betriebsprofil bearbeiten'}</button><button type="button" class="subtle-btn" data-business-media="${esc(b.id)}">Logo &amp; Bilder</button>${b.member_role==='owner'&&b.status==='Freigeschaltet'&&b.review_state==='approved'?`<button type="button" class="subtle-btn" data-business-sensitive="${esc(b.id)}">Rechtliche Änderungen beantragen</button>`:''}</div></article>`).join(''):'<p>Keine Betriebe zugeordnet.</p>';}
+ root.innerHTML=rows.length?rows.map(b=>`<article class="panel sk-business-item"><div><strong>${esc(b.company_name)}</strong><p class="muted">${esc(b.postal_code||'')} ${esc(b.city||'')} · ${esc(b.country||'')}</p><p><span class="status-tag ${b.status==='Freigeschaltet'?'sk-list-status-active':''}">${esc(skBusinessStatus(b.status))}</span> <span class="status-tag">${esc(skBusinessStatus(b.review_state))}</span></p>${b.review_state==='changes_requested'?`<p role="alert">Nachbesserung: ${esc(b.review_message||'Bitte Angaben korrigieren')}</p>`:''}</div><div class="sk-business-actions"><button type="button" class="subtle-btn" data-edit-business="${esc(b.id)}">${b.review_state==='changes_requested'?'Nachbessern':'Betriebsprofil bearbeiten'}</button><button type="button" class="subtle-btn" data-business-media="${esc(b.id)}">Logo &amp; Bilder</button>${b.member_role==='owner'&&b.status==='Freigeschaltet'&&b.review_state==='approved'?`<button type="button" class="subtle-btn" data-business-sensitive="${esc(b.id)}">Rechtliche Änderungen beantragen</button>`:''}${b.member_role==='owner'&&b.status==='Ausstehend'&&['draft','changes_requested'].includes(b.review_state)?`<button type="button" class="subtle-btn" data-business-submit="${esc(b.id)}">Zur Freischaltung einreichen</button>`:''}${b.member_role==='owner'&&b.status!=='Gesperrt'?`<button type="button" class="subtle-btn" data-business-deletion="${esc(b.id)}">Löschung beantragen</button>`:''}</div></article>`).join(''):'<p>Keine Betriebe zugeordnet.</p>';}
  catch(e){root.textContent='Betriebe konnten nicht geladen werden: '+e.message;}
 }
 function skBusinessForm(b){
@@ -432,7 +432,46 @@ async function skOpenBusinessSensitiveRequest(business){
   finally{skDialogState.saving=false;}
  });
 }
+// Eindeutige Freischaltung und Löschanträge je Betrieb. Keine automatische Konto-Löschung.
+async function skOpenBusinessSubmission(b){
+ if(!modal('Freischaltung einreichen · '+b.company_name,`<div><p>Der Antrag betrifft ausschliesslich <strong>${esc(b.company_name)}</strong>. Bitte das Betriebsprofil zuerst speichern. Annette prüft die Einreichung separat.</p><p id="sk-submit-business-status" class="form-feedback" role="status"></p><div class="dialog-actions"><button type="button" class="subtle-btn" data-business-dialog-cancel>Abbrechen</button><button type="button" class="btn" id="sk-business-submit-confirm">Jetzt einreichen</button></div></div>`))return;
+ document.getElementById('sk-business-submit-confirm').addEventListener('click',async e=>{
+  const button=e.currentTarget;button.disabled=true;skDialogState.saving=true;
+  try{await window.SK_AUTH.submitBusinessById(b.id);skDialogSavedClose();await loadMyBusinesses();}
+  catch(err){document.getElementById('sk-submit-business-status').textContent='Nicht eingereicht: '+err.message;button.disabled=false;skDialogState.saving=false;}
+ });
+}
+async function skOpenBusinessDeletion(b){
+ const intro=b.status==='Ausstehend'&&['draft','changes_requested'].includes(b.review_state)
+  ?'Diese noch nicht eingereichte Registrierung kann abgebrochen werden. Der Vorgang wird für die kontrollierte Löschung vorgemerkt; andere Betriebe und dein Login bleiben bestehen.'
+  :'Der Löschantrag wird von Annette geprüft. Es erfolgt keine sofortige Löschung.';
+ if(!modal('Löschung beantragen · '+b.company_name,`<form id="sk-business-deletion-form"><p>${intro}</p><p id="sk-business-deletion-history" role="status">Löschstatus wird geprüft …</p><label>Firmenname zur Bestätigung exakt eingeben *</label><input name="confirm_name" required autocomplete="off"><label>Begründung (optional)</label><textarea name="reason" maxlength="2000" rows="3"></textarea><p class="form-feedback" id="sk-business-deletion-feedback" role="alert"></p><div class="dialog-actions"><button type="button" class="subtle-btn" data-business-dialog-cancel>Abbrechen</button><button type="submit" class="btn">Löschung verbindlich beantragen</button></div></form>`))return;
+ const form=document.getElementById('sk-business-deletion-form');
+ try{const r=await window.SK_AUTH.deletionStatusById(b.id);if(!dialog.open||!form.isConnected)return;
+  form.querySelector('#sk-business-deletion-history').textContent=r?'Letzter Löschvorgang: '+r.status:'Kein früherer Löschantrag.';
+  if(r&&['requested','approved','processing','database_removed','failed'].includes(r.status)){
+   form.querySelector('[type=submit]').disabled=true;
+   form.querySelector('#sk-business-deletion-feedback').textContent='Für diesen Betrieb existiert bereits ein laufender Löschvorgang.';
+  }
+ }catch(err){if(form.isConnected){form.querySelector('#sk-business-deletion-history').textContent='Löschstatus konnte nicht geprüft werden: '+err.message;form.querySelector('[type=submit]').disabled=true;}}
+ form.addEventListener('submit',async e=>{
+  e.preventDefault();if(!form.reportValidity())return;
+  const name=form.elements.namedItem('confirm_name').value.trim();
+  if(name!==b.company_name){form.querySelector('#sk-business-deletion-feedback').textContent='Der Firmenname stimmt nicht mit dem ausgewählten Betrieb überein.';return;}
+  if(!window.confirm('Löschung für «'+b.company_name+'» verbindlich beantragen? Dieser Schritt ist nicht rückgängig zu machen.'))return;
+  const button=form.querySelector('[type=submit]');button.disabled=true;skDialogState.saving=true;
+  try{const result=await window.SK_AUTH.requestBusinessDeletionById(b.id,name,form.elements.namedItem('reason').value);
+   skDialogSavedClose();await loadMyBusinesses();
+   const summary=document.getElementById('my-businesses-list');
+   const note=document.createElement('p');note.setAttribute('role','status');note.textContent=result?.immediate?'Registrierungsabbruch vorgemerkt. Die endgültige Löschung wird kontrolliert durchgeführt.':'Löschantrag eingereicht. Annette prüft den Antrag.';summary.prepend(note);
+  }catch(err){form.querySelector('#sk-business-deletion-feedback').textContent='Antrag nicht eingereicht: '+err.message;button.disabled=false;skDialogState.saving=false;}
+ });
+}
+document.getElementById('dialog-body').addEventListener('click',e=>{if(e.target.closest('[data-business-dialog-cancel]'))void skDialogRequestClose('cancel-business-action');});
 document.getElementById('my-businesses-list').addEventListener('click',async e=>{
+ const submitBtn=e.target.closest('[data-business-submit]');
+ const deletionBtn=e.target.closest('[data-business-deletion]');
+ if(submitBtn||deletionBtn){const button=submitBtn||deletionBtn;button.disabled=true;try{const items=await window.SK_AUTH.listMyBusinesses();const business=items.find(b=>b.id===(submitBtn?submitBtn.dataset.businessSubmit:deletionBtn.dataset.businessDeletion));if(!business||business.member_role!=='owner')throw Error('Kein eigener Betrieb ausgewählt.');if(submitBtn)await skOpenBusinessSubmission(business);else await skOpenBusinessDeletion(business);}catch(err){alert('Aktion konnte nicht geöffnet werden: '+err.message);}finally{button.disabled=false;}return;}
  const sensitiveBtn=e.target.closest('[data-business-sensitive]');
  if(sensitiveBtn){sensitiveBtn.disabled=true;try{
   const businesses=await window.SK_AUTH.listMyBusinesses();const business=businesses.find(b=>b.id===sensitiveBtn.dataset.businessSensitive);
