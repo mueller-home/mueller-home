@@ -753,7 +753,7 @@ document.getElementById('my-list-table').addEventListener('click',async e=>{
   }catch(error){alert('Aktion fehlgeschlagen: '+error.message);b.disabled=false;}
   finally{ownListingsBusy=false;}
 });
-let selectedChatId=null, chatThreads=[], chatBusy=false;
+let selectedChatId=null, chatThreads=[], chatBusy=false, skChatFilterBusinessId="";
 const chatStatus=()=>document.getElementById('chat-status');
 async function renderChats(preselect=null){
  const list=document.getElementById('conversation-buttons'),historyBox=document.getElementById('chat-history'),heading=document.getElementById('chat-heading');
@@ -761,29 +761,59 @@ async function renderChats(preselect=null){
  try{
   chatThreads=await window.SK_AUTH.chatThreads();
   if(preselect)selectedChatId=preselect;
-  if(!chatThreads.some(t=>t.id===selectedChatId))selectedChatId=chatThreads[0]?.id||null;
-  list.innerHTML=chatThreads.length?chatThreads.map(t=>`<button type="button" class="conversation-btn ${t.id===selectedChatId?'active':''}" data-chat="${esc(t.id)}"><strong>${esc(t.other_business_name)}</strong><small>${esc(t.listing_title)}</small></button>`).join(''):'<p class="muted">Noch keine Unterhaltungen vorhanden.</p>';
-  const thread=chatThreads.find(t=>t.id===selectedChatId);
-  heading.innerHTML=thread?`<strong>${esc(thread.other_business_name)}</strong><small>${esc(thread.listing_title)}</small>`:'<strong>Unterhaltung auswählen</strong>';
+  const filter=document.getElementById('chat-own-business-filter');
+  let names=[];try{names=await window.SK_AUTH.listApprovedBusinesses();}catch(_error){}
+  const nameById=new Map(names.map(b=>[b.id,b.company_name||'Betrieb']));
+  const choices=[...new Map(chatThreads.map(t=>[t.own_business_id,nameById.get(t.own_business_id)||'Mein Betrieb'])).entries()];
+  filter.innerHTML='<option value="">Alle meine Betriebe</option>'+choices.map(([id,name])=>`<option value="${esc(id)}">${esc(name)}</option>`).join('');
+  if(skChatFilterBusinessId && !choices.some(([id])=>id===skChatFilterBusinessId))skChatFilterBusinessId='';
+  filter.value=skChatFilterBusinessId;
+  const visible=chatThreads.filter(t=>!skChatFilterBusinessId||t.own_business_id===skChatFilterBusinessId);
+  if(!visible.some(t=>t.id===selectedChatId))selectedChatId=visible[0]?.id||null;
+  list.innerHTML=visible.length?visible.map(t=>`<button type="button" class="conversation-btn ${t.id===selectedChatId?'active':''}" data-chat="${esc(t.id)}"><strong>${esc(t.listing_title||'Inserat')}</strong><small>${esc(t.other_business_name||'Betrieb')}</small></button>`).join(''):'<p class="muted">Keine Unterhaltungen für diese Auswahl vorhanden.</p>';
+  const thread=visible.find(t=>t.id===selectedChatId);
+  heading.innerHTML=thread?`<strong>${esc(thread.listing_title||'Inserat')}</strong><small>${esc(thread.other_business_name||'Betrieb')}</small>`:'<strong>Unterhaltung auswählen</strong>';
   document.getElementById('chat-form').classList.toggle('hidden',!thread);
   historyBox.innerHTML=thread?'<p class="muted">Nachrichten werden geladen …</p>':'';
   if(thread){const messages=await window.SK_AUTH.chatMessages(thread.id);if(selectedChatId===thread.id){historyBox.innerHTML=messages.map(m=>`<div class="bubble ${m.sender_business_id===thread.own_business_id?'mine':'other'}">${esc(m.body)}<small style="display:block;opacity:.7">${esc(new Date(m.created_at).toLocaleString('de-CH'))}</small></div>`).join('')||'<p class="muted">Noch keine Nachrichten.</p>';historyBox.scrollTop=historyBox.scrollHeight;}}
   chatStatus().textContent='';
  }catch(e){chatStatus().textContent='Unterhaltungen konnten nicht geladen werden: '+e.message;historyBox.innerHTML='';}
 }
+document.getElementById('chat-own-business-filter').addEventListener('change',e=>{skChatFilterBusinessId=e.target.value;selectedChatId=null;void renderChats();});
 document.getElementById('conversation-buttons').addEventListener('click',e=>{const b=e.target.closest('[data-chat]');if(b){selectedChatId=b.dataset.chat;void renderChats();}});
 document.getElementById('chat-form').addEventListener('submit',async e=>{
  e.preventDefault();if(chatBusy)return;const t=chatThreads.find(x=>x.id===selectedChatId),field=document.getElementById('chat-entry');if(!t||!field.value.trim())return;
  chatBusy=true;try{await window.SK_AUTH.chatSend(t.id,t.own_business_id,field.value.trim());field.value='';await renderChats(t.id);}catch(error){chatStatus().textContent='Nachricht konnte nicht gesendet werden: '+error.message;}finally{chatBusy=false;}
 });
+// Kontaktaufnahme direkt in der Inseratseite statt über Browser-Pop-ups.
+let skContactListingId=null,skContactBusy=false;
+const contactForm=document.getElementById('detail-contact-form');
+const contactStatus=document.getElementById('detail-contact-status');
+document.getElementById('detail-contact-cancel').addEventListener('click',()=>{contactForm.classList.add('hidden');contactStatus.textContent='';});
 document.getElementById('detail-contact').addEventListener('click',async ()=>{
  const id=document.getElementById('detail-contact').dataset.listingId;
- let businesses;try{businesses=await window.SK_AUTH.listApprovedBusinesses();}catch(e){alert('Betriebe konnten nicht geladen werden: '+e.message);return;}
- const listing=marketplaceListings.find(l=>l.id===id);const own=businesses.filter(b=>b.id!==listing?.business_id);if(!own.length){alert('Für dieses Inserat ist kein eigener freigegebener Betrieb verfügbar.');return;}
- let selected=own[0].id;
- if(own.length>1){const choice=prompt('Von welchem Betrieb aus möchten Sie schreiben?\n'+own.map((b,i)=>`${i+1}: ${b.company_name}`).join('\n')+'\nBitte Nummer eingeben:');const i=Number(choice)-1;if(choice===null||!Number.isInteger(i)||!own[i])return;selected=own[i].id;}
- const message=prompt('Erste Nachricht an den Inseratsbetrieb (maximal 2000 Zeichen):');if(!message?.trim())return;
- try{const threadId=await window.SK_AUTH.chatStart(id,selected,message.trim());selectedChatId=threadId;await show('messages');await renderChats(threadId);}catch(error){alert('Kontaktaufnahme fehlgeschlagen: '+error.message);}
+ contactStatus.textContent='Betriebe werden geladen …';contactForm.classList.remove('hidden');
+ let businesses;try{businesses=await window.SK_AUTH.listApprovedBusinesses();}catch(e){contactStatus.textContent='Betriebe konnten nicht geladen werden: '+e.message;return;}
+ const listing=marketplaceListings.find(l=>l.id===id);
+ const own=businesses.filter(b=>b.id!==listing?.business_id);
+ if(!own.length){contactStatus.textContent='Für dieses Inserat ist kein eigener freigegebener Betrieb verfügbar.';return;}
+ skContactListingId=id;
+ const select=document.getElementById('detail-contact-business');
+ select.replaceChildren();
+ for(const business of own){const option=document.createElement('option');option.value=business.id;option.textContent=business.company_name||'Betrieb';select.append(option);}
+ document.getElementById('detail-contact-business-wrap').classList.toggle('hidden',own.length===1);
+ contactStatus.textContent='';document.getElementById('detail-contact-message').focus();
+});
+contactForm.addEventListener('submit',async e=>{
+ e.preventDefault();if(skContactBusy||!skContactListingId)return;
+ const selected=document.getElementById('detail-contact-business').value;
+ const body=document.getElementById('detail-contact-message').value.trim();
+ if(!selected||!body)return;
+ skContactBusy=true;document.getElementById('detail-contact-submit').disabled=true;
+ contactStatus.textContent='Nachricht wird gesendet …';
+ try{const threadId=await window.SK_AUTH.chatStart(skContactListingId,selected,body);selectedChatId=threadId;skChatFilterBusinessId='';contactForm.reset();contactForm.classList.add('hidden');await show('messages');await renderChats(threadId);}
+ catch(error){contactStatus.textContent='Kontaktaufnahme fehlgeschlagen: '+error.message;}
+ finally{skContactBusy=false;document.getElementById('detail-contact-submit').disabled=false;}
 });
 const companies=[{name:'Alpenhotel Panorama',land:'Schweiz',status:'Ausstehend'},{name:'Restaurant Seeblick',land:'Schweiz',status:'Ausstehend'},{name:'Camping am Park',land:'Deutschland',status:'Aktiv'},{name:'Hotel Tirol',land:'Österreich',status:'Aktiv'}];
 let skBusinessList=[];
