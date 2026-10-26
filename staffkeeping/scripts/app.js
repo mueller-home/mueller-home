@@ -355,11 +355,11 @@ async function skOpenBusinessMedia(business){
 // Ein Antrag veraendert den Live-Stand nicht; Annette entscheidet separat.
 async function skOpenBusinessSensitiveRequest(business){
  if(business.member_role!=='owner'||business.status!=='Freigeschaltet'||business.review_state!=='approved'){
-  throw Error('Rechtliche Aenderungsantraege sind fuer diesen Betrieb nicht moeglich.');
+  throw Error('Rechtliche Änderungsanträge sind für diesen Betrieb nicht möglich.');
  }
- if(!modal('Rechtliche Aenderung beantragen · '+business.company_name,`<form id="sk-sensitive-business-form">
-  <p>Firmenname, UID / USt-ID oder Land koennen bei freigeschalteten Betrieben nur nach Genehmigung durch Annette geaendert werden. Der bisherige Wert bleibt bis dahin bestehen.</p>
-  <label for="sk-sensitive-business-field">Zu aendernde Angabe</label>
+ if(!modal('Rechtliche Änderung beantragen · '+business.company_name,`<form id="sk-sensitive-business-form">
+  <p>Firmenname, UID / USt-ID oder Land können bei freigeschalteten Betrieben nur nach Genehmigung durch Annette geändert werden. Der bisherige Wert bleibt bis dahin bestehen.</p>
+  <label for="sk-sensitive-business-field">Zu ändernde Angabe</label>
   <select id="sk-sensitive-business-field" name="field" required>
    <option value="company_name">Firmenname</option><option value="vat_id">UID / USt-ID</option><option value="country">Land</option>
   </select>
@@ -399,18 +399,18 @@ async function skOpenBusinessSensitiveRequest(business){
  const field=form.elements.namedItem('field'),value=form.elements.namedItem('value'),current=form.querySelector('#sk-sensitive-business-current');
  const currentValue=()=>field.value==='company_name'?business.company_name:field.value==='vat_id'?business.vat_id:business.country;
  const update=()=>{
-  const map={CH:'Schweiz',DE:'Deutschland',AT:'Oesterreich'};
+  const map={CH:'Schweiz',DE:'Deutschland',AT:'Österreich'};
   current.textContent='Aktueller Wert: '+String(currentValue()??'–');
   value.placeholder=field.value==='country'?'CH, DE oder AT':'Neuen Wert eingeben';
   value.maxLength=field.value==='country'?2:field.value==='vat_id'?64:160;
-  if(field.value==='country')current.textContent+=' · Neuer Wert als Laendercode ('+Object.keys(map).join(', ')+')';
+  if(field.value==='country')current.textContent+=' · Neuer Wert als Ländercode ('+Object.keys(map).join(', ')+')';
  };
  field.addEventListener('change',()=>{value.value='';update();});update();
  form.addEventListener('submit',async event=>{
   event.preventDefault();if(!form.reportValidity())return;
   const next=value.value.trim();
   if(next===String(currentValue()??'').trim())return void (form.querySelector('#sk-sensitive-business-feedback').textContent='Bitte einen anderen Wert eingeben.');
-  if(!confirm('Aenderungsantrag fuer „'+business.company_name+'“ verbindlich an Annette einreichen? Die bestehenden Betriebsdaten bleiben unveraendert.'))return;
+  if(!confirm('Änderungsantrag für „'+business.company_name+'“ verbindlich an Annette einreichen? Die bestehenden Betriebsdaten bleiben unverändert.'))return;
   const submit=form.querySelector('[type="submit"]');submit.disabled=true;skDialogState.saving=true;
   try{await window.SK_AUTH.requestBusinessSensitiveChangeById(business.id,field.value,next);
    // Erfolgreiche verbindliche Einreichung ist KEIN ungesicherter Formularzustand.
@@ -438,7 +438,7 @@ document.getElementById('my-businesses-list').addEventListener('click',async e=>
   const businesses=await window.SK_AUTH.listMyBusinesses();const business=businesses.find(b=>b.id===sensitiveBtn.dataset.businessSensitive);
   if(!business)throw Error('Betrieb nicht mehr zugeordnet.');
   await skOpenBusinessSensitiveRequest(business);
- }catch(err){alert('Aenderungsantrag konnte nicht geoeffnet werden: '+err.message);}finally{sensitiveBtn.disabled=false;}return;}
+ }catch(err){alert('Änderungsantrag konnte nicht geöffnet werden: '+err.message);}finally{sensitiveBtn.disabled=false;}return;}
  const mediaBtn=e.target.closest('[data-business-media]');
  if(mediaBtn){mediaBtn.disabled=true;try{const businesses=await window.SK_AUTH.listMyBusinesses();const business=businesses.find(b=>b.id===mediaBtn.dataset.businessMedia);if(!business)throw Error('Betrieb nicht mehr zugeordnet.');await skOpenBusinessMedia(business);}catch(err){alert('Medien konnten nicht geöffnet werden: '+err.message);}finally{mediaBtn.disabled=false;}return;}
  const btn=e.target.closest('[data-edit-business]');if(!btn)return;
@@ -727,7 +727,7 @@ async function openBusinessReview(id){
    if(skSelectedBusiness!==id)return;
    const b=info.business; const notes=info.notes||[], audit=info.audit||[], members=info.members||[];
    panel.innerHTML=`<div class="business-review-heading"><div><span class="overline">ADMIN · BETRIEBSPRÜFUNG</span><h2>${esc(b.company_name)}</h2><span class="status-tag">${esc(b.status)}</span></div><button type="button" class="subtle-btn" id="business-review-close">Schliessen</button></div>
-   <div class="business-review-grid"><section><h3>Unternehmensangaben</h3><dl class="business-info">${detailsRow('Firmenname',b.company_name)}${detailsRow('Branche',b.industry)}${detailsRow('Land',b.country)}${detailsRow('PLZ / Ort',[b.postal_code,b.city].filter(Boolean).join(' '))}${detailsRow('Strasse / Hausnummer',[b.street,b.house_number].filter(Boolean).join(' '))}${detailsRow('Adresszusatz',b.address_extra)}${detailsRow('Strassenadresse öffentlich',b.show_street_address?'Ja':'Nein')}${detailsRow('USt-/UID-Nr.',b.vat_id)}${detailsRow('Beschreibung',b.description)}${detailsRow('Prüfstatus',b.review_state)}${detailsRow('Eingereicht',dateTimeDisplay(b.submitted_at))}${detailsRow('Nachbesserungsgrund',b.review_message)}${detailsRow('E-Mail-Benachrichtigungen (Vorliebe)',b.email_notifications_enabled?'Ja':'Nein')}${detailsRow('Registriert',dateTimeDisplay(b.created_at))}${detailsRow('Nutzungsbedingungen bestätigt',dateTimeDisplay(b.terms_accepted_at))}</dl></section>
+   <div class="business-review-grid"><section><h3>Unternehmensangaben</h3><dl class="business-info">${detailsRow('Firmenname',b.company_name)}${detailsRow('Branche',b.industry)}${detailsRow('Land',b.country)}${detailsRow('PLZ / Ort',[b.postal_code,b.city].filter(Boolean).join(' '))}${detailsRow('Strasse / Hausnummer',[b.street,b.house_number].filter(Boolean).join(' '))}${detailsRow('Adresszusatz',b.address_extra)}${detailsRow('Strassenadresse öffentlich',b.show_street_address?'Ja':'Nein')}${detailsRow('USt-/UID-Nr.',b.vat_id)}${detailsRow('Beschreibung',b.description)}${detailsRow('Prüfstatus',b.review_state)}${detailsRow('Eingereicht',dateTimeDisplay(b.submitted_at))}${detailsRow('Nachbesserungsgrund',b.review_message)}${detailsRow('E-Mail-Benachrichtigungen',b.email_notifications_enabled?'Ja':'Nein')}${detailsRow('Registriert',dateTimeDisplay(b.created_at))}${detailsRow('Nutzungsbedingungen bestätigt',dateTimeDisplay(b.terms_accepted_at))}</dl></section>
    <section><h3>Kontakt &amp; Benutzer</h3><dl class="business-info">${detailsRow('Kontaktperson',b.contact_name)}${detailsRow('E-Mail',b.contact_email)}${detailsRow('Telefon',b.contact_phone)}</dl><div class="business-contact-actions"><a class="subtle-btn" href="mailto:${encodeURIComponent(b.contact_email||'')}">E-Mail schreiben ↗</a>${b.contact_phone?`<a class="subtle-btn" href="tel:${encodeURIComponent(b.contact_phone)}">Anrufen ↗</a>`:''}</div><h4>Konten</h4>${members.length?members.map(m=>`<p class="business-minor">${esc(m.email)} · ${esc(m.role)}</p>`).join(''):'<p class="muted">Keine Benutzerzuordnung</p>'}</section></div>
    <section class="business-review-media"><h3>Standort des Betriebs</h3><div id="business-admin-map" class="business-map" role="region" aria-label="Standortkarte des Betriebs"></div><p id="business-admin-map-status" class="muted"></p></section><section class="business-review-media"><h3>Firmenlogo und Betriebsbilder</h3><div id="business-admin-media" class="admin-media-preview">Medien werden geladen …</div></section>
    <div class="business-review-grid"><section><h3>Interne Admin-Notizen</h3><p class="muted">Nur für Administratoren. Einträge werden mit Datum und Autor protokolliert.</p><form id="business-note-form"><label for="business-note">Neue Notiz</label><textarea id="business-note" rows="3" maxlength="3000" required placeholder="Rückfrage, Gesprächsnotiz, Prüfergebnis …"></textarea><button class="btn btn-small" type="submit">Notiz speichern</button><p class="form-feedback" id="business-note-status" role="status"></p></form><div class="business-events">${notes.length?notes.map(n=>`<article><small>${esc(dateTimeDisplay(n.created_at))} · ${esc(n.author)}</small><p>${esc(n.note)}</p></article>`).join(''):'<p class="muted">Noch keine Notizen.</p>'}</div></section>
