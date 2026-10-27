@@ -43,7 +43,7 @@ function skSetActiveBusiness(id,{skipRefresh=false}={}){
 }
 document.getElementById('sk-active-business-select').addEventListener('change',e=>skSetActiveBusiness(e.target.value));
 
-async function show(view,updateUrl=true){
+async function show(view,updateUrl=true,preserveChatTarget=false){
   if(navigationBusy)return;
   if(typeof skDialogRequestClose==='function' && document.getElementById('app-dialog')?.open){
     if(!(await skDialogRequestClose('navigation:'+view))){if(!updateUrl)history.replaceState({view:currentScreen},'','#'+currentScreen);return;}
@@ -63,6 +63,11 @@ async function show(view,updateUrl=true){
       if(!updateUrl)history.replaceState({view:'profile'},'', '#profile');
       return;
     }}finally{navigationBusy=false;}
+  }
+  if(view==='messages'&&!preserveChatTarget){
+    skChatShowArchived=false;
+    skChatListingFilterId=null;
+    selectedChatId=null;
   }
   currentScreen=view;
   performShow(view,updateUrl);
@@ -365,7 +370,7 @@ async function skOpenListingChats(listingId){
   }
   skChatListingFilterId=listingId;const linked=threads.filter(t=>t.listing_id===listingId);skChatShowArchived=!linked.some(t=>!t.closed_at&&!t.archived_at);selectedChatId=linked.find(t=>skChatShowArchived?!!(t.closed_at||t.archived_at):!(t.closed_at||t.archived_at))?.id||null;
   skChatFilterBusinessId='';
-  await show('messages');
+  await show('messages',true,true);
   if(currentScreen==='messages')await renderChats(selectedChatId);
  }catch(error){alert('Unterhaltungen konnten nicht geladen werden: '+error.message);}
 }
@@ -951,15 +956,17 @@ function renderMyListings(){
       const myIds=new Set(businesses.map(b=>b.id));
       const names=new Map(businesses.map(b=>[b.id,b.company_name||'Betrieb']));
       const partnerRows=partnerships.filter(p=>myIds.has(p.partner_business_id));
-      const accepted=partnerRows.filter(p=>p.state==='angenommen'||p.state==='abgeschlossen');
+      const ongoing=partnerRows.filter(p=>p.state==='angenommen');
+      const completed=partnerRows.filter(p=>p.state==='abgeschlossen');
       const incoming=partnerRows.filter(p=>p.state==='angeboten');
       const table=(items)=>'<div class="table-wrap"><table class="data-table"><thead><tr><th>Inserat</th><th>Eigener Betrieb</th><th>Status</th><th>Aktion</th></tr></thead><tbody>'+items.map(p=>{
-        const status=p.state==='angenommen'?'Vergeben – Zusammenarbeit läuft':p.state==='abgeschlossen'?'Zusammenarbeit abgeschlossen':'Vergabeangebot erhalten';
+        const status=p.state==='angenommen'?'Zusammenarbeit läuft':p.state==='abgeschlossen'?'Zusammenarbeit abgeschlossen':'Vergabeangebot erhalten';
         return `<tr><td><strong>${esc(p.listing_title||'Inserat')}</strong></td><td>${esc(names.get(p.partner_business_id)||'Mein Betrieb')}</td><td><span class="status-tag">${esc(status)}</span></td><td class="table-actions"><button type="button" data-partner-chat="${esc(p.thread_id)}">Zum Chat</button></td></tr>`;
       }).join('')+'</tbody></table></div>';
       root.innerHTML='<h2>Als Partner</h2><p class="muted">Inserate, die einem Ihrer Betriebe zugesprochen wurden. Sie bleiben auch nach dem Ende der öffentlichen Anzeige hier sichtbar.</p>'+
-        (accepted.length?table(accepted):'<p class="muted">Noch keine angenommenen Vergaben.</p>')+
-        (incoming.length?'<h3>Offene Vergabeangebote ('+incoming.length+')</h3>'+table(incoming):'');
+        '<section class="sk-partner-ongoing"><h3>Zusammenarbeit läuft ('+ongoing.length+')</h3>'+(ongoing.length?table(ongoing):'<p class="muted">Keine laufenden Zusammenarbeiten.</p>')+'</section>'+
+        '<section class="sk-partner-completed"><h3>Zusammenarbeit abgeschlossen ('+completed.length+')</h3>'+(completed.length?table(completed):'<p class="muted">Keine abgeschlossenen Zusammenarbeiten.</p>')+'</section>'+
+        (incoming.length?'<section class="sk-partner-offers"><h3>Offene Vergabeangebote ('+incoming.length+')</h3>'+table(incoming)+'</section>':'');
     }).catch(error=>{
       if(request===skPartnerListingLoadToken&&currentScreen==='my-listings'&&listTab==='partner')root.innerHTML='<h2>Als Partner</h2><p role="alert">Partner-Inserate konnten nicht geladen werden: '+esc(error.message)+'</p>';
     });
@@ -989,7 +996,7 @@ document.getElementById('my-list-table').addEventListener('click',async e=>{
   skChatListingFilterId=null;skChatFilterBusinessId='';
   skChatShowArchived=!!(thread.archived_at||thread.closed_at);
   selectedChatId=thread.id;
-  await show('messages');if(currentScreen==='messages')await renderChats(thread.id);
+  await show('messages',true,true);if(currentScreen==='messages')await renderChats(thread.id);
  }catch(error){alert('Chat konnte nicht geöffnet werden: '+error.message);}
  finally{link.disabled=false;}
 });
@@ -1219,7 +1226,7 @@ contactForm.addEventListener('submit',async e=>{
  if(!selected||!body)return;
  skContactBusy=true;document.getElementById('detail-contact-submit').disabled=true;
  contactStatus.textContent='Nachricht wird gesendet …';
- try{const threadId=await window.SK_AUTH.chatStart(skContactListingId,selected,body);selectedChatId=threadId;skChatFilterBusinessId=selected;contactForm.reset();contactForm.classList.add('hidden');await show('messages');await renderChats(threadId);}
+ try{const threadId=await window.SK_AUTH.chatStart(skContactListingId,selected,body);selectedChatId=threadId;skChatFilterBusinessId=selected;contactForm.reset();contactForm.classList.add('hidden');await show('messages',true,true);await renderChats(threadId);}
  catch(error){contactStatus.textContent='Kontaktaufnahme fehlgeschlagen: '+error.message;}
  finally{skContactBusy=false;document.getElementById('detail-contact-submit').disabled=false;}
 });
