@@ -132,7 +132,7 @@ async function loadMemberDashboard(){
   ['Abgelaufene Inserate',count(items===null?null:expired.length),'my-listings','Inserate prüfen'],
   ['Betriebe mit Prüfstatus',count(businesses===null?null:pending.length),'my-businesses','Meine Betriebe']
  ];
- const cardsHtml=cards.map(([label,num,view,action])=>`<article class="sk-dash-card"><span>${esc(label)}</span><strong>${esc(num)}</strong><button type="button" data-view="${view}">${esc(action)} →</button></article>`).join('');
+ const cardsHtml=cards.map(([label,num,view,action],index)=>`<article class="sk-dash-card"><span>${esc(label)}</span><strong ${index===0?'id="sk-dashboard-unread-count"':''}>${esc(num)}</strong><button type="button" data-view="${view}">${esc(action)} →</button></article>`).join('');
  const notice=(title,subtitle,view)=>`<li><div><strong>${esc(title)}</strong><small>${esc(subtitle)}</small></div><button type="button" class="subtle-btn" data-view="${view}">Öffnen →</button></li>`;
  let alerts=[];
  for(const l of expired.slice(0,5))alerts.push(notice(l.title,'Inserat abgelaufen · Enddatum prüfen','my-listings'));
@@ -147,6 +147,21 @@ async function loadMemberDashboard(){
  <section class="panel sk-dash-panel"><h2>Geplante Erweiterungen</h2><p class="muted">Ungelesene Nachrichten werden pro Benutzer und Unterhaltung gezählt. Beim Öffnen werden angezeigte Nachrichten als gelesen markiert.</p><p class="muted">Neue Treffer gespeicherter Suchen: verfügbar, sobald die gespeicherten Suchen und die Trefferprüfung umgesetzt sind.</p><p class="muted">Mitgliedschaft: Ablaufhinweise folgen, sobald die verbindlichen Laufzeitdaten und Regeln definiert sind.</p></section>
  ${failed.length?`<p role="alert">Einige Daten konnten nicht geladen werden: ${esc(failed.join(', '))}. Es werden keine Ersatzwerte angezeigt.</p>`:''}`;
 }
+// Nur die Ungelesen-Zahl aktualisieren: Die restlichen Dashboard-Kacheln bleiben ruhig.
+let skDashboardUnreadBusy=false;
+async function skRefreshDashboardUnread(){
+ if(currentScreen!=='dashboard'||document.hidden||skDashboardUnreadBusy||!window.SK_AUTH?.chatUnreadCounts)return;
+ const node=document.getElementById('sk-dashboard-unread-count');if(!node)return;
+ skDashboardUnreadBusy=true;
+ try{
+  const rows=await window.SK_AUTH.chatUnreadCounts();
+  if(currentScreen==='dashboard'&&node.isConnected)node.textContent=String(rows.reduce((total,row)=>total+Number(row.unread_count||0),0));
+ }catch(error){console.warn('[StaffKeeping ungelesene Nachrichten]',error.message);}
+ finally{skDashboardUnreadBusy=false;}
+}
+setInterval(()=>{void skRefreshDashboardUnread();},5000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)void skRefreshDashboardUnread();});
+window.addEventListener('focus',()=>{void skRefreshDashboardUnread();});
 function skDateOffsetCH(days){
  const day=new Date();day.setUTCDate(day.getUTCDate()+days);
  return new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Zurich',year:'numeric',month:'2-digit',day:'2-digit'}).format(day);
@@ -232,6 +247,7 @@ async function loadMarketplace({silent=false}={}){
     marketplaceDistances=new Map(distanceRows.map(row=>[row.listing_id,row.distance_km]));
     marketplaceOriginAvailable=distanceRows.some(row=>row.origin_available);
     marketplaceLocations=new Map(locRows.map(row=>[row.listing_id,row]));
+    try{await skRefreshChatIndex();}catch(error){console.warn('[StaffKeeping Chat-Hinweise im Marktplatz]',error.message);}
     marketplaceLoadError='';skMarketLastRefresh=Date.now();
     if(currentScreen==='market')render();
   }catch(error){
@@ -279,9 +295,10 @@ function render(){
   document.getElementById('bookmark-count').textContent=marketplaceListings.filter(l=>starred.has(l.id)).length;
   const grid=document.getElementById('listing-grid');
   if(marketplaceLoadError){grid.innerHTML=`<p role="alert">Inserate konnten nicht geladen werden: ${esc(marketplaceLoadError)}</p><button type="button" class="btn" id="retry-market">Erneut versuchen</button>`;document.getElementById('retry-market').addEventListener('click',loadMarketplace);}
-  else grid.innerHTML=(activeRadius&&!marketplaceOriginAvailable?'<p class="muted" role="status">Für diese Anmeldung ist kein freigegebener Betriebsstandort mit gültigen Koordinaten verfügbar. Der Radiusfilter wird nicht angewandt; alle übrigen Suchfilter bleiben aktiv.</p>':'')+items.map((l,i)=>`${activeRadius&&marketplaceOriginAvailable&&unknownCount>0&&i===knownCount?'<h3 class="sk-unknown-distance-title">Weitere Inserate – Entfernung unbekannt</h3>':''}<article class="listing-card"><div class="listing-top"><span class="type-pill ${l.type==='Biete'?'available':''}">${esc(marketplaceType(l.type))}</span><button class="star" type="button" data-star="${esc(l.id)}" title="${starred.has(l.id)?'Aus Merkliste entfernen':'In Merkliste aufnehmen'}" aria-label="${starred.has(l.id)?'Aus Merkliste entfernen':'In Merkliste aufnehmen'}" aria-pressed="${starred.has(l.id)}">${starred.has(l.id)?'★':'☆'}</button></div><h3>${esc(l.title)}</h3><div class="listing-location">⌖ ${esc(l.city)} · ${esc(l.country)}${activeRadius&&marketplaceOriginAvailable?(Number.isFinite(marketplaceDistances.get(l.id))?` · ${Math.round(marketplaceDistances.get(l.id))} km entfernt`:' · Entfernung nicht berechenbar / Standort nicht verifiziert'):''}</div><p>${esc(l.description)}</p><div class="listing-meta"><span>◷ ${esc(marketplaceDate(l.date_from))} – ${esc(marketplaceDate(l.date_to))}</span>${l.accommodation?'<span>⌂ Unterkunft</span>':''}</div><div class="listing-footer"><div class="languages">${(l.languages||[]).map(x=>`<span>${esc(x)}</span>`).join('')}</div><button class="detail-link" type="button" data-detail="${esc(l.id)}">Details ansehen →</button></div></article>`).join('');
+  else grid.innerHTML=(activeRadius&&!marketplaceOriginAvailable?'<p class="muted" role="status">Für diese Anmeldung ist kein freigegebener Betriebsstandort mit gültigen Koordinaten verfügbar. Der Radiusfilter wird nicht angewandt; alle übrigen Suchfilter bleiben aktiv.</p>':'')+items.map((l,i)=>`${activeRadius&&marketplaceOriginAvailable&&unknownCount>0&&i===knownCount?'<h3 class="sk-unknown-distance-title">Weitere Inserate – Entfernung unbekannt</h3>':''}<article class="listing-card"><div class="listing-top"><span class="type-pill ${l.type==='Biete'?'available':''}">${esc(marketplaceType(l.type))}</span><button class="star" type="button" data-star="${esc(l.id)}" title="${starred.has(l.id)?'Aus Merkliste entfernen':'In Merkliste aufnehmen'}" aria-label="${starred.has(l.id)?'Aus Merkliste entfernen':'In Merkliste aufnehmen'}" aria-pressed="${starred.has(l.id)}">${starred.has(l.id)?'★':'☆'}</button></div><h3>${esc(l.title)}</h3>${skChatIndex.some(t=>t.listing_id===l.id)?`<button type="button" class="sk-market-chat-link" data-market-chat="${esc(l.id)}">↗ ${skChatIndex.filter(t=>t.listing_id===l.id).length} ${skChatIndex.filter(t=>t.listing_id===l.id).length===1?'Unterhaltung':'Unterhaltungen'} · Zum Chat</button>`:''}<div class="listing-location">⌖ ${esc(l.city)} · ${esc(l.country)}${activeRadius&&marketplaceOriginAvailable?(Number.isFinite(marketplaceDistances.get(l.id))?` · ${Math.round(marketplaceDistances.get(l.id))} km entfernt`:' · Entfernung nicht berechenbar / Standort nicht verifiziert'):''}</div><p>${esc(l.description)}</p><div class="listing-meta"><span>◷ ${esc(marketplaceDate(l.date_from))} – ${esc(marketplaceDate(l.date_to))}</span>${l.accommodation?'<span>⌂ Unterkunft</span>':''}</div><div class="listing-footer"><div class="languages">${(l.languages||[]).map(x=>`<span>${esc(x)}</span>`).join('')}</div><button class="detail-link" type="button" data-detail="${esc(l.id)}">Details ansehen →</button></div></article>`).join('');
   grid.querySelectorAll('[data-star]').forEach(b=>b.addEventListener('click',()=>{const id=b.dataset.star;starred.has(id)?starred.delete(id):starred.add(id);render()}));
   grid.querySelectorAll('[data-detail]').forEach(b=>b.addEventListener('click',()=>openDetail(b.dataset.detail)));
+  grid.querySelectorAll('[data-market-chat]').forEach(b=>b.addEventListener('click',()=>{void skOpenListingChats(b.dataset.marketChat);}));
   document.getElementById('no-results').classList.toggle('hidden',marketplaceLoadError||items.length>0);
   grid.classList.toggle('hidden',viewMap);document.getElementById('market-map-wrap').classList.toggle('hidden',!viewMap);
   if(viewMap)void renderMarketMap(items);
@@ -1026,14 +1043,26 @@ async function skChatCheckUpdates(){
 }
 setInterval(()=>{void skChatCheckUpdates();},2000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void skChatCheckUpdates();});
-// Direkt aus der Unterhaltung zum zugehörigen Inserat wechseln.
-// Das Inserat wird nur geöffnet, wenn es im berechtigten Marktplatz abrufbar ist.
+// Inserateigner öffnen ihre eigene Verwaltung; Interessenten die Marktplatzdetails.
 document.getElementById('chat-heading').addEventListener('click',async e=>{
  const button=e.target.closest('[data-chat-listing]');if(!button)return;
  const id=button.dataset.chatListing;
  if(!id)return;
  button.disabled=true;
  try{
+  // Inserateigner zuerst prüfen: auch inaktive/abgelaufene Inserate bleiben erreichbar.
+  const own=await window.SK_AUTH.listMyListings();
+  if(own.some(l=>l.id===id)){
+   await show('my-listings');
+   if(currentScreen!=='my-listings')return;
+   await loadMyListings();
+   if(!ownListings.some(l=>l.id===id)){
+    // Eine bereits laufende Listenaktualisierung darf den Direktzugriff nicht blockieren.
+    ownListings=own;
+    ownBusinessList=await window.SK_AUTH.listApprovedBusinesses();
+   }
+   if(currentScreen==='my-listings'){listingForm(id);return;}
+  }
   let listing=marketplaceListings.find(l=>l.id===id);
   if(!listing){
    const latest=await window.SK_AUTH.listMarketplaceListings();
