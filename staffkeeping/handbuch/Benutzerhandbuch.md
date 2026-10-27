@@ -1,12 +1,10 @@
 # StaffKeeping – Benutzerhandbuch
 
-## Vom ersten Login bis zur Zusammenarbeit
+## Schritt für Schritt durch StaffKeeping
 
 Dieses Handbuch führt dich Schritt für Schritt durch die wichtigsten Tätigkeiten in StaffKeeping. Beginne bei der Registrierung und folge den Kapiteln, die für dich relevant sind.
 
 ## 1. Registrieren und anmelden
-
-# Wie registriere ich mich und melde mich an?
 
 1. Öffne StaffKeeping und wähle die Registrierung.
 2. Gib deine persönlichen Angaben und deine E-Mail-Adresse ein und lege dein Passwort fest.
@@ -28,8 +26,6 @@ Nach der Anmeldung führt dich «Meine Übersicht» zu deinen wichtigsten Aufgab
 
 
 ## 2. Einen Betrieb erfassen und freigeben lassen
-
-# Wie erfasse ich meinen Betrieb?
 
 1. Öffne «Meine Betriebe» und beginne die Erfassung eines neuen Betriebs.
 2. Trage Betriebsname, Kontakt- und Adressangaben ein.
@@ -55,8 +51,6 @@ Jeder Betrieb wird einzeln geprüft. Die Freigabe eines Betriebs gilt nicht auto
 
 ## 3. Ein Inserat erstellen und veröffentlichen
 
-# Wie erstelle ich ein Inserat?
-
 1. Stelle sicher, dass dein Betrieb freigegeben ist. Bei mehreren Betrieben wählst du zuerst den passenden aktiven Betrieb.
 2. Öffne «Meine Inserate» und beginne die Erfassung eines neuen Inserats.
 3. Wähle, ob du Personal suchst oder Personal anbietest, und ergänze Titel, Kategorie und Beschreibung.
@@ -80,8 +74,6 @@ Ein Inserat bleibt deinem ausgewählten Betrieb zugeordnet. Vor einer Vergabe ka
 
 ## 4. Passende Inserate finden
 
-# Wie finde ich ein passendes Inserat?
-
 1. Öffne «Marktplatz».
 2. Suche nach einem Stichwort oder grenze die Ergebnisse nach Inserattyp, Kategorie, Datum und Unterkunft ein.
 3. Für eine Umkreissuche wählst du den passenden aktiven Betrieb. Dessen Standort ist der Ausgangspunkt für den Radius.
@@ -104,8 +96,6 @@ Die Kartenmarker zeigen ungefähre Positionen. Inserate ohne bestätigten Stando
 
 ## 5. Eine Suche speichern und Treffer verfolgen
 
-# Wie speichere ich eine Suche?
-
 1. Stelle im Marktplatz die Filter so ein, wie du sie künftig wiederverwenden möchtest.
 2. Wähle «Suche speichern» und vergib einen aussagekräftigen Namen.
 3. Entscheide, ob du bei neuen passenden Inseraten per E-Mail benachrichtigt werden möchtest.
@@ -122,8 +112,6 @@ Bei einer Umkreissuche bleibt der beim Speichern gewählte Ausgangsbetrieb mit d
 
 ## 6. Mit einem anderen Betrieb Kontakt aufnehmen
 
-# Wie nehme ich Kontakt zu einem Inserat auf?
-
 1. Öffne das Inserat, das dich interessiert.
 2. Wähle «Kontakt aufnehmen». Wenn du mehrere berechtigte Betriebe hast, prüfe den ausgewählten Absenderbetrieb.
 3. Formuliere deine erste Nachricht direkt auf der Inseratseite und sende sie ab.
@@ -139,8 +127,6 @@ Besteht bereits eine Unterhaltung zu diesem Inserat, führt «Zum Chat» zum bes
 
 
 ## 7. Ein Inserat vergeben oder eine Vergabe annehmen
-
-# Wie vereinbare ich eine Zusammenarbeit?
 
 **Wenn du das Inserat erstellt hast:**
 
@@ -176,8 +162,6 @@ Andere Unterhaltungen zu einem vergebenen Inserat werden archiviert. Das vergebe
 
 ## 8. Eine Zusammenarbeit abschliessen
 
-# Wie schliesse ich eine Zusammenarbeit ab?
-
 1. Führe die vereinbarte Zusammenarbeit durch und nutze den gemeinsamen Chat für organisatorische Absprachen.
 2. Nach dem Ende der Zusammenarbeit öffnest du die zugehörige Unterhaltung.
 3. Wähle «Zusammenarbeit abgeschlossen» beziehungsweise «Abschluss der Zusammenarbeit bestätigen».
@@ -195,8 +179,6 @@ Abgeschlossene Zusammenarbeiten findest du unter «Meine Inserate» → «Als Pa
 
 
 ## 9. Einen Partner bewerten und Bewertungen ansehen
-
-# Wie bewerte ich eine Zusammenarbeit?
 
 1. Warte, bis beide Betriebe den Abschluss der Zusammenarbeit bestätigt haben.
 2. Öffne die Bewertungsaufgabe oder wechsle zu «Meine Bewertungen».
@@ -221,8 +203,6 @@ Im Inserat beziehungsweise im Betriebsprofil kannst du die Rückmeldungen andere
 
 ## 10. Bestehende Inserate und Partnerschaften verwalten
 
-# Wie behalte ich meine Inserate im Blick?
-
 1. Öffne «Meine Inserate».
 2. Prüfe die aktiven Inserate und bearbeite sie bei Bedarf.
 3. Setze ein Inserat inaktiv, wenn es vorübergehend nicht mehr angeboten werden soll.
@@ -245,8 +225,6 @@ Ein Inserat mit vorhandenen Unterhaltungen wird beim Entfernen inaktiv gesetzt; 
 
 ## 11. Aufgaben und Nachrichten im Blick behalten
 
-# Wie nutze ich meine persönliche Übersicht?
-
 1. Öffne nach der Anmeldung «Meine Übersicht».
 2. Prüfe, ob ungelesene Nachrichten oder offene Vergabeangebote vorhanden sind.
 3. Klicke unter «Aktuelles und Aufgaben» auf eine Meldung, um direkt zur betreffenden Unterhaltung oder Zusammenarbeit zu gelangen.
@@ -263,8 +241,6 @@ Die Zahl ungelesener Nachrichten aktualisiert sich während der Nutzung der Übe
 
 ## 12. Mitgliedschaft und Preise verstehen
 
-# Wie verwalte ich meine Mitgliedschaft?
-
 1. Erfasse deinen Betrieb und warte auf dessen Freigabe.
 2. Informiere dich über die angebotenen Tarife und Konditionen.
 3. Wähle den gewünschten Tarif und prüfe die angezeigten Vertragsinformationen.
@@ -280,8 +256,6 @@ Mitgliedschaften sind betriebsbezogen. Wenn du mehrere Betriebe verwaltest, kön
 
 
 ## 13. Hilfe finden
-
-# Wo finde ich Hilfe?
 
 1. Öffne «Hilfe», wenn du einen gesamten Ablauf nachlesen möchtest.
 2. Wähle ein Thema wie «Betrieb erfassen», «Inserat erstellen» oder «Kontakt aufnehmen».
