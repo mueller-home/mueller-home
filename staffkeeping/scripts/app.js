@@ -90,6 +90,7 @@ function performShow(view,updateUrl=true){
   if(view==='profile'){void loadSafeBusinessProfile();}
   if(view==='account'){void loadPersonalAccount();}
   if(view==='dashboard')void loadMemberDashboard();
+  if(view==='reviews')void skRenderReviews();
   if(view==='market'){void skRefreshActiveBusiness().then(()=>loadMarketplace());void skLoadSavedSearches();}
   if(view==='my-listings'){void skRefreshActiveBusiness();loadMyListings();}
   if(view==='my-businesses')loadMyBusinesses();
@@ -114,7 +115,8 @@ async function loadMemberDashboard(){
   window.SK_AUTH.chatThreads(),
   window.SK_AUTH.listListingDrafts(),
   window.SK_AUTH.listNewBusinessDrafts(),
-  window.SK_AUTH.chatUnreadCounts()
+  window.SK_AUTH.chatUnreadCounts(),
+  window.SK_AUTH.partnershipOverview()
  ]);
  if(version!==skDashboardLoadVersion||currentScreen!=='dashboard')return;
  const value=i=>results[i].status==='fulfilled'&&Array.isArray(results[i].value)?results[i].value:null;
@@ -125,26 +127,36 @@ async function loadMemberDashboard(){
  const expired=items?.filter(x=>skListingEffectiveStatus(x)==='Abgelaufen')||[];
  const ending=items?.filter(x=>x.status==='Aktiv'&&x.date_to>=skTodayCH()&&x.date_to<=skDateOffsetCH(7))||[];
  const pending=businesses?.filter(x=>['submitted','changes_requested','rejected'].includes(x.review_state)||x.status==='Ausstehend')||[];
+ const partnerships=value(6);
+ const offered=partnerships?.filter(p=>p.state==='angeboten')||[];
+ const awarded=partnerships?.filter(p=>p.state==='angenommen')||[];
+ const toReview=partnerships?.filter(p=>p.state==='abgeschlossen'&&!p.has_reviewed)||[];
  const cards=[
   ['Ungelesene Nachrichten',count(unreadTotal),'messages','Nachrichten öffnen'],
   ['Unterhaltungen',count(threads===null?null:threads.filter(t=>!t.closed_at&&!t.archived_at).length),'messages','Chats öffnen'],
   ['Aktive Inserate',count(items?.filter(x=>skListingEffectiveStatus(x)==='Aktiv').length??null),'my-listings','Inserate verwalten'],
   ['Abgelaufene Inserate',count(items===null?null:expired.length),'my-listings','Inserate prüfen'],
-  ['Betriebe mit Prüfstatus',count(businesses===null?null:pending.length),'my-businesses','Meine Betriebe']
+  ['Betriebe mit Prüfstatus',count(businesses===null?null:pending.length),'my-businesses','Meine Betriebe'],
+  ['Offene Vergaben',count(partnerships===null?null:offered.length),'messages','Vergaben prüfen'],
+  ['Bestätigte Partnerschaften',count(partnerships===null?null:awarded.length),'messages','Zusammenarbeiten ansehen'],
+  ['Bewertungen offen',count(partnerships===null?null:toReview.length),'reviews','Bewertungen öffnen']
  ];
  const cardsHtml=cards.map(([label,num,view,action],index)=>`<article class="sk-dash-card"><span>${esc(label)}</span><strong ${index===0?'id="sk-dashboard-unread-count"':''}>${esc(num)}</strong><button type="button" data-view="${view}">${esc(action)} →</button></article>`).join('');
  const notice=(title,subtitle,view)=>`<li><div><strong>${esc(title)}</strong><small>${esc(subtitle)}</small></div><button type="button" class="subtle-btn" data-view="${view}">Öffnen →</button></li>`;
  let alerts=[];
+ for(const p of offered.slice(0,5))alerts.push(notice(p.listing_title,'Vergabeangebot wartet auf Antwort','messages'));
+ for(const p of awarded.slice(0,5))alerts.push(notice(p.listing_title,'Zusammenarbeit läuft · Abschluss bestätigen','messages'));
+ for(const p of toReview.slice(0,5))alerts.push(notice(p.listing_title,'Zusammenarbeit abgeschlossen · Bewertung ausstehend','reviews'));
  for(const l of expired.slice(0,5))alerts.push(notice(l.title,'Inserat abgelaufen · Enddatum prüfen','my-listings'));
  for(const l of ending.slice(0,5))alerts.push(notice(l.title,'Inserat läuft innerhalb von 7 Tagen ab','my-listings'));
  for(const b of pending.slice(0,5))alerts.push(notice(b.company_name||'Betrieb',skBusinessStatus(b.review_state||b.status),'my-businesses'));
  if(listingDrafts?.length)alerts.push(notice(`${listingDrafts.length} private Inserateentwürfe`,'Noch nicht veröffentlicht','my-listings'));
  if(businessDrafts?.length)alerts.push(notice(`${businessDrafts.length} private Betriebsentwürfe`,'Noch nicht eingereicht','my-businesses'));
- const failed=results.map((r,i)=>r.status==='rejected'?['Inserate','Betriebe','Unterhaltungen','Inserateentwürfe','Betriebsentwürfe','Lesestatus'][i]:null).filter(Boolean);
+ const failed=results.map((r,i)=>r.status==='rejected'?['Inserate','Betriebe','Unterhaltungen','Inserateentwürfe','Betriebsentwürfe','Lesestatus','Partnerschaften'][i]:null).filter(Boolean);
  root.innerHTML=`<div class="sk-dash-cards">${cardsHtml}</div>
  <section class="panel sk-dash-panel"><h2>Aktuelles und Aufgaben</h2>${alerts.length?`<ul class="sk-dash-alerts">${alerts.join('')}</ul>`:'<p class="muted">Keine anstehenden Aufgaben aus den verfügbaren Daten.</p>'}</section>
  <section class="panel sk-dash-panel"><h2>Direkt starten</h2><div class="sk-dash-actions"><button type="button" class="btn" data-view="market">Marktplatz durchsuchen</button><button type="button" class="btn btn-outline" data-view="my-listings">Meine Inserate</button><button type="button" class="btn btn-outline" data-view="messages">Nachrichten</button><button type="button" class="btn btn-outline" data-view="my-businesses">Meine Betriebe</button></div></section>
- <section class="panel sk-dash-panel"><h2>Geplante Erweiterungen</h2><p class="muted">Ungelesene Nachrichten werden pro Benutzer und Unterhaltung gezählt. Beim Öffnen werden angezeigte Nachrichten als gelesen markiert.</p><p class="muted">Neue Treffer gespeicherter Suchen: verfügbar, sobald die gespeicherten Suchen und die Trefferprüfung umgesetzt sind.</p><p class="muted">Mitgliedschaft: Ablaufhinweise folgen, sobald die verbindlichen Laufzeitdaten und Regeln definiert sind.</p></section>
+ <section class="panel sk-dash-panel"><h2>Weitere Erweiterungen</h2><p class="muted">Vergaben, abgeschlossene Zusammenarbeiten und ausstehende Bewertungen werden aus Supabase geladen.</p><p class="muted">Neue Treffer gespeicherter Suchen: verfügbar, sobald die gespeicherten Suchen und die Trefferprüfung umgesetzt sind.</p><p class="muted">Mitgliedschaft: Ablaufhinweise folgen, sobald die verbindlichen Laufzeitdaten und Regeln definiert sind.</p></section>
  ${failed.length?`<p role="alert">Einige Daten konnten nicht geladen werden: ${esc(failed.join(', '))}. Es werden keine Ersatzwerte angezeigt.</p>`:''}`;
 }
 // Nur die Ungelesen-Zahl aktualisieren: Die restlichen Dashboard-Kacheln bleiben ruhig.
@@ -983,6 +995,20 @@ async function skChatMarkVisible(thread,messages){if(!thread||!messages?.length|
 const skChatThreadsKey=threads=>JSON.stringify((threads||[]).map(t=>[t.id,t.listing_title,t.own_business_id,t.other_business_name,t.last_message_at,t.closed_at,t.archived_at]));
 const skChatMessagesKey=messages=>JSON.stringify((messages||[]).map(m=>[m.id,m.body,m.sender_business_id,m.created_at]));
 
+let skPartnerships=[],skChatOwnListingIds=new Set();
+const skPartnershipFor=t=>skPartnerships.find(p=>p.thread_id===t?.id);
+function skRenderPartnershipControls(t){
+ const box=document.getElementById('sk-partnership-controls');if(!box)return;
+ if(!t){box.innerHTML='';return;}
+ const p=skPartnershipFor(t),isOwner=p?p.owner_business_id===t.own_business_id:skChatOwnListingIds.has(t.listing_id);
+ let html='';
+ if(!p && isOwner && !t.closed_at && !t.archived_at)html='<button type="button" class="btn" data-partnership-action="offer">Inserat an diesen Betrieb vergeben</button>';
+ else if(p?.state==='angeboten')html=isOwner?'<p>Vergabe angeboten · Antwort des Interessenten ausstehend</p>':'<p>Für dieses Inserat wurde Ihnen eine Vergabe angeboten.</p><button type="button" class="btn" data-partnership-action="accept">Vergabe annehmen</button><button type="button" class="subtle-btn" data-partnership-action="reject">Ablehnen</button>';
+ else if(p?.state==='abgelehnt')html='<p>Vergabe abgelehnt.</p>'+(isOwner&&!t.closed_at&&!t.archived_at?'<button type="button" class="subtle-btn" data-partnership-action="offer">Erneut anbieten</button>':'');
+ else if(p?.state==='angenommen'){const mineDone=isOwner?p.owner_finished:p.partner_finished;html='<p>Inserat vergeben · Zusammenarbeit bestätigt.'+(mineDone?' Ihre Abschlussbestätigung ist erfasst.':'')+'</p>'+(!mineDone?'<button type="button" class="btn" data-partnership-action="finish">Zusammenarbeit abgeschlossen</button>':'<p>Die Abschlussbestätigung des anderen Betriebs steht noch aus.</p>');}
+ else if(p?.state==='abgeschlossen')html='<p>Zusammenarbeit abgeschlossen · Bewertung unter «Bewertungen» möglich.</p><button type="button" class="subtle-btn" data-view="reviews">Bewertungen öffnen</button>';
+ box.innerHTML=html;
+}
 const chatStatus=()=>document.getElementById('chat-status');
 async function renderChats(preselect=null){
  const renderVersion=++skChatRenderVersion;
@@ -990,6 +1016,8 @@ async function renderChats(preselect=null){
  chatStatus().textContent='Unterhaltungen werden geladen …';
  try{
   chatThreads=await window.SK_AUTH.chatThreads();
+  try{skChatOwnListingIds=new Set((await window.SK_AUTH.listMyListings()).map(l=>l.id));}catch(_error){skChatOwnListingIds=new Set();}
+  try{skPartnerships=await window.SK_AUTH.partnershipOverview();}catch(err){skPartnerships=[];console.warn('[StaffKeeping Partnerschaften]',err.message);}
   try{await skChatLoadUnread();}catch(e){skChatUnread=new Map();console.warn('[StaffKeeping Lesestatus]',e.message);}
   if(renderVersion!==skChatRenderVersion||currentScreen!=='messages')return;
   if(preselect)selectedChatId=preselect;
@@ -1013,11 +1041,12 @@ async function renderChats(preselect=null){
   list.innerHTML=visible.length?visible.map(t=>`<button type="button" class="conversation-btn ${t.id===selectedChatId?'active':''}" data-chat="${esc(t.id)}"><strong>${esc(t.listing_title||'Inserat')}</strong><small>${esc(t.other_business_name||'Betrieb')}</small>${(t.archived_at||t.closed_at)?'<small>Abgeschlossen / archiviert</small>':''}${(skChatUnread.get(t.id)||0)>0?`<span class="sk-chat-unread" aria-label="${skChatUnread.get(t.id)} ungelesene Nachrichten">${skChatUnread.get(t.id)} neu</span>`:''}</button>`).join(''):'<p class="muted">Keine Unterhaltungen für diese Auswahl vorhanden.</p>';
   const thread=visible.find(t=>t.id===selectedChatId);
   heading.innerHTML=thread?`<strong>${esc(thread.listing_title||'Inserat')}</strong><small>${esc(thread.other_business_name||'Betrieb')}</small><button type="button" class="sk-chat-listing-link" data-chat-listing="${esc(thread.listing_id)}">Zum Inserat →</button>`:'<strong>Unterhaltung auswählen</strong>';
+  skRenderPartnershipControls(thread);
   document.getElementById('chat-form').classList.toggle('hidden',!thread||!!(thread.closed_at||thread.archived_at));
   document.getElementById('chat-close').classList.toggle('hidden',!thread||!!(thread.closed_at||thread.archived_at));
   historyBox.innerHTML=thread?'<p class="muted">Nachrichten werden geladen …</p>':'';
-  if(thread){const messages=await window.SK_AUTH.chatMessages(thread.id);if(renderVersion===skChatRenderVersion&&currentScreen==='messages'&&selectedChatId===thread.id){historyBox.innerHTML=messages.map(m=>`<div class="bubble ${m.sender_business_id===thread.own_business_id?'mine':'other'}">${esc(m.body)}<small style="display:block;opacity:.7">${esc(new Date(m.created_at).toLocaleString('de-CH'))}</small></div>`).join('')||'<p class="muted">Noch keine Nachrichten.</p>';historyBox.scrollTop=historyBox.scrollHeight;skChatSnapshot=skChatThreadsKey(chatThreads)+'|'+thread.id+'|'+skChatMessagesKey(messages);try{await skChatMarkVisible(thread,messages);}catch(e){console.warn('[StaffKeeping Gelesen]',e.message);}}}
-  else skChatSnapshot=skChatThreadsKey(chatThreads)+'|';
+  if(thread){const messages=await window.SK_AUTH.chatMessages(thread.id);if(renderVersion===skChatRenderVersion&&currentScreen==='messages'&&selectedChatId===thread.id){historyBox.innerHTML=messages.map(m=>`<div class="bubble ${m.sender_business_id===thread.own_business_id?'mine':'other'}">${esc(m.body)}<small style="display:block;opacity:.7">${esc(new Date(m.created_at).toLocaleString('de-CH'))}</small></div>`).join('')||'<p class="muted">Noch keine Nachrichten.</p>';historyBox.scrollTop=historyBox.scrollHeight;skChatSnapshot=skChatThreadsKey(chatThreads)+'|'+JSON.stringify(skPartnerships.map(p=>[p.thread_id,p.state,p.owner_finished,p.partner_finished]))+'|'+JSON.stringify(skPartnerships.map(p=>[p.thread_id,p.state,p.owner_finished,p.partner_finished]))+'|'+thread.id+'|'+skChatMessagesKey(messages);try{await skChatMarkVisible(thread,messages);}catch(e){console.warn('[StaffKeeping Gelesen]',e.message);}}}
+  else skChatSnapshot=skChatThreadsKey(chatThreads)+'|'+JSON.stringify(skPartnerships.map(p=>[p.thread_id,p.state,p.owner_finished,p.partner_finished]))+'|';
   if(renderVersion===skChatRenderVersion)chatStatus().textContent='';
  }catch(e){chatStatus().textContent='Unterhaltungen konnten nicht geladen werden: '+e.message;historyBox.innerHTML='';}
 }
@@ -1033,7 +1062,9 @@ async function skChatCheckUpdates(){
   const messages=active?await window.SK_AUTH.chatMessages(inspectedThread):[];
   try{await skChatLoadUnread();}catch(_error){}
   if(currentScreen!=='messages'||document.hidden||selectedChatId!==inspectedThread)return;
-  const signature=skChatThreadsKey(threads)+'|'+(active?inspectedThread+'|'+skChatMessagesKey(messages):'');
+  const partnerships=await window.SK_AUTH.partnershipOverview();
+  const changes=JSON.stringify(partnerships.map(p=>[p.thread_id,p.state,p.owner_finished,p.partner_finished]));
+  const signature=skChatThreadsKey(threads)+'|'+changes+'|'+(active?inspectedThread+'|'+skChatMessagesKey(messages):'');
   if(signature!==skChatSnapshot)await renderChats();
   else if(active&&messages.length){try{await skChatMarkVisible(active,messages);}catch(_error){}}
  }catch(error){
@@ -1074,6 +1105,35 @@ document.getElementById('chat-heading').addEventListener('click',async e=>{
   if(currentScreen==='detail')openDetail(id);
  }catch(error){chatStatus().textContent='Inserat konnte nicht geöffnet werden: '+(error?.message||'Unbekannter Fehler');}
  finally{button.disabled=false;}
+});
+document.getElementById('sk-partnership-controls').addEventListener('click',async e=>{
+ const button=e.target.closest('[data-partnership-action]');if(!button)return;
+ const t=chatThreads.find(x=>x.id===selectedChatId);if(!t)return;
+ const action=button.dataset.partnershipAction;
+ const questions={offer:'Vergabe an diesen Betrieb verbindlich anbieten?',accept:'Vergabe für Ihren Betrieb annehmen?',reject:'Vergabe ablehnen?',finish:'Bestätigen, dass die tatsächliche Zusammenarbeit abgeschlossen ist?'};
+ if(!confirm(questions[action]||'Aktion ausführen?'))return;
+ button.disabled=true;
+ try{const result=await window.SK_AUTH.partnershipAction(t.id,t.own_business_id,action);chatStatus().textContent=result==='abschluss_ausstehend'?'Abschluss bestätigt. Die andere Seite muss ebenfalls bestätigen.':'Aktion gespeichert: '+result;await renderChats(t.id);}
+ catch(err){chatStatus().textContent='Aktion fehlgeschlagen: '+err.message;}
+ finally{button.disabled=false;}
+});
+async function skRenderReviews(){
+ const pending=document.getElementById('sk-reviews-pending'),list=document.getElementById('sk-reviews-list'),status=document.getElementById('sk-reviews-status');
+ if(!pending||!list)return;
+ pending.textContent='Bewertungen werden geladen …';list.textContent='';status.textContent='';
+ try{
+  const [partners,reviews,businesses]=await Promise.all([window.SK_AUTH.partnershipOverview(),window.SK_AUTH.partnershipReviews(),window.SK_AUTH.listApprovedBusinesses()]);
+  const names=new Map(businesses.map(b=>[b.id,b.company_name||'Betrieb']));
+  const editable=partners.filter(p=>p.state==='abgeschlossen'&&!p.has_reviewed);
+  pending.innerHTML=editable.length?editable.map(p=>{const mine=names.has(p.owner_business_id)?p.owner_business_id:p.partner_business_id;const other=mine===p.owner_business_id?p.partner_business_id:p.owner_business_id;return `<div class="sk-review-item"><strong>${esc(p.listing_title)}</strong><p>${esc(names.get(other)||'Partnerbetrieb')}</p><form data-partnership-review="${esc(p.id)}" data-business="${esc(mine)}"><label>Gesamtbewertung <select name="stars" required><option value="5">5 Sterne</option><option value="4">4 Sterne</option><option value="3">3 Sterne</option><option value="2">2 Sterne</option><option value="1">1 Stern</option></select></label><label>Kommentar (freiwillig)<textarea name="comment" maxlength="1000" rows="3"></textarea></label><button type="submit" class="btn">Bewertung abgeben</button></form></div>`;}).join(''):'<p class="muted">Keine ausstehenden Bewertungen.</p>';
+  list.innerHTML=reviews.length?reviews.map(r=>`<div class="sk-review-item"><strong>${esc(r.listing_title)}</strong><p>${esc(r.reviewer_name||'Betrieb')} · ${r.visible?`<span class="sk-review-stars">${'★'.repeat(Number(r.stars)||0)}${'☆'.repeat(5-(Number(r.stars)||0))}</span>`:'Bewertung bis zur gegenseitigen Abgabe verborgen'}</p>${r.visible&&r.comment?`<p>${esc(r.comment)}</p>`:''}<small>${esc(new Date(r.created_at).toLocaleDateString('de-CH'))}</small></div>`).join(''):'<p class="muted">Noch keine Bewertungen vorhanden.</p>';
+ }catch(err){pending.textContent='Bewertungen konnten nicht geladen werden: '+err.message;}
+}
+document.getElementById('sk-reviews-pending').addEventListener('submit',async e=>{
+ const form=e.target.closest('[data-partnership-review]');if(!form)return;e.preventDefault();
+ const button=form.querySelector('[type="submit"]');button.disabled=true;
+ try{await window.SK_AUTH.partnershipReview(form.dataset.partnershipReview,form.dataset.business,Number(form.elements.stars.value),form.elements.comment.value);await skRenderReviews();}
+ catch(err){document.getElementById('sk-reviews-status').textContent='Bewertung konnte nicht gespeichert werden: '+err.message;button.disabled=false;}
 });
 document.getElementById('chat-archive-toggle').addEventListener('click',()=>{skChatShowArchived=!skChatShowArchived;selectedChatId=null;void renderChats();});
 document.getElementById('chat-close').addEventListener('click',async()=>{const t=chatThreads.find(x=>x.id===selectedChatId);if(!t||!confirm('Unterhaltung für beide Seiten abschliessen? Sie bleibt im Archiv lesbar.'))return;try{await window.SK_AUTH.chatClose(t.id,t.own_business_id);selectedChatId=null;await renderChats();}catch(e){chatStatus().textContent='Unterhaltung konnte nicht abgeschlossen werden: '+e.message;}});

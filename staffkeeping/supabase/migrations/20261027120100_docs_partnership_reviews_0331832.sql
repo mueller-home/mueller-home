@@ -1,0 +1,11 @@
+-- StaffKeeping 0.33.1.8.32 – Zentrale Projektdokumentation
+BEGIN;
+UPDATE sk_internal.project_doc_chapters SET body=body||E'\n\n'||$note$
+## 0.33.1.8.32 – Vergabe und Bewertungen
+Verbindlicher Ablauf: Inserateigner bietet innerhalb einer bestehenden Unterhaltung eine Vergabe an; nur der kontaktierende Partnerbetrieb kann annehmen oder ablehnen. Annahme setzt den Inseratstatus auf «Vergeben», blendet das Inserat aus dem öffentlichen Marktplatz aus und archiviert die übrigen Gespräche. Die Gewinnerunterhaltung bleibt für weitere Absprachen offen. Beide Betriebe bestätigen unabhängig das Ende der tatsächlichen Zusammenarbeit. Erst nach beiden Abschlussbestätigungen: Status «Abgeschlossen», Archivierung der Gewinnerunterhaltung und gegenseitige Bewertung mit 1–5 Sternen und freiwilligem Text. Maximal eine Bewertung je Betrieb und Partnerschaft; Gegenbewertung erscheint erst nach beidseitiger Bewertung oder nach 14 Tagen. Sicherheit: Private Tabellen ohne direkte Clientrechte; Aktionen über RPC und Mitgliedschaftsprüfung, DB-Schutz von Inseraten mit Partnerschaft, Ablaufjob darf Vergeben/Abgeschlossen nicht verändern. Dashboard: offene Vergaben, laufende Partnerschaften, ausstehende Bewertungen, direkte Zugriffe. Noch offen: produktiver Retest, Negativtests, Wiederöffnung/Aufhebung von Vergaben, Beschwerden bei Bewertungen und datenschutzrechtliche Löschwege für Partnerschaftsdaten.
+$note$,updated_at=now() WHERE slug='concept' AND position('## 0.33.1.8.32 – Vergabe und Bewertungen' IN body)=0;
+UPDATE sk_internal.project_doc_chapters SET body=body||E'\n\n'||$note$
+## 0.33.1.8.32 – Entwicklungsstand
+Version 0.33.1.8.32 als ZIP + 2 SQL-Migrationen vorbereitet; produktiver Einsatz und Browsertest noch NICHT bestätigt. Testfolge: (1) Eigner bietet Vergabe an, (2) Interessent lehnt ab, (3) erneutes Angebot oder anderer Interessent, (4) Annahme blendet Inserat aus Markt, (5) anderer Chat archiviert, gewählter bleibt offen, (6) beide bestätigen tatsächliches Ende, (7) gegenseitige Bewertungen, (8) Dashboard zählt richtig, (9) Fremdbetrieb und manipulierter RPC abweisen, (10) stündlicher Ablaufjob respektiert Vergeben/Abgeschlossen. Offene Themen 0.33.1.8.31 und früher beibehalten.
+$note$,updated_at=now() WHERE slug='status' AND position('## 0.33.1.8.32 – Entwicklungsstand' IN body)=0;
+COMMIT;
