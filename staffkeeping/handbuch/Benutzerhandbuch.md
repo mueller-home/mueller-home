@@ -1,151 +1,295 @@
 # StaffKeeping – Benutzerhandbuch
 
-Dieses Handbuch begleitet dich bei der Nutzung von StaffKeeping – vom Betriebseintrag über die Suche und Kontaktaufnahme bis zum Abschluss einer Zusammenarbeit.
+## Vom ersten Login bis zur Zusammenarbeit
 
-## Meine Übersicht
+Dieses Handbuch führt dich Schritt für Schritt durch die wichtigsten Tätigkeiten in StaffKeeping. Beginne bei der Registrierung und folge den Kapiteln, die für dich relevant sind.
 
+## 1. Registrieren und anmelden
 
-Nach der Anmeldung zeigt «Meine Übersicht» deine wichtigsten Aufgaben und Aktivitäten. Wähle eine Kachel oder einen Eintrag unter «Aktuelles und Aufgaben», um direkt zum entsprechenden Bereich zu gelangen.
+# Wie registriere ich mich und melde mich an?
 
-Die Zahl ungelesener Nachrichten wird bei geöffneter Übersicht automatisch aktualisiert. Hinweise auf den Abschluss einer Zusammenarbeit erscheinen erst, wenn das Bis-Datum des Inserats erreicht ist.
+1. Öffne StaffKeeping und wähle die Registrierung.
+2. Gib deine persönlichen Angaben und deine E-Mail-Adresse ein und lege dein Passwort fest.
+3. Schliess die Registrierung ab und bestätige deine E-Mail-Adresse, wenn du dazu aufgefordert wirst.
+4. Melde dich mit deinen Zugangsdaten an.
+5. Erfasse anschliessend deinen ersten Betrieb und reiche ihn zur Freigabe ein.
 
+Nach der Anmeldung führt dich «Meine Übersicht» zu deinen wichtigsten Aufgaben. Über dein Profil verwaltest du deine persönlichen Angaben. Wenn du für mehrere Betriebe tätig bist, nutzt du weiterhin dasselbe Benutzerkonto.
 
-> **Screenshot noch erstellen** – Meine Übersicht mit mindestens einer Aufgabe und sichtbaren Kacheln. Dateiname: `dashboard-uebersicht-01.png`. Ablage: `sk-help-images/sk-guide-overview/dashboard-uebersicht-01.png`.
+> **Screenshot-Platzhalter: `registrierung-01.png`**
+> Aufnahme: Registrierungsseite mit den sichtbaren Eingabefeldern und der Schaltfläche zum Abschliessen der Registrierung; keine echten persönlichen Angaben.
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-start/registrierung-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-start/registrierung-01.png`
 
+> **Screenshot-Platzhalter: `dashboard-uebersicht-01.png`**
+> Aufnahme: Persönliche Übersicht mit Kennzahlen und mindestens einer Aufgabe unter «Aktuelles und Aufgaben»; sensible Inhalte anonymisieren.
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-overview/dashboard-uebersicht-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-overview/dashboard-uebersicht-01.png`
 
-## Meine Betriebe und aktiver Betrieb
 
+## 2. Einen Betrieb erfassen und freigeben lassen
 
-Unter «Meine Betriebe» siehst du den Genehmigungsstatus deiner Betriebe. Neue Betriebe werden erst nach ausdrücklicher Einreichung zur Prüfung an die Administration übermittelt.
+# Wie erfasse ich meinen Betrieb?
 
-Mit «Entwurf speichern» kannst du unvollständige Angaben privat sichern. Über «Entwurf fortsetzen» arbeitest du später weiter. «Schliessen» verlässt das Formular; das X bietet bei ungesicherten Änderungen die Wahl zwischen Weiterbearbeiten und Verwerfen.
+1. Öffne «Meine Betriebe» und beginne die Erfassung eines neuen Betriebs.
+2. Trage Betriebsname, Kontakt- und Adressangaben ein.
+3. Prüfe den Standort auf der Karte. Falls erforderlich, setze den Marker an die richtige Position und bestätige ihn.
+4. Wenn du noch nicht alle Angaben hast, wähle «Entwurf speichern». Über «Entwurf fortsetzen» kannst du später weiterarbeiten.
+5. Kontrolliere die vollständigen Angaben und wähle «Betrieb zur Prüfung erfassen».
+6. Verfolge den Genehmigungsstatus unter «Meine Betriebe». Nach der Freigabe kannst du den Betrieb für deine Aktivitäten verwenden.
 
-Wenn du mehrere freigegebene Betriebe hast, kannst du im Header den **aktiven Betrieb** wählen. Bei nur einem Betrieb erfolgt die Auswahl automatisch, ohne sichtbares Feld. Der aktive Betrieb dient beispielsweise als Ausgangspunkt der Umkreissuche und als vorausgewählter Absender im Chat. Eine gespeicherte Umkreissuche behält den Betrieb, mit dem sie gespeichert wurde.
+Jeder Betrieb wird einzeln geprüft. Die Freigabe eines Betriebs gilt nicht automatisch für andere Betriebe desselben Benutzers.
 
+**Mit mehreren Betrieben arbeiten:** Wenn du mehrere freigegebene Betriebe hast, wähle den «Aktiven Betrieb» im Header. Er dient unter anderem als Ausgangspunkt der Umkreissuche und wird bei neuen Inseraten und Kontaktaufnahmen vorausgewählt. Bei genau einem freigegebenen Betrieb erfolgt die Auswahl automatisch.
 
-> **Screenshot noch erstellen** – «Meine Betriebe» mit privatem Entwurf und Prüfstatus. Dateiname: `meine-betriebe-01.png`. Ablage: `sk-help-images/sk-guide-businesses/meine-betriebe-01.png`.
+> **Screenshot-Platzhalter: `meine-betriebe-01.png`**
+> Aufnahme: «Meine Betriebe» mit einem genehmigten Betrieb und einem Entwurf oder ausstehenden Antrag; Status vollständig sichtbar.
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-businesses/meine-betriebe-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-businesses/meine-betriebe-01.png`
 
+> **Screenshot-Platzhalter: `aktiver-betrieb-01.png`**
+> Aufnahme: Header eines Kontos mit mindestens zwei freigegebenen Betrieben; Auswahl «Aktiver Betrieb» geöffnet.
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-businesses/aktiver-betrieb-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-businesses/aktiver-betrieb-01.png`
 
 
-> **Screenshot noch erstellen** – Header bei einem Benutzer mit zwei freigegebenen Betrieben, Auswahl aufgeklappt. Dateiname: `aktiver-betrieb-01.png`. Ablage: `sk-help-images/sk-guide-businesses/aktiver-betrieb-01.png`.
+## 3. Ein Inserat erstellen und veröffentlichen
 
+# Wie erstelle ich ein Inserat?
 
-## Marktplatz und Karte
+1. Stelle sicher, dass dein Betrieb freigegeben ist. Bei mehreren Betrieben wählst du zuerst den passenden aktiven Betrieb.
+2. Öffne «Meine Inserate» und beginne die Erfassung eines neuen Inserats.
+3. Wähle, ob du Personal suchst oder Personal anbietest, und ergänze Titel, Kategorie und Beschreibung.
+4. Gib den Zeitraum sowie die zutreffenden Rahmenbedingungen ein, beispielsweise die Unterkunft.
+5. Kontrolliere alle Angaben. Speichere einen privaten Entwurf, wenn du später weiterarbeiten möchtest.
+6. Reiche das vollständige Inserat zur Veröffentlichung ein beziehungsweise veröffentliche es über die dafür vorgesehene Aktion.
+7. Prüfe unter «Meine Inserate», ob das Inserat mit dem richtigen Status erscheint.
 
+Ein Inserat bleibt deinem ausgewählten Betrieb zugeordnet. Vor einer Vergabe kannst du es im Rahmen der angebotenen Aktionen bearbeiten oder inaktiv setzen. Sobald es vergeben oder die Zusammenarbeit abgeschlossen ist, sind seine Inhalte schreibgeschützt.
 
-Im Marktplatz suchst du nach passenden Inseraten. Du kannst beispielsweise nach Stichwort, Inserattyp, Kategorie, Unterkunft oder Umkreis filtern. Bei der Umkreissuche wird der Standort des passenden aktiven Betriebs verwendet.
+> **Screenshot-Platzhalter: `inserat-erfassen-01.png`**
+> Aufnahme: Formular zum Erstellen eines Inserats mit Beispielwerten zu Titel, Zeitraum und Kategorie sowie sichtbarer Abschlussaktion.
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-create-listing/inserat-erfassen-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-create-listing/inserat-erfassen-01.png`
 
-Mit «Liste» und «Karte» wechselst du zwischen den beiden Darstellungen. Die Kartenpositionen sind ungefähre Standorte. Inserate ohne bestätigten Standort können weiterhin in der Liste erscheinen.
+> **Screenshot-Platzhalter: `meine-inserate-01.png`**
+> Aufnahme: «Meine Inserate» mit einer regulären Inseratekarte, «Private Entwürfe» und «Inaktive Inserate».
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-listings/meine-inserate-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-listings/meine-inserate-01.png`
 
-Siehst du bei einem Inserat «Zum Chat», besteht für deinen Benutzer bereits eine zugängliche Unterhaltung. Über das Inserat kannst du den betreffenden Betrieb kontaktieren.
 
+## 4. Passende Inserate finden
 
-> **Screenshot noch erstellen** – Marktplatz mit Filterfeldern und Listentreffern, mindestens ein Inserat mit Chat-Hinweis. Dateiname: `marktplatz-liste-01.png`. Ablage: `sk-help-images/sk-guide-market/marktplatz-liste-01.png`.
+# Wie finde ich ein passendes Inserat?
 
+1. Öffne «Marktplatz».
+2. Suche nach einem Stichwort oder grenze die Ergebnisse nach Inserattyp, Kategorie, Datum und Unterkunft ein.
+3. Für eine Umkreissuche wählst du den passenden aktiven Betrieb. Dessen Standort ist der Ausgangspunkt für den Radius.
+4. Wechsle zwischen «Liste» und «Karte», um die Ergebnisse zu vergleichen.
+5. Öffne ein Inserat, um Beschreibung, Zeitraum und weitere Informationen anzusehen.
+6. Wenn das Angebot zu deinem Bedarf passt, nimm über «Kontakt aufnehmen» Verbindung auf.
 
+Die Kartenmarker zeigen ungefähre Positionen. Inserate ohne bestätigten Standort findest du weiterhin in der Listenansicht.
 
-> **Screenshot noch erstellen** – Kartenansicht mit mindestens zwei räumlich getrennten Markern und geöffnetem Inserathinweis. Dateiname: `marktplatz-karte-01.png`. Ablage: `sk-help-images/sk-guide-market/marktplatz-karte-01.png`.
+> **Screenshot-Platzhalter: `marktplatz-liste-01.png`**
+> Aufnahme: Marktplatz-Liste mit sichtbaren Suchfiltern und mindestens zwei passenden Inseraten.
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-market/marktplatz-liste-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-market/marktplatz-liste-01.png`
 
+> **Screenshot-Platzhalter: `marktplatz-karte-01.png`**
+> Aufnahme: Marktplatz-Karte mit mindestens zwei örtlich getrennten Markern; ein Inserathinweis ist geöffnet.
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-market/marktplatz-karte-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-market/marktplatz-karte-01.png`
 
-## Gespeicherte Suchen
 
+## 5. Eine Suche speichern und Treffer verfolgen
 
-Stelle zuerst die gewünschten Marktplatzfilter ein. Wähle danach «Suche speichern» und gib der Suche einen Namen. Gespeicherte Suchen kannst du später öffnen, ändern oder löschen.
+# Wie speichere ich eine Suche?
 
-Aktiviere bei einer gespeicherten Suche «E-Mail bei neuen Treffern», wenn du über neu passende Inserate informiert werden möchtest. Über die Einstellungen der Suche kannst du die Benachrichtigung jederzeit wieder deaktivieren.
+1. Stelle im Marktplatz die Filter so ein, wie du sie künftig wiederverwenden möchtest.
+2. Wähle «Suche speichern» und vergib einen aussagekräftigen Namen.
+3. Entscheide, ob du bei neuen passenden Inseraten per E-Mail benachrichtigt werden möchtest.
+4. Öffne eine gespeicherte Suche, um dieselben Filter erneut anzuwenden.
+5. Bearbeite, benenne sie um oder lösche sie, wenn sich dein Bedarf ändert.
 
-Eine gespeicherte Umkreissuche ist an ihren gewählten Ausgangsbetrieb gebunden. Ein späterer Wechsel des aktiven Betriebs verändert den gespeicherten Ausgangspunkt nicht.
+Bei einer Umkreissuche bleibt der beim Speichern gewählte Ausgangsbetrieb mit der Suche verbunden. Ein späterer Wechsel des aktiven Betriebs verändert diese Suche nicht.
 
+> **Screenshot-Platzhalter: `gespeicherte-suchen-01.png`**
+> Aufnahme: Marktplatz mit einer benannten gespeicherten Suche und sichtbarer E-Mail-Einstellung.
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-searches/gespeicherte-suchen-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-searches/gespeicherte-suchen-01.png`
 
-> **Screenshot noch erstellen** – Marktplatz mit Bereich «Gespeicherte Suchen», einer benannten Suche und E-Mail-Option. Dateiname: `gespeicherte-suchen-01.png`. Ablage: `sk-help-images/sk-guide-searches/gespeicherte-suchen-01.png`.
 
+## 6. Mit einem anderen Betrieb Kontakt aufnehmen
 
-## Meine Inserate
+# Wie nehme ich Kontakt zu einem Inserat auf?
 
+1. Öffne das Inserat, das dich interessiert.
+2. Wähle «Kontakt aufnehmen». Wenn du mehrere berechtigte Betriebe hast, prüfe den ausgewählten Absenderbetrieb.
+3. Formuliere deine erste Nachricht direkt auf der Inseratseite und sende sie ab.
+4. Öffne «Nachrichten», um die Antwort zu lesen und das Gespräch fortzusetzen. Neue Nachrichten erscheinen automatisch.
+5. Über «Zum Inserat» kannst du die Angaben erneut ansehen, auch wenn das Inserat nach einer angenommenen Vergabe nicht mehr öffentlich erscheint.
 
-Unter «Meine Inserate» findest du deine Inserate und privaten Entwürfe. Inaktive Inserate stehen in einer eigenen Gruppe unter «Private Entwürfe».
+Besteht bereits eine Unterhaltung zu diesem Inserat, führt «Zum Chat» zum bestehenden Gespräch. In der Nachrichtenübersicht erscheinen normalerweise aktive Unterhaltungen. Archivierte Gespräche öffnest du über den entsprechenden Link. Bei mehreren Betrieben kannst du die Unterhaltungen nach deinem Betrieb filtern.
 
-Im Bereich «Als Partner» werden zugeteilte Zusammenarbeiten getrennt angezeigt: zuerst **«Zusammenarbeit läuft»**, darunter **«Zusammenarbeit abgeschlossen»**. Über «Zum Chat» öffnest du die dazugehörige Unterhaltung.
+> **Screenshot-Platzhalter: `nachrichten-aktiv-01.png`**
+> Aufnahme: Aktive Unterhaltung mit Inseratetitel, «Zum Inserat», Nachrichtenverlauf und Eingabefeld.
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-chat/nachrichten-aktiv-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-chat/nachrichten-aktiv-01.png`
 
-Bei einem Inserat mit Chatverlauf führt das Entfernen zur Deaktivierung statt zum endgültigen Löschen. Vergebene und abgeschlossene Inserate bleiben lesbar, können aber nicht mehr bearbeitet werden.
 
+## 7. Ein Inserat vergeben oder eine Vergabe annehmen
 
-> **Screenshot noch erstellen** – «Meine Inserate» mit regulären Inseraten, privaten Entwürfen und Gruppe «Inaktive Inserate». Dateiname: `meine-inserate-01.png`. Ablage: `sk-help-images/sk-guide-listings/meine-inserate-01.png`.
+# Wie vereinbare ich eine Zusammenarbeit?
 
+**Wenn du das Inserat erstellt hast:**
 
+1. Öffne die Unterhaltung mit dem Betrieb, mit dem du zusammenarbeiten möchtest.
+2. Wähle «Inserat an diesen Betrieb vergeben».
+3. Warte, bis der angefragte Betrieb das Angebot annimmt oder ablehnt.
+4. Sobald die Vergabe angenommen wurde, ist das Inserat nicht mehr im öffentlichen Marktplatz sichtbar. Der gemeinsame Chat bleibt für Absprachen offen.
 
-> **Screenshot noch erstellen** – Reiter «Als Partner» mit den Gruppen «Zusammenarbeit läuft» und «Zusammenarbeit abgeschlossen». Dateiname: `als-partner-01.png`. Ablage: `sk-help-images/sk-guide-listings/als-partner-01.png`.
+**Wenn du Interesse an einem Inserat hast:**
 
+1. Öffne die entsprechende Unterhaltung.
+2. Prüfe das Vergabeangebot und die Inseratdetails.
+3. Wähle «Annehmen» oder «Ablehnen».
+4. Nach der Annahme findest du das Inserat unter «Meine Inserate» → «Als Partner» in «Zusammenarbeit läuft».
 
-## Nachrichten und Chat
+Andere Unterhaltungen zu einem vergebenen Inserat werden archiviert. Das vergebene Inserat bleibt für die beteiligten Betriebe lesbar, kann aber nicht mehr bearbeitet werden.
 
+> **Screenshot-Platzhalter: `vergabe-anbieten-01.png`**
+> Aufnahme: Unterhaltung aus Sicht des Inserateigners mit Aktion «Inserat an diesen Betrieb vergeben».
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-awards/vergabe-anbieten-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-awards/vergabe-anbieten-01.png`
 
-Öffne ein Inserat und wähle «Kontakt aufnehmen». Die erste Nachricht schreibst du direkt im Inserat. Falls du mehrere berechtigte Betriebe hast, kann der Absenderbetrieb gewählt werden.
+> **Screenshot-Platzhalter: `vergabe-annehmen-01.png`**
+> Aufnahme: Unterhaltung aus Sicht des Interessenten mit Vergabeangebot und Aktionen «Annehmen» und «Ablehnen».
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-awards/vergabe-annehmen-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-awards/vergabe-annehmen-01.png`
 
-In «Nachrichten» siehst du standardmässig die aktiven Unterhaltungen. Neue Nachrichten erscheinen bei geöffnetem Nachrichtenfenster automatisch; du musst die Seite nicht neu laden. Ungelesene Nachrichten sind gekennzeichnet.
+> **Screenshot-Platzhalter: `als-partner-01.png`**
+> Aufnahme: «Meine Inserate» → «Als Partner» mit «Zusammenarbeit läuft» oberhalb von «Zusammenarbeit abgeschlossen».
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-awards/als-partner-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-awards/als-partner-01.png`
 
-Über «Zum Inserat» öffnest du das zugehörige Inserat. Auch nach einer angenommenen Vergabe ist das Inserat für die beteiligten Betriebe weiterhin lesbar.
 
-Beide Seiten dürfen eine Unterhaltung abschliessen. Abgeschlossene oder archivierte Unterhaltungen werden nur über den Archivlink angezeigt, sofern solche vorhanden sind. Beim normalen Wechsel zu «Nachrichten» wird wieder die aktive Ansicht geöffnet.
+## 8. Eine Zusammenarbeit abschliessen
 
+# Wie schliesse ich eine Zusammenarbeit ab?
 
-> **Screenshot noch erstellen** – Aktiver Chat mit Inseratetitel im Vordergrund, «Zum Inserat» und Nachrichtenverlauf. Dateiname: `nachrichten-aktiv-01.png`. Ablage: `sk-help-images/sk-guide-chat/nachrichten-aktiv-01.png`.
+1. Führe die vereinbarte Zusammenarbeit durch und nutze den gemeinsamen Chat für organisatorische Absprachen.
+2. Nach dem Ende der Zusammenarbeit öffnest du die zugehörige Unterhaltung.
+3. Wähle «Zusammenarbeit abgeschlossen» beziehungsweise «Abschluss der Zusammenarbeit bestätigen».
+4. Die andere Seite bestätigt den Abschluss unabhängig davon ebenfalls.
+5. Sobald beide Bestätigungen vorliegen, gilt die Zusammenarbeit als abgeschlossen; anschliessend kannst du den Partner bewerten.
 
+Die Aufgabe zur Abschlussbestätigung erscheint in «Meine Übersicht» ab dem Bis-Datum des Inserats. Eine Bestätigung bedeutet nicht automatisch, dass du mit der Leistung zufrieden warst: Dafür steht die separate Bewertung zur Verfügung.
 
-## Vergaben und Zusammenarbeit
+Abgeschlossene Zusammenarbeiten findest du unter «Meine Inserate» → «Als Partner» in «Zusammenarbeit abgeschlossen». Die Unterhaltung bleibt im Archiv lesbar.
 
+> **Screenshot-Platzhalter: `abschluss-bestaetigen-01.png`**
+> Aufnahme: Chat einer angenommenen Zusammenarbeit mit der Aktion zur Abschlussbestätigung und erkennbarem Inseratetitel.
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-completion/abschluss-bestaetigen-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-completion/abschluss-bestaetigen-01.png`
 
-Der Inserateigner kann im Chat dem gewünschten Betrieb die Vergabe anbieten. Der Interessent nimmt das Angebot ausdrücklich an oder lehnt es ab.
 
-Nach der Annahme ist das Inserat nicht mehr öffentlich im Marktplatz sichtbar. Für die beiden Partner bleibt es lesbar; der gemeinsame Chat bleibt für Absprachen offen. Die übrigen Interessenten-Chats werden archiviert.
+## 9. Einen Partner bewerten und Bewertungen ansehen
 
-Nach dem tatsächlichen Ende bestätigen beide Betriebe unabhängig voneinander den Abschluss. Die Aufgabe zur Abschlussbestätigung erscheint in «Meine Übersicht» erst ab dem Bis-Datum des Inserats. Sobald beide bestätigt haben, kann die Zusammenarbeit bewertet werden.
+# Wie bewerte ich eine Zusammenarbeit?
 
+1. Warte, bis beide Betriebe den Abschluss der Zusammenarbeit bestätigt haben.
+2. Öffne die Bewertungsaufgabe oder wechsle zu «Meine Bewertungen».
+3. Bewerte **Kommunikation**, **Zuverlässigkeit** und **Zusammenarbeit** jeweils mit 1 bis 5 Sternen.
+4. Ergänze auf Wunsch einen sachlichen Kommentar.
+5. Prüfe deine Angaben und sende die Bewertung ab.
 
-> **Screenshot noch erstellen** – Chat des Inserateigners mit Schaltfläche zum Vergabeangebot und Inseratetitel. Dateiname: `vergabe-anbieten-01.png`. Ablage: `sk-help-images/sk-guide-awards/vergabe-anbieten-01.png`.
+Die Gesamtbewertung ergibt sich aus den drei Kriterien. Bewertungen gehören zum betreffenden Betrieb und beziehen sich auf bestätigte Zusammenarbeiten. Die Bewertung der Gegenseite wird sichtbar, sobald beide bewertet haben oder die vorgesehene Frist abgelaufen ist.
 
+Im Inserat beziehungsweise im Betriebsprofil kannst du die Rückmeldungen anderer Mitglieder zum Betrieb ansehen. Ein öffentlicher Durchschnitt wird erst ab einer ausreichenden Anzahl veröffentlichter Bewertungen angezeigt.
 
+> **Screenshot-Platzhalter: `bewertung-erfassen-01.png`**
+> Aufnahme: Bewertungsformular mit drei Einzelkriterien, Sterneauswahl und freiwilligem Kommentar.
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-reviews/bewertung-erfassen-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-reviews/bewertung-erfassen-01.png`
 
-> **Screenshot noch erstellen** – Chat des Interessenten mit Vergabeangebot und Möglichkeiten zum Annehmen und Ablehnen. Dateiname: `vergabe-annehmen-01.png`. Ablage: `sk-help-images/sk-guide-awards/vergabe-annehmen-01.png`.
+> **Screenshot-Platzhalter: `betriebsbewertung-01.png`**
+> Aufnahme: Inseratdetail oder Betriebsprofil mit sichtbarer aggregierter Betriebsbewertung und den Kriterien; nur geeignete Beispieldaten verwenden.
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-reviews/betriebsbewertung-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-reviews/betriebsbewertung-01.png`
 
 
-## Bewertungen
+## 10. Bestehende Inserate und Partnerschaften verwalten
 
+# Wie behalte ich meine Inserate im Blick?
 
-Nach dem beidseitig bestätigten Abschluss kannst du deinen Partnerbetrieb bewerten. Öffne «Bewertungen» oder nutze den entsprechenden Einstieg nach der Abschlussbestätigung.
+1. Öffne «Meine Inserate».
+2. Prüfe die aktiven Inserate und bearbeite sie bei Bedarf.
+3. Setze ein Inserat inaktiv, wenn es vorübergehend nicht mehr angeboten werden soll.
+4. Führe unter «Private Entwürfe» noch nicht veröffentlichte Inserate weiter.
+5. Öffne «Inaktive Inserate», um deaktivierte Inserate einzusehen und gegebenenfalls wieder zu aktivieren.
+6. Wechsle zu «Als Partner», um angenommene Vergaben und abgeschlossene Zusammenarbeiten zu sehen.
 
-Vergib für **Kommunikation**, **Zuverlässigkeit** und **Zusammenarbeit** jeweils 1 bis 5 Sterne. Ein schriftlicher Kommentar ist freiwillig. StaffKeeping berechnet die Gesamtbewertung aus den drei Kriterien.
+Ein Inserat mit vorhandenen Unterhaltungen wird beim Entfernen inaktiv gesetzt; die Gesprächsverläufe bleiben erhalten und werden archiviert. Vergebene oder abgeschlossene Inserate sind schreibgeschützt und bleiben für die beteiligten Betriebe einsehbar.
 
-Pro Betrieb und Zusammenarbeit ist nur eine Bewertung möglich. Die Gegenbewertung wird nach ihrer Abgabe oder spätestens 14 Tage nach Abschluss sichtbar. Im Inseratdetail kann die Bewertung des Betriebs angezeigt werden; ein Durchschnitt erscheint erst bei mindestens drei veröffentlichten Bewertungen.
+> **Screenshot-Platzhalter: `meine-inserate-01.png`**
+> Aufnahme: «Meine Inserate» mit einer regulären Inseratekarte, «Private Entwürfe» und «Inaktive Inserate».
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-listings/meine-inserate-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-listings/meine-inserate-01.png`
 
+> **Screenshot-Platzhalter: `als-partner-01.png`**
+> Aufnahme: «Meine Inserate» → «Als Partner» mit «Zusammenarbeit läuft» oberhalb von «Zusammenarbeit abgeschlossen».
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-awards/als-partner-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-awards/als-partner-01.png`
 
-> **Screenshot noch erstellen** – Bewertungsformular mit den drei Kriterien und einem Beispielkommentar, ohne echte vertrauliche Angaben. Dateiname: `bewertung-erfassen-01.png`. Ablage: `sk-help-images/sk-guide-reviews/bewertung-erfassen-01.png`.
 
+## 11. Aufgaben und Nachrichten im Blick behalten
 
+# Wie nutze ich meine persönliche Übersicht?
 
-> **Screenshot noch erstellen** – Inseratdetail mit sichtbarer Betriebsbewertung und Durchschnitt aus mindestens drei freigegebenen Bewertungen. Dateiname: `betriebsbewertung-01.png`. Ablage: `sk-help-images/sk-guide-reviews/betriebsbewertung-01.png`.
+1. Öffne nach der Anmeldung «Meine Übersicht».
+2. Prüfe, ob ungelesene Nachrichten oder offene Vergabeangebote vorhanden sind.
+3. Klicke unter «Aktuelles und Aufgaben» auf eine Meldung, um direkt zur betreffenden Unterhaltung oder Zusammenarbeit zu gelangen.
+4. Kontrolliere deine Inserate und die Genehmigungsstände deiner Betriebe.
+5. Öffne offene Bewertungen, sobald eine Zusammenarbeit abgeschlossen wurde.
 
+Die Zahl ungelesener Nachrichten aktualisiert sich während der Nutzung der Übersicht. Die Aufgabe zur Abschlussbestätigung erscheint ab dem Bis-Datum des Inserats.
 
-## Mitgliedschaft und Preise
+> **Screenshot-Platzhalter: `dashboard-uebersicht-01.png`**
+> Aufnahme: Persönliche Übersicht mit Kennzahlen und mindestens einer Aufgabe unter «Aktuelles und Aufgaben»; sensible Inhalte anonymisieren.
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-overview/dashboard-uebersicht-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-overview/dashboard-uebersicht-01.png`
 
 
-Dein Betrieb wird erst nach der Prüfung durch die Administration freigegeben. Die Freigabe eines Betriebs gilt nicht automatisch für andere Betriebe, die du ebenfalls verwaltest.
+## 12. Mitgliedschaft und Preise verstehen
 
-Die Mitgliedschaft ist einem Betrieb zugeordnet. Wenn du mehrere Betriebe verwaltest, gelten die Mitgliedschaft und die vereinbarten Konditionen für jeden Betrieb separat.
+# Wie verwalte ich meine Mitgliedschaft?
 
-Informiere dich über die angebotenen Tarife und Konditionen. Für Fragen zu Preisen, Rechnungen, Laufzeit oder Kündigung wende dich an die StaffKeeping-Administration.
+1. Erfasse deinen Betrieb und warte auf dessen Freigabe.
+2. Informiere dich über die angebotenen Tarife und Konditionen.
+3. Wähle den gewünschten Tarif und prüfe die angezeigten Vertragsinformationen.
+4. Behalte deine Mitgliedschaft sowie ihre Laufzeit und die dazugehörigen Unterlagen im Blick.
+5. Bei Fragen zu Rechnung, Laufzeit oder Kündigung wende dich an die StaffKeeping-Administration.
 
+Mitgliedschaften sind betriebsbezogen. Wenn du mehrere Betriebe verwaltest, können diese unterschiedliche Mitgliedschaften und Konditionen haben.
 
-> **Screenshot noch erstellen** – Betriebsübersicht mit sichtbarem Freigabestatus, ohne persönliche Kontaktdaten. Dateiname: `betriebsstatus-01.png`. Ablage: `sk-help-images/sk-guide-membership/betriebsstatus-01.png`.
+> **Screenshot-Platzhalter: `betriebsstatus-01.png`**
+> Aufnahme: Betriebsübersicht mit Genehmigungsstatus, ohne persönliche Kontaktdaten.
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-membership/betriebsstatus-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-membership/betriebsstatus-01.png`
 
 
-## Hilfe verwenden
+## 13. Hilfe finden
 
+# Wo finde ich Hilfe?
 
-Über «Hilfe» öffnest du das vollständige Benutzerhandbuch mit Suchfunktion. «Hilfe zur Seite» zeigt eine Anleitung zur aktuell geöffneten Ansicht.
+1. Öffne «Hilfe», wenn du einen gesamten Ablauf nachlesen möchtest.
+2. Wähle ein Thema wie «Betrieb erfassen», «Inserat erstellen» oder «Kontakt aufnehmen».
+3. Nutze «Hilfe zur Seite», wenn du Unterstützung zu deinem gerade geöffneten Bereich suchst.
+4. Kehre nach dem Lesen zur jeweiligen Tätigkeit zurück.
 
-Wähle das passende Kapitel oder verwende die Suche, um eine Anleitung zu finden.
-
-
-> **Screenshot noch erstellen** – Handbuch mit Kapitelliste links und geöffnetem Kapitel, ohne Administrationsbearbeitung. Dateiname: `hilfe-handbuch-01.png`. Ablage: `sk-help-images/sk-guide-help/hilfe-handbuch-01.png`.
+> **Screenshot-Platzhalter: `hilfe-handbuch-01.png`**
+> Aufnahme: Geöffnetes Benutzerhandbuch mit Kapitelübersicht und einem ausgewählten Workflow-Kapitel.
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-help/hilfe-handbuch-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-help/hilfe-handbuch-01.png`
 
