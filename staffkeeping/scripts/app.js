@@ -1,6 +1,6 @@
 /* StaffKeeping 0.33.1.4 – separate business profiles, consistent administration */
 'use strict';
-const screens=['dashboard','login','register','reset','pending','market','profile','account','my-listings','my-businesses','detail','messages','reviews','admin-businesses','admin-listings','admin-dashboard','admin-docs','admin-home','admin-activity','admin-deletions','help'];
+const screens=['dashboard','login','register','reset','pending','market','profile','account','my-listings','my-businesses','detail','messages','reviews','admin-businesses','admin-listings','admin-dashboard','admin-docs','admin-pricing','admin-home','admin-activity','admin-deletions','help'];
 const navOnly=document.querySelectorAll('.nav-only'), guests=document.querySelectorAll('.guest-only');
 const publicViews=new Set(['login','register','reset','pending','help']);
 let demoSignedIn=false;
@@ -105,6 +105,7 @@ function performShow(view,updateUrl=true){
   if(view==='admin-deletions')window.SK_DELETION?.refreshAdmin();
   if(view==='admin-listings')renderAdminListings();
   if(view==='admin-docs'){renderProjectDocs();window.SK_HELP?.loadAdmin();}
+  if(view==='admin-pricing')void skRenderAdminPricing();
   if(view==='admin-home'||view==='admin-activity')window.SK_ADMIN_HOME?.load(view);
   if(view==='help')window.SK_HELP?.load();
 }
@@ -408,6 +409,19 @@ function openDetail(id){
   document.getElementById('detail-conditions').textContent=l.conditions||'Keine zusätzlichen Rahmenbedingungen angegeben.';
   document.getElementById('detail-features').innerHTML=`${l.accommodation?'<span class="status-tag">Unterkunft vorhanden</span>':'<span class="status-tag">Keine Unterkunft angegeben</span>'} ${(l.languages||[]).map(x=>`<span class="status-tag">${esc(x)}</span>`).join(' ')}`;
   document.getElementById('detail-company').textContent='Betrieb in '+l.city;
+  const reputation=document.getElementById('sk-business-reputation');
+  if(reputation){reputation.textContent='Bewertungen werden geladen …';
+   void window.SK_AUTH.businessReputation(l.business_id).then(data=>{
+     if(currentScreen!=='detail'||contact.dataset.listingId!==l.id)return;
+     if(data?.business_name)document.getElementById('detail-company').textContent=data.business_name;
+     if(!data||!data.review_count){reputation.textContent='Noch keine veröffentlichten Bewertungen.';return;}
+     if(data.review_count<3){reputation.textContent=`${data.review_count} veröffentlichte Bewertung(en) · Für einen Durchschnitt sind mindestens drei erforderlich.`;return;}
+     const stars=Number(data.average_stars||0).toFixed(1);
+     reputation.innerHTML=`<strong>★ ${esc(stars)} / 5 · ${esc(data.review_count)} Bewertungen</strong><p>Kommunikation: ${esc(Number(data.communication||0).toFixed(1))} · Zuverlässigkeit: ${esc(Number(data.reliability||0).toFixed(1))} · Zusammenarbeit: ${esc(Number(data.collaboration||0).toFixed(1))}</p>`;
+     for(const item of data.comments||[]){const p=document.createElement('p');p.textContent='«'+item+'»';reputation.appendChild(p);}
+   }).catch(()=>{if(currentScreen==='detail')reputation.textContent='Bewertungen derzeit nicht verfügbar.';});
+  }
+
   const contact=document.getElementById('detail-contact');contact.disabled=false;contact.textContent='Kontakt aufnehmen →';contact.dataset.listingId=l.id;contact.dataset.existingChat='0';
   document.getElementById('detail-contact-form').classList.add('hidden');
   show('detail');
@@ -1207,23 +1221,35 @@ document.getElementById('sk-partnership-controls').addEventListener('click',asyn
  catch(err){chatStatus().textContent='Aktion fehlgeschlagen: '+err.message;}
  finally{button.disabled=false;}
 });
+async function skRenderAdminPricing(){
+ const root=document.getElementById('sk-admin-pricing-list'),status=document.getElementById('sk-admin-pricing-status');if(!root)return;
+ root.textContent='Tarife werden geladen …';status.textContent='';
+ try{const rows=await window.SK_AUTH.adminPricingList();
+ root.innerHTML=rows.map(r=>`<form class="sk-admin-price-form" data-price-code="${esc(r.code)}"><div><strong>${esc(r.name)}</strong><p class="muted">${esc(r.description||'')}</p></div><label>Preis in CHF<input type="number" name="price" min="0" max="100000" step="0.01" required value="${esc((Number(r.amount_cents)/100).toFixed(2))}"></label><label>Währung<input value="CHF" disabled></label><button class="btn" type="submit">Speichern</button><p class="muted">${r.billing_period==='monthly'?'Monatliche Tarifvorlage':'Einmalige Gebühr'} · Zuletzt geändert: ${esc(new Date(r.updated_at).toLocaleDateString('de-CH'))}</p></form>`).join('');
+ }catch(e){root.textContent='Tarife konnten nicht geladen werden: '+e.message;}
+}
+document.getElementById('sk-admin-pricing-list').addEventListener('submit',async e=>{
+ const form=e.target.closest('[data-price-code]');if(!form)return;e.preventDefault();const button=form.querySelector('[type=submit]');button.disabled=true;
+ const amount=Number(form.elements.price.value);const status=document.getElementById('sk-admin-pricing-status');
+ try{if(!Number.isFinite(amount)||amount<0||amount>100000||!Number.isInteger(Math.round(amount*100)))throw Error('Ungültiger Betrag.');await window.SK_AUTH.adminPricingSave(form.dataset.priceCode,Math.round(amount*100));status.textContent='Preis gespeichert und Änderung protokolliert.';await skRenderAdminPricing();status.textContent='Preis gespeichert und Änderung protokolliert.';}catch(err){status.textContent='Speichern fehlgeschlagen: '+err.message;}finally{button.disabled=false;}
+});
 async function skRenderReviews(){
  const pending=document.getElementById('sk-reviews-pending'),list=document.getElementById('sk-reviews-list'),status=document.getElementById('sk-reviews-status');
  if(!pending||!list)return;
  pending.textContent='Bewertungen werden geladen …';list.textContent='';status.textContent='';
  try{
-  const [partners,reviews,businesses]=await Promise.all([window.SK_AUTH.partnershipOverview(),window.SK_AUTH.partnershipReviews(),window.SK_AUTH.listApprovedBusinesses()]);
+  const [partners,reviews,businesses]=await Promise.all([window.SK_AUTH.partnershipOverview(),window.SK_AUTH.partnershipReviewsDetailed(),window.SK_AUTH.listApprovedBusinesses()]);
   const names=new Map(businesses.map(b=>[b.id,b.company_name||'Betrieb']));
   const editable=partners.filter(p=>p.state==='abgeschlossen'&&!p.has_reviewed);
-  pending.innerHTML=editable.length?editable.map(p=>{const mine=names.has(p.owner_business_id)?p.owner_business_id:p.partner_business_id;const other=mine===p.owner_business_id?p.partner_business_id:p.owner_business_id;return `<div class="sk-review-item"><strong>${esc(p.listing_title)}</strong><p>${esc(names.get(other)||'Partnerbetrieb')}</p><form data-partnership-review="${esc(p.id)}" data-business="${esc(mine)}"><label>Gesamtbewertung <select name="stars" required><option value="5">5 Sterne</option><option value="4">4 Sterne</option><option value="3">3 Sterne</option><option value="2">2 Sterne</option><option value="1">1 Stern</option></select></label><label>Kommentar (freiwillig)<textarea name="comment" maxlength="1000" rows="3"></textarea></label><button type="submit" class="btn">Bewertung abgeben</button></form></div>`;}).join(''):'<p class="muted">Keine ausstehenden Bewertungen.</p>';
-  if(skFocusReviewPartnershipId){const form=[...pending.querySelectorAll('[data-partnership-review]')].find(el=>el.dataset.partnershipReview===skFocusReviewPartnershipId);skFocusReviewPartnershipId=null;if(form){form.scrollIntoView({behavior:'smooth',block:'center'});form.querySelector('select[name=stars]')?.focus({preventScroll:true});}}
-  list.innerHTML=reviews.length?reviews.map(r=>`<div class="sk-review-item"><strong>${esc(r.listing_title)}</strong><p>${esc(r.reviewer_name||'Betrieb')} · ${r.visible?`<span class="sk-review-stars">${'★'.repeat(Number(r.stars)||0)}${'☆'.repeat(5-(Number(r.stars)||0))}</span>`:'Bewertung bis zur gegenseitigen Abgabe verborgen'}</p>${r.visible&&r.comment?`<p>${esc(r.comment)}</p>`:''}<small>${esc(new Date(r.created_at).toLocaleDateString('de-CH'))}</small></div>`).join(''):'<p class="muted">Noch keine Bewertungen vorhanden.</p>';
+  pending.innerHTML=editable.length?editable.map(p=>{const mine=names.has(p.owner_business_id)?p.owner_business_id:p.partner_business_id;const other=mine===p.owner_business_id?p.partner_business_id:p.owner_business_id;return `<div class="sk-review-item"><strong>${esc(p.listing_title)}</strong><p>${esc(names.get(other)||'Partnerbetrieb')}</p><form data-partnership-review="${esc(p.id)}" data-business="${esc(mine)}"><label>Kommunikation<select name="communication" required><option value="">Bitte auswählen</option><option value="5">5 Sterne</option><option value="4">4 Sterne</option><option value="3">3 Sterne</option><option value="2">2 Sterne</option><option value="1">1 Sterne</option></select></label><label>Zuverlässigkeit<select name="reliability" required><option value="">Bitte auswählen</option><option value="5">5 Sterne</option><option value="4">4 Sterne</option><option value="3">3 Sterne</option><option value="2">2 Sterne</option><option value="1">1 Sterne</option></select></label><label>Zusammenarbeit<select name="collaboration" required><option value="">Bitte auswählen</option><option value="5">5 Sterne</option><option value="4">4 Sterne</option><option value="3">3 Sterne</option><option value="2">2 Sterne</option><option value="1">1 Sterne</option></select></label><p class="muted">Die Gesamtbewertung ist der Durchschnitt der drei Kriterien.</p><label>Kommentar (freiwillig)<textarea name="comment" maxlength="1000" rows="3"></textarea></label><button type="submit" class="btn">Bewertung abgeben</button></form></div>`;}).join(''):'<p class="muted">Keine ausstehenden Bewertungen.</p>';
+  if(skFocusReviewPartnershipId){const form=[...pending.querySelectorAll('[data-partnership-review]')].find(el=>el.dataset.partnershipReview===skFocusReviewPartnershipId);skFocusReviewPartnershipId=null;if(form){form.scrollIntoView({behavior:'smooth',block:'center'});form.querySelector('select[name=communication]')?.focus({preventScroll:true});}}
+  list.innerHTML=reviews.length?reviews.map(r=>`<div class="sk-review-item"><strong>${esc(r.listing_title)}</strong><p>${esc(r.reviewer_name||'Betrieb')} · ${r.visible?`<span class="sk-review-stars">${'★'.repeat(Number(r.stars)||0)}${'☆'.repeat(5-(Number(r.stars)||0))}</span>`:'Bewertung bis zur gegenseitigen Abgabe verborgen'}</p>${r.visible&&r.communication!=null?`<p class="muted">Kommunikation: ${esc(r.communication)} / 5 · Zuverlässigkeit: ${esc(r.reliability)} / 5 · Zusammenarbeit: ${esc(r.collaboration)} / 5</p>`:r.visible?'<p class="muted">Ältere Gesamtbewertung</p>':''}${r.visible&&r.comment?`<p>${esc(r.comment)}</p>`:''}<small>${esc(new Date(r.created_at).toLocaleDateString('de-CH'))}</small></div>`).join(''):'<p class="muted">Noch keine Bewertungen vorhanden.</p>';
  }catch(err){pending.textContent='Bewertungen konnten nicht geladen werden: '+err.message;}
 }
 document.getElementById('sk-reviews-pending').addEventListener('submit',async e=>{
  const form=e.target.closest('[data-partnership-review]');if(!form)return;e.preventDefault();
  const button=form.querySelector('[type="submit"]');button.disabled=true;
- try{await window.SK_AUTH.partnershipReview(form.dataset.partnershipReview,form.dataset.business,Number(form.elements.stars.value),form.elements.comment.value);await skRenderReviews();}
+ try{await window.SK_AUTH.partnershipReviewCriteria(form.dataset.partnershipReview,form.dataset.business,Number(form.elements.communication.value),Number(form.elements.reliability.value),Number(form.elements.collaboration.value),form.elements.comment.value);await skRenderReviews();}
  catch(err){document.getElementById('sk-reviews-status').textContent='Bewertung konnte nicht gespeichert werden: '+err.message;button.disabled=false;}
 });
 document.getElementById('chat-archive-toggle').addEventListener('click',()=>{skChatShowArchived=!skChatShowArchived;selectedChatId=null;void renderChats();});
