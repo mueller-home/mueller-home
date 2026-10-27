@@ -935,7 +935,7 @@ async function saveListing(){
   const from=listingFormField(form,'from').value,to=listingFormField(form,'to').value;
   if(to<from){listingFormField(form,'to').setCustomValidity('Das Bis-Datum muss am oder nach dem Von-Datum liegen.');form.reportValidity();listingFormField(form,'to').setCustomValidity('');return;}
   const payload={type:listingFormField(form,'type').value,category:listingFormField(form,'category').value,title:listingFormField(form,'title').value.trim(),description:listingFormField(form,'description').value.trim(),date_from:from,date_to:to,conditions:listingFormField(form,'conditions').value.trim(),accommodation:listingFormField(form,'accommodation').checked,languages:[...form.querySelectorAll('input[name="languages"]:checked')].map(e=>e.value)};
-  const id=form.dataset.edit||null;const businessId=listingFormField(form,'business_id').value;
+  const id=form.dataset.edit||null;if(id&&['Vergeben','Abgeschlossen'].includes(ownListings.find(x=>x.id===id)?.status)){alert('Dieses Inserat ist schreibgeschützt.');return;}const businessId=listingFormField(form,'business_id').value;
   const draftGuard=window.SK_DRAFTS?.current();try{await draftGuard?.requireEdit?.();}catch(error){const note=form.querySelector('.listing-save-error');if(note)note.textContent=error.message;return;}
  const button=document.getElementById('save-real-listing');button.disabled=true;button.textContent='Wird veröffentlicht …';ownListingsBusy=true;skDialogState.saving=true;
   try{await window.SK_AUTH.saveMyListing(payload,id,businessId);const draft=window.SK_DRAFTS?.current();if(draft){try{await draft.finish();}catch(draftErr){console.warn('[SK drafts] Entwurf nach Live-Speichern nicht bereinigt',draftErr);draft.abandon();}}skDialogSavedClose();await loadMyListings();}
@@ -944,6 +944,7 @@ async function saveListing(){
 }
 function listingForm(id,preferredBusiness=null,restoreDraft=false,draftKey=null){
   const l=ownListings.find(x=>x.id===id);
+  if(l && ['Vergeben','Abgeschlossen'].includes(l.status)){void skOpenReadOnlyListingFromOwn(l.id);return;}
   const today=skTodayCH();
   const dateFrom=l?.date_from||today,dateTo=l?.date_to||today;
   modal(l?'Inserat bearbeiten':'Neues Inserat',`<form id="listing-form" data-edit="${esc(l?.id||'')}"><label>Betrieb / Einsatzstandort *</label><select name="business_id" required ${l?"disabled":""}>${ownBusinessList.map(b=>`<option value="${esc(b.id)}" ${(l?.business_id||preferredBusiness||window.SK_SELECTED_BUSINESS||ownBusinessList[0]?.id)===b.id?"selected":""}>${esc(b.company_name)} · ${esc(b.city||"")}</option>`).join("")}</select><div class="field-grid"><div><label>Typ *</label><select name="type" required>${['Suche','Biete'].map(x=>`<option ${l?.type===x?'selected':''}>${x}</option>`).join('')}</select></div><div><label>Kategorie *</label><select name="category" required>${['Küche','Service','Housekeeping','Technik','Animation'].map(x=>`<option ${l?.category===x?'selected':''}>${x}</option>`).join('')}</select></div></div><p class="muted">Ort und Land werden automatisch aus dem freigegebenen Betriebsprofil übernommen.</p><label>Titel (5–80 Zeichen) *</label><input name="title" required minlength="5" maxlength="80" value="${esc(l?.title||'')}"><label>Beschreibung (20–1000 Zeichen) *</label><textarea name="description" required minlength="20" maxlength="1000" rows="3">${esc(l?.description||'')}</textarea><div class="field-grid"><div><label>Von *</label><input name="from" type="date" required value="${esc(dateFrom)}"></div><div><label>Bis *</label><input name="to" type="date" required value="${esc(dateTo)}"></div></div><label>Rahmenbedingungen (max. 500 Zeichen)</label><textarea name="conditions" maxlength="500" rows="2">${esc(l?.conditions||'')}</textarea><label class="check"><input type="checkbox" name="accommodation" ${l?.accommodation?'checked':''}><span>Unterkunft vorhanden</span></label><p class="muted">Sprachen: ${['DE','FR','IT','EN','ES'].map(x=>`<label class="inline-check"><input type="checkbox" name="languages" value="${x}" ${(l?.languages||['DE']).includes(x)?'checked':''}> ${x}</label>`).join(' ')}</p><p class="listing-save-error" role="alert"></p><div class="dialog-actions"><button type="button" class="subtle-btn" id="save-listing-draft">Entwurf speichern</button><button type="button" class="btn" id="save-real-listing">${l?(l.status==='Aktiv'?'Änderungen veröffentlichen':'Änderungen speichern'):'Veröffentlichen'}</button></div></form>`);
@@ -1002,7 +1003,7 @@ function renderMyListings(){
      const existing=(!String(d.draft_key).startsWith('new:'))?ownListings.find(l=>l.id===d.draft_key):null;
      return `<tr><td><strong>${esc(title)}</strong><small>${existing?'Änderungen an veröffentlichtem Inserat':'Neues Inserat · privat'}</small></td><td>${esc(business?.company_name||'Betrieb')}</td><td>${esc(new Date(d.updated_at).toLocaleString('de-CH'))}</td><td class="table-actions"><button type="button" data-draft="edit" data-key="${esc(d.draft_key)}" data-business="${esc(d.business_id)}">Bearbeiten</button><button type="button" data-draft="delete" data-key="${esc(d.draft_key)}" data-business="${esc(d.business_id)}">Verwerfen</button></td></tr>`;
    }).join('')+'</tbody></table></div>':'';
-  const listingRowsMarkup=items=>items.map(l=>`<tr><td><strong>${esc(l.title)}</strong><small>${esc(l.city)} · ${esc(l.country)}</small>${skChatIndex.some(t=>t.listing_id===l.id)?`<button type="button" class="sk-listing-chat-link" data-own="chats" data-id="${esc(l.id)}">${skChatIndex.filter(t=>t.listing_id===l.id).length} ${skChatIndex.filter(t=>t.listing_id===l.id).length===1?'Unterhaltung':'Unterhaltungen'} ansehen →</button>`:''}</td><td>${esc(l.type)} · ${esc(l.category)}</td><td>${esc(dateDisplay(l.date_from))} – ${esc(dateDisplay(l.date_to))}</td><td><span class="status-tag sk-list-status ${skListingEffectiveStatus(l)==='Aktiv'?'sk-list-status-active':skListingEffectiveStatus(l)==='Abgelaufen'?'sk-list-status-inactive':'sk-list-status-inactive'}">${esc(skListingEffectiveStatus(l))}</span></td><td class="table-actions sk-own-actions"><button type="button" class="sk-action-edit" data-own="edit" data-id="${esc(l.id)}" aria-label="Inserat bearbeiten" title="Inserat bearbeiten">✎</button><button type="button" class="sk-action-toggle" data-own="toggle" data-id="${esc(l.id)}" ${skListingEffectiveStatus(l)==='Abgelaufen'?'disabled':''} aria-label="${skListingEffectiveStatus(l)==='Abgelaufen'?'Zuerst Enddatum verlängern':l.status==='Aktiv'?'Inserat deaktivieren':'Inserat aktivieren'}" title="${skListingEffectiveStatus(l)==='Abgelaufen'?'Zuerst Enddatum verlängern':l.status==='Aktiv'?'Inserat deaktivieren':'Inserat aktivieren'}">↻</button><button type="button" class="sk-action-delete" data-own="delete" data-id="${esc(l.id)}" aria-label="Inserat dauerhaft löschen" title="Inserat dauerhaft löschen">✕</button></td></tr>`).join('');
+  const listingRowsMarkup=items=>items.map(l=>`<tr><td><strong>${esc(l.title)}</strong><small>${esc(l.city)} · ${esc(l.country)}</small>${skChatIndex.some(t=>t.listing_id===l.id)?`<button type="button" class="sk-listing-chat-link" data-own="chats" data-id="${esc(l.id)}">${skChatIndex.filter(t=>t.listing_id===l.id).length} ${skChatIndex.filter(t=>t.listing_id===l.id).length===1?'Unterhaltung':'Unterhaltungen'} ansehen →</button>`:''}</td><td>${esc(l.type)} · ${esc(l.category)}</td><td>${esc(dateDisplay(l.date_from))} – ${esc(dateDisplay(l.date_to))}</td><td><span class="status-tag sk-list-status ${skListingEffectiveStatus(l)==='Aktiv'?'sk-list-status-active':skListingEffectiveStatus(l)==='Abgelaufen'?'sk-list-status-inactive':'sk-list-status-inactive'}">${esc(skListingEffectiveStatus(l))}</span></td><td class="table-actions sk-own-actions"><button type="button" class="sk-action-edit" data-own="edit" data-id="${esc(l.id)}" aria-label="${['Vergeben','Abgeschlossen'].includes(l.status)?'Inserat ansehen':'Inserat bearbeiten'}" title="${['Vergeben','Abgeschlossen'].includes(l.status)?'Inserat ansehen (schreibgeschützt)':'Inserat bearbeiten'}">✎</button><button type="button" class="sk-action-toggle" data-own="toggle" data-id="${esc(l.id)}" ${['Vergeben','Abgeschlossen'].includes(l.status)||skListingEffectiveStatus(l)==='Abgelaufen'?'disabled':''} aria-label="${skListingEffectiveStatus(l)==='Abgelaufen'?'Zuerst Enddatum verlängern':l.status==='Aktiv'?'Inserat deaktivieren':'Inserat aktivieren'}" title="${skListingEffectiveStatus(l)==='Abgelaufen'?'Zuerst Enddatum verlängern':l.status==='Aktiv'?'Inserat deaktivieren':'Inserat aktivieren'}">↻</button><button type="button" class="sk-action-delete" data-own="delete" data-id="${esc(l.id)}" ${['Vergeben','Abgeschlossen'].includes(l.status)?'disabled':''} aria-label="Inserat dauerhaft löschen" title="Inserat dauerhaft löschen">✕</button></td></tr>`).join('');
   const listingTable=items=>'<div class="table-wrap"><table class="data-table"><thead><tr><th>Inserat / Ort</th><th>Typ / Kategorie</th><th>Zeitraum</th><th>Status</th><th>Aktionen</th></tr></thead><tbody>'+listingRowsMarkup(items)+'</tbody></table></div>';
   root.innerHTML='<h2>'+(listTab==='inserate'?'Eigene Inserate':'Vergebene Inserate')+'</h2>'+listingTable(rows)+(rows.length?'':'<p class="muted">Keine veröffentlichten Inserate in dieser Ansicht.</p>')+draftsMarkup+(inactiveRows.length?'<section class="sk-inactive-listings" aria-label="Inaktive Inserate"><h3>Inaktive Inserate ('+inactiveRows.length+')</h3><p class="muted">Diese Inserate sind im Marktplatz nicht sichtbar.</p>'+listingTable(inactiveRows)+'</section>':'');
 }
@@ -1039,6 +1040,7 @@ document.getElementById('my-list-table').addEventListener('click',async e=>{
   const b=e.target.closest('[data-own]');if(!b||ownListingsBusy)return;
   const id=b.dataset.id,l=ownListings.find(x=>x.id===id);if(!l)return;
   if(b.dataset.own==='chats'){await skOpenListingChats(id);return;}
+  if(['Vergeben','Abgeschlossen'].includes(l.status)){if(b.dataset.own==='edit')await skOpenReadOnlyListingFromOwn(id);else alert('Vergebene und abgeschlossene Inserate sind schreibgeschützt.');return;}
   if(b.dataset.own==='edit'){listingForm(id);return;}
   if(b.dataset.own==='toggle'&&skListingEffectiveStatus(l)==='Abgelaufen'){alert('Inserat abgelaufen: Bitte zuerst das Enddatum verlängern und speichern.');return;}
   if(b.dataset.own==='delete'&&!confirm('Inserat entfernen? Mit vorhandenen Unterhaltungen wird es nur deaktiviert; sämtliche Gespräche werden archiviert. Ohne Unterhaltungen wird es endgültig gelöscht.'))return;
@@ -1148,35 +1150,44 @@ async function skChatCheckUpdates(){
 }
 setInterval(()=>{void skChatCheckUpdates();},2000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)void skChatCheckUpdates();});
-// Inserateigner öffnen ihre eigene Verwaltung; Interessenten die Marktplatzdetails.
+// Ein bestätigtes Inserat ist für beide berechtigten Betriebe lesbar, nie editierbar.
+function skReadOnlyListing(l){
+ const status=['Vergeben','Abgeschlossen'].includes(l.status)?l.status:'Nur lesen';
+ const languages=Array.isArray(l.languages)?l.languages:[];
+ modal('Inserat ansehen',`<div class="sk-listing-readonly" role="region" aria-label="Inserat – schreibgeschützt"><p><strong>${esc(l.title)}</strong> · <span class="status-tag">${esc(status)}</span></p><p class="muted">Dieses Inserat ist schreibgeschützt. Änderungen sind nach einer angenommenen Vergabe nicht mehr möglich.</p><p><strong>Ort:</strong> ${esc(l.city||'')} · ${esc(l.country||'')}</p><p><strong>Inserattyp:</strong> ${esc(l.type||'')} · ${esc(l.category||'')}</p><p><strong>Zeitraum:</strong> ${esc(dateDisplay(l.date_from))} – ${esc(dateDisplay(l.date_to))}</p><h3>Beschreibung</h3><p style="white-space:pre-wrap">${esc(l.description||'')}</p><h3>Rahmenbedingungen</h3><p style="white-space:pre-wrap">${esc(l.conditions||'Keine zusätzlichen Rahmenbedingungen angegeben.')}</p><p><strong>Unterkunft:</strong> ${l.accommodation?'Vorhanden':'Nicht angegeben'}</p><p><strong>Sprachen:</strong> ${languages.map(esc).join(', ')||'Keine Angabe'}</p><div class="dialog-actions"><button type="button" class="subtle-btn" data-close-listing-view>Schliessen</button></div></div>`);
+}
+document.getElementById('dialog-body').addEventListener('click',e=>{if(e.target.closest('[data-close-listing-view]')){skDialogState.allowedClose=true;dialog.close();}});
+async function skOpenReadOnlyListingFromOwn(id){
+ try{
+  let l=ownListings.find(x=>x.id===id);
+  if(!l)l=(await window.SK_AUTH.listMyListings()).find(x=>x.id===id);
+  if(!l)throw new Error('Das Inserat ist für Ihren Betrieb nicht verfügbar.');
+  if(['Vergeben','Abgeschlossen'].includes(l.status))skReadOnlyListing(l);
+  else {await show('my-listings');await loadMyListings();listingForm(id);}
+ }catch(error){alert('Inserat konnte nicht geöffnet werden: '+error.message);}
+}
 document.getElementById('chat-heading').addEventListener('click',async e=>{
  const button=e.target.closest('[data-chat-listing]');if(!button)return;
- const id=button.dataset.chatListing;
- if(!id)return;
+ const thread=chatThreads.find(t=>t.id===selectedChatId);
+ if(!thread||thread.listing_id!==button.dataset.chatListing)return;
  button.disabled=true;
  try{
-  // Inserateigner zuerst prüfen: auch inaktive/abgelaufene Inserate bleiben erreichbar.
+  const partnership=skPartnershipFor(thread);
+  if(partnership&&['angenommen','abgeschlossen'].includes(partnership.state)){
+   const l=await window.SK_AUTH.partnershipListing(thread.id);
+   if(!l)throw new Error('Dieses Inserat ist nicht mehr zugänglich.');
+   skReadOnlyListing(l);return;
+  }
   const own=await window.SK_AUTH.listMyListings();
-  if(own.some(l=>l.id===id)){
-   await show('my-listings');
-   if(currentScreen!=='my-listings')return;
-   await loadMyListings();
-   if(!ownListings.some(l=>l.id===id)){
-    // Eine bereits laufende Listenaktualisierung darf den Direktzugriff nicht blockieren.
-    ownListings=own;
-    ownBusinessList=await window.SK_AUTH.listApprovedBusinesses();
-   }
-   if(currentScreen==='my-listings'){listingForm(id);return;}
+  if(own.some(l=>l.id===thread.listing_id)){
+   await show('my-listings');await loadMyListings();
+   if(!ownListings.some(l=>l.id===thread.listing_id)){ownListings=own;ownBusinessList=await window.SK_AUTH.listApprovedBusinesses();}
+   listingForm(thread.listing_id);return;
   }
-  let listing=marketplaceListings.find(l=>l.id===id);
-  if(!listing){
-   const latest=await window.SK_AUTH.listMarketplaceListings();
-   marketplaceListings=latest;
-   listing=latest.find(l=>l.id===id);
-  }
+  let listing=marketplaceListings.find(l=>l.id===thread.listing_id);
+  if(!listing){const latest=await window.SK_AUTH.listMarketplaceListings();marketplaceListings=latest;listing=latest.find(l=>l.id===thread.listing_id);}
   if(!listing){chatStatus().textContent='Dieses Inserat ist aktuell nicht im Marktplatz verfügbar.';return;}
-  await show('detail');
-  if(currentScreen==='detail')openDetail(id);
+  await show('detail');if(currentScreen==='detail')openDetail(thread.listing_id);
  }catch(error){chatStatus().textContent='Inserat konnte nicht geöffnet werden: '+(error?.message||'Unbekannter Fehler');}
  finally{button.disabled=false;}
 });
