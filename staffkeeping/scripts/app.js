@@ -939,10 +939,32 @@ function listingForm(id,preferredBusiness=null,restoreDraft=false,draftKey=null)
  });
 }
 document.getElementById('new-listing').addEventListener('click',()=>listingForm());
+let skPartnerListingLoadToken=0;
 document.querySelectorAll('[data-list-tab]').forEach(b=>b.addEventListener('click',()=>{listTab=b.dataset.listTab;document.querySelectorAll('[data-list-tab]').forEach(x=>x.classList.toggle('active',x===b));renderMyListings()}));
 function renderMyListings(){
   const root=document.getElementById('my-list-table');
-  if(listTab==='partner'){root.innerHTML='<h2>Als Partner</h2><p class="muted">Partnerschaften werden in einer späteren Marktplatzphase angebunden.</p>';return;}
+  if(listTab==='partner'){
+    root.innerHTML='<h2>Als Partner</h2><p class="muted">Angenommene Vergaben und abgeschlossene Zusammenarbeiten, bei denen Ihr Betrieb der Interessent ist.</p><p class="muted" role="status">Partner-Inserate werden geladen …</p>';
+    const request=++skPartnerListingLoadToken;
+    Promise.all([window.SK_AUTH.partnershipOverview(),window.SK_AUTH.listApprovedBusinesses()]).then(([partnerships,businesses])=>{
+      if(request!==skPartnerListingLoadToken||currentScreen!=='my-listings'||listTab!=='partner')return;
+      const myIds=new Set(businesses.map(b=>b.id));
+      const names=new Map(businesses.map(b=>[b.id,b.company_name||'Betrieb']));
+      const partnerRows=partnerships.filter(p=>myIds.has(p.partner_business_id));
+      const accepted=partnerRows.filter(p=>p.state==='angenommen'||p.state==='abgeschlossen');
+      const incoming=partnerRows.filter(p=>p.state==='angeboten');
+      const table=(items)=>'<div class="table-wrap"><table class="data-table"><thead><tr><th>Inserat</th><th>Eigener Betrieb</th><th>Status</th><th>Aktion</th></tr></thead><tbody>'+items.map(p=>{
+        const status=p.state==='angenommen'?'Vergeben – Zusammenarbeit läuft':p.state==='abgeschlossen'?'Zusammenarbeit abgeschlossen':'Vergabeangebot erhalten';
+        return `<tr><td><strong>${esc(p.listing_title||'Inserat')}</strong></td><td>${esc(names.get(p.partner_business_id)||'Mein Betrieb')}</td><td><span class="status-tag">${esc(status)}</span></td><td class="table-actions"><button type="button" data-partner-chat="${esc(p.thread_id)}">Zum Chat</button></td></tr>`;
+      }).join('')+'</tbody></table></div>';
+      root.innerHTML='<h2>Als Partner</h2><p class="muted">Inserate, die einem Ihrer Betriebe zugesprochen wurden. Sie bleiben auch nach dem Ende der öffentlichen Anzeige hier sichtbar.</p>'+
+        (accepted.length?table(accepted):'<p class="muted">Noch keine angenommenen Vergaben.</p>')+
+        (incoming.length?'<h3>Offene Vergabeangebote ('+incoming.length+')</h3>'+table(incoming):'');
+    }).catch(error=>{
+      if(request===skPartnerListingLoadToken&&currentScreen==='my-listings'&&listTab==='partner')root.innerHTML='<h2>Als Partner</h2><p role="alert">Partner-Inserate konnten nicht geladen werden: '+esc(error.message)+'</p>';
+    });
+    return;
+  }
   const rows=listTab==='inserate'?ownListings.filter(x=>!['Vergeben','Abgeschlossen','Inaktiv'].includes(x.status)):ownListings.filter(x=>['Vergeben','Abgeschlossen'].includes(x.status));
   const inactiveRows=listTab==='inserate'?ownListings.filter(x=>x.status==='Inaktiv'):[];
     const draftsMarkup=listTab==='inserate' && ownListingDrafts.length ?
@@ -958,6 +980,19 @@ function renderMyListings(){
   root.innerHTML='<h2>'+(listTab==='inserate'?'Eigene Inserate':'Vergebene Inserate')+'</h2>'+listingTable(rows)+(rows.length?'':'<p class="muted">Keine veröffentlichten Inserate in dieser Ansicht.</p>')+draftsMarkup+(inactiveRows.length?'<section class="sk-inactive-listings" aria-label="Inaktive Inserate"><h3>Inaktive Inserate ('+inactiveRows.length+')</h3><p class="muted">Diese Inserate sind im Marktplatz nicht sichtbar.</p>'+listingTable(inactiveRows)+'</section>':'');
 }
 document.getElementById('dialog-body').addEventListener('click',e=>{if(e.target.closest('#save-listing-draft')){void saveListingDraftAndClose();return;}if(e.target.closest('#save-real-listing'))void saveListing();});
+document.getElementById('my-list-table').addEventListener('click',async e=>{
+ const link=e.target.closest('[data-partner-chat]');if(!link)return;
+ link.disabled=true;
+ try{
+  const all=await skRefreshChatIndex();const thread=all.find(t=>t.id===link.dataset.partnerChat);
+  if(!thread){alert('Diese Unterhaltung ist für Ihren Betrieb nicht mehr verfügbar.');return;}
+  skChatListingFilterId=null;skChatFilterBusinessId='';
+  skChatShowArchived=!!(thread.archived_at||thread.closed_at);
+  selectedChatId=thread.id;
+  await show('messages');if(currentScreen==='messages')await renderChats(thread.id);
+ }catch(error){alert('Chat konnte nicht geöffnet werden: '+error.message);}
+ finally{link.disabled=false;}
+});
 document.getElementById('my-list-table').addEventListener('click',async e=>{
  const btn=e.target.closest('[data-draft]');if(!btn)return;
  const d=ownListingDrafts.find(x=>x.draft_key===btn.dataset.key&&x.business_id===btn.dataset.business);
