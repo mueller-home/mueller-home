@@ -1,8 +1,6 @@
 # StaffKeeping – Benutzerhandbuch
 
-Stand: 27. Oktober 2026 · Funktionsstand 0.33.1.8.39
-
-Dieses Handbuch erklärt die Bedienung für Mitglieder von StaffKeeping. Noch nicht verfügbare Funktionen sind ausdrücklich gekennzeichnet.
+Dieses Handbuch begleitet dich bei der Nutzung von StaffKeeping – vom Betriebseintrag über die Suche und Kontaktaufnahme bis zum Abschluss einer Zusammenarbeit.
 
 ## Meine Übersicht
 
@@ -54,7 +52,7 @@ Siehst du bei einem Inserat «Zum Chat», besteht für deinen Benutzer bereits e
 
 Stelle zuerst die gewünschten Marktplatzfilter ein. Wähle danach «Suche speichern» und gib der Suche einen Namen. Gespeicherte Suchen kannst du später öffnen, ändern oder löschen.
 
-Du kannst die Option «E-Mail bei neuen Treffern» vormerken. **Automatische Trefferprüfung und E-Mail-Versand sind derzeit noch nicht freigeschaltet.** Durch das Aktivieren dieser Option werden noch keine Benachrichtigungen verschickt.
+Aktiviere bei einer gespeicherten Suche «E-Mail bei neuen Treffern», wenn du über neu passende Inserate informiert werden möchtest. Über die Einstellungen der Suche kannst du die Benachrichtigung jederzeit wieder deaktivieren.
 
 Eine gespeicherte Umkreissuche ist an ihren gewählten Ausgangsbetrieb gebunden. Ein späterer Wechsel des aktiven Betriebs verändert den gespeicherten Ausgangspunkt nicht.
 
@@ -133,9 +131,9 @@ Pro Betrieb und Zusammenarbeit ist nur eine Bewertung möglich. Die Gegenbewertu
 
 Dein Betrieb wird erst nach der Prüfung durch die Administration freigegeben. Die Freigabe eines Betriebs gilt nicht automatisch für andere Betriebe, die du ebenfalls verwaltest.
 
-**Abo-Kauf, Online-Zahlung, automatische Rechnungsstellung, Kündigung und Ablaufhinweise sind derzeit noch nicht verfügbar.** Die Tarife werden von der Administration vorbereitet. Aus diesem Handbuch entsteht keine Zahlungspflicht.
+Die Mitgliedschaft ist einem Betrieb zugeordnet. Wenn du mehrere Betriebe verwaltest, gelten die Mitgliedschaft und die vereinbarten Konditionen für jeden Betrieb separat.
 
-Bei Fragen zur Mitgliedschaft wende dich an die StaffKeeping-Administration.
+Informiere dich über die angebotenen Tarife und Konditionen. Für Fragen zu Preisen, Rechnungen, Laufzeit oder Kündigung wende dich an die StaffKeeping-Administration.
 
 
 > **Screenshot noch erstellen** – Betriebsübersicht mit sichtbarem Freigabestatus, ohne persönliche Kontaktdaten. Dateiname: `betriebsstatus-01.png`. Ablage: `sk-help-images/sk-guide-membership/betriebsstatus-01.png`.
@@ -146,7 +144,7 @@ Bei Fragen zur Mitgliedschaft wende dich an die StaffKeeping-Administration.
 
 Über «Hilfe» öffnest du das vollständige Benutzerhandbuch mit Suchfunktion. «Hilfe zur Seite» zeigt eine Anleitung zur aktuell geöffneten Ansicht.
 
-Die Anleitungen erklären die Bedienung. Wenn eine Funktion als noch nicht verfügbar beschrieben ist, kann sie derzeit nicht genutzt werden.
+Wähle das passende Kapitel oder verwende die Suche, um eine Anleitung zu finden.
 
 
 > **Screenshot noch erstellen** – Handbuch mit Kapitelliste links und geöffnetem Kapitel, ohne Administrationsbearbeitung. Dateiname: `hilfe-handbuch-01.png`. Ablage: `sk-help-images/sk-guide-help/hilfe-handbuch-01.png`.
