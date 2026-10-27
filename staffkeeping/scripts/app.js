@@ -147,10 +147,10 @@ async function loadMemberDashboard(){
   ['Bewertungen offen',count(partnerships===null?null:toReview.length),'reviews','Bewertungen öffnen']
  ];
  const cardsHtml=cards.map(([label,num,view,action],index)=>`<article class="sk-dash-card"><span>${esc(label)}</span><strong ${index===0?'id="sk-dashboard-unread-count"':''}>${esc(num)}</strong><button type="button" data-view="${view}">${esc(action)} →</button></article>`).join('');
- const notice=(title,subtitle,view)=>`<li><div><strong>${esc(title)}</strong><small>${esc(subtitle)}</small></div><button type="button" class="subtle-btn" data-view="${view}">Öffnen →</button></li>`;
+ const notice=(title,subtitle,view,threadId=null)=>`<li><div><strong>${esc(title)}</strong><small>${esc(subtitle)}</small></div><button type="button" class="subtle-btn" data-view="${view}"${threadId?` data-dashboard-thread="${esc(threadId)}"`:''}>Öffnen →</button></li>`;
  let alerts=[];
- for(const p of offered.slice(0,5))alerts.push(notice(p.listing_title,'Vergabeangebot wartet auf Antwort','messages'));
- for(const p of awarded.slice(0,5))alerts.push(notice(p.listing_title,'Zusammenarbeit läuft · Abschluss bestätigen','messages'));
+ for(const p of offered.slice(0,5))alerts.push(notice(p.listing_title,'Vergabeangebot wartet auf Antwort','messages',p.thread_id));
+ for(const p of awarded.slice(0,5))alerts.push(notice(p.listing_title,'Zusammenarbeit läuft · Abschluss bestätigen','messages',p.thread_id));
  for(const p of toReview.slice(0,5))alerts.push(notice(p.listing_title,'Zusammenarbeit abgeschlossen · Bewertung ausstehend','reviews'));
  for(const l of expired.slice(0,5))alerts.push(notice(l.title,'Inserat abgelaufen · Enddatum prüfen','my-listings'));
  for(const l of ending.slice(0,5))alerts.push(notice(l.title,'Inserat läuft innerhalb von 7 Tagen ab','my-listings'));
@@ -164,6 +164,26 @@ async function loadMemberDashboard(){
  <section class="panel sk-dash-panel"><h2>Weitere Erweiterungen</h2><p class="muted">Vergaben, abgeschlossene Zusammenarbeiten und ausstehende Bewertungen werden aus Supabase geladen.</p><p class="muted">Neue Treffer gespeicherter Suchen: verfügbar, sobald die gespeicherten Suchen und die Trefferprüfung umgesetzt sind.</p><p class="muted">Mitgliedschaft: Ablaufhinweise folgen, sobald die verbindlichen Laufzeitdaten und Regeln definiert sind.</p></section>
  ${failed.length?`<p role="alert">Einige Daten konnten nicht geladen werden: ${esc(failed.join(', '))}. Es werden keine Ersatzwerte angezeigt.</p>`:''}`;
 }
+// Dashboard-Aufgaben verlinken gezielt die zur Vergabe gehörende Unterhaltung.
+// Serverseitige Chat-Liste bestimmt die Berechtigung; keine fremden IDs werden angezeigt.
+document.getElementById('member-dashboard-body')?.addEventListener('click',async event=>{
+ const button=event.target.closest('[data-dashboard-thread]');if(!button)return;
+ event.preventDefault();event.stopPropagation();
+ if(button.disabled)return;
+ button.disabled=true;
+ try{
+  const threads=await window.SK_AUTH.chatThreads();
+  const thread=threads.find(t=>t.id===button.dataset.dashboardThread);
+  if(!thread){alert('Diese Unterhaltung ist für Ihren Betrieb nicht mehr verfügbar.');return;}
+  skChatListingFilterId=null;
+  skChatFilterBusinessId='';
+  skChatShowArchived=!!(thread.archived_at||thread.closed_at);
+  selectedChatId=thread.id;
+  await show('messages',true,true);
+  if(currentScreen==='messages')await renderChats(thread.id);
+ }catch(error){alert('Unterhaltung konnte nicht geöffnet werden: '+(error?.message||'Unbekannter Fehler'));}
+ finally{button.disabled=false;}
+},true);
 // Nur die Ungelesen-Zahl aktualisieren: Die restlichen Dashboard-Kacheln bleiben ruhig.
 let skDashboardUnreadBusy=false;
 async function skRefreshDashboardUnread(){
