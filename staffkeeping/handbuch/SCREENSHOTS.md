@@ -131,3 +131,12 @@ Die Dateien lokal unter `staffkeeping/handbuch/screenshots/` im jeweiligen Kapit
 - **Dateiname:** `hilfe-handbuch-01.png`
 - **Lokaler Pfad:** `staffkeeping/handbuch/screenshots/sk-guide-help/hilfe-handbuch-01.png`
 - **Bild-ID nach dem Hochladen:** `sk-help-images/sk-guide-help/hilfe-handbuch-01.png`
+
+
+### Mitgliedschaft im Profil
+
+- **Dateiname:** `mitgliedschaft-profil-01.png`
+- **Motiv:** Persönliches Profil, Abschnitt «Meine Mitgliedschaft», Mitgliedschaftsstatus und Classic-/Flex-Tarife.
+- **Ablage:** `staffkeeping/handbuch/screenshots/sk-guide-membership/mitgliedschaft-profil-01.png`
+- **Upload-Bild-ID:** `sk-guide-membership/mitgliedschaft-profil-01.png`
+- **Datenschutz:** Vor Aufnahme persönliche E-Mail-Adressen und vertrauliche Angaben ausblenden.

@@ -239,20 +239,19 @@ Die Zahl ungelesener Nachrichten aktualisiert sich während der Nutzung der Übe
 > Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-overview/dashboard-uebersicht-01.png`
 
 
-## 12. Mitgliedschaft und Preise verstehen
+## 12. Meine Mitgliedschaft und Preise
 
-1. Erfasse deinen Betrieb und warte auf dessen Freigabe.
-2. Informiere dich über die angebotenen Tarife und Konditionen.
-3. Wähle den gewünschten Tarif und prüfe die angezeigten Vertragsinformationen.
-4. Behalte deine Mitgliedschaft sowie ihre Laufzeit und die dazugehörigen Unterlagen im Blick.
-5. Bei Fragen zu Rechnung, Laufzeit oder Kündigung wende dich an die StaffKeeping-Administration.
+1. Melde dich bei StaffKeeping an und öffne «Mein Profil».
+2. Unter «Meine Mitgliedschaft» findest du deinen Mitgliedschaftsstatus und die aktuellen Tarife.
+3. Für Fragen zur Anmeldung, zur Abrechnung oder zu einer manuellen Freigabe kontaktierst du die StaffKeeping-Administration.
+4. Unter «Meine Betriebe» findest du die separat genehmigten Betriebe, die du über dein Profil verwaltest.
 
-Mitgliedschaften sind betriebsbezogen. Wenn du mehrere Betriebe verwaltest, können diese unterschiedliche Mitgliedschaften und Konditionen haben.
+**Wichtig:** Die Mitgliedschaft gehört zu deinem persönlichen Benutzerprofil. Ein Profil kann mehrere genehmigte Betriebe verwalten. Wenn für einen Betrieb eine eigenständige Mitgliedschaft verlangt wird, muss dafür ein weiteres Benutzerprofil erstellt werden. Die Freigabe jedes Betriebs erfolgt unabhängig von der Mitgliedschaft.
 
-> **Screenshot-Platzhalter: `betriebsstatus-01.png`**
-> Aufnahme: Betriebsübersicht mit Genehmigungsstatus, ohne persönliche Kontaktdaten.
-> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-membership/betriebsstatus-01.png`
-> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-membership/betriebsstatus-01.png`
+> **Screenshot-Platzhalter: `mitgliedschaft-profil-01.png`**
+> Aufnahme: «Mein Profil» mit geöffnetem Bereich «Meine Mitgliedschaft». Zeige den Mitgliedschaftsstatus und die Tarifübersicht; persönliche Angaben und E-Mail-Adressen unkenntlich machen.
+> Datei ablegen unter: `staffkeeping/handbuch/screenshots/sk-guide-membership/mitgliedschaft-profil-01.png`
+> Nach dem Hochladen in die Handbuchverwaltung: `sk-help-images/sk-guide-membership/mitgliedschaft-profil-01.png`
 
 
 ## 13. Hilfe finden

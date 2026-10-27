@@ -105,7 +105,7 @@ function performShow(view,updateUrl=true){
   if(view==='admin-deletions')window.SK_DELETION?.refreshAdmin();
   if(view==='admin-listings')renderAdminListings();
   if(view==='admin-docs'){renderProjectDocs();window.SK_HELP?.loadAdmin();}
-  if(view==='admin-pricing')void skRenderAdminPricing();
+  if(view==='admin-pricing'){void skRenderAdminPricing();void skRenderAdminProfileMemberships();}
   if(view==='admin-home'||view==='admin-activity')window.SK_ADMIN_HOME?.load(view);
   if(view==='help')window.SK_HELP?.load();
 }
@@ -168,7 +168,15 @@ async function loadMemberDashboard(){
  <section class="panel sk-dash-panel"><h2>Aktuelles und Aufgaben</h2>${alerts.length?`<ul class="sk-dash-alerts">${alerts.join('')}</ul>`:'<p class="muted">Keine anstehenden Aufgaben aus den verfügbaren Daten.</p>'}</section>
  <section class="panel sk-dash-panel"><h2>Direkt starten</h2><div class="sk-dash-actions"><button type="button" class="btn" data-view="market">Marktplatz durchsuchen</button><button type="button" class="btn btn-outline" data-view="my-listings">Meine Inserate</button><button type="button" class="btn btn-outline" data-view="messages">Nachrichten</button><button type="button" class="btn btn-outline" data-view="my-businesses">Meine Betriebe</button></div></section>
  <section class="panel sk-dash-panel"><h2>Weitere Erweiterungen</h2><p class="muted">Vergaben, abgeschlossene Zusammenarbeiten und ausstehende Bewertungen werden aus Supabase geladen.</p><p class="muted">Neue Treffer gespeicherter Suchen: verfügbar, sobald die gespeicherten Suchen und die Trefferprüfung umgesetzt sind.</p><p class="muted">Mitgliedschaft: Ablaufhinweise folgen, sobald die verbindlichen Laufzeitdaten und Regeln definiert sind.</p></section>
+ <section class="panel sk-dash-panel"><h2>Meine Mitgliedschaft</h2><div id="sk-dashboard-membership">Mitgliedschaft wird geladen …</div><button type="button" class="subtle-btn" data-view="account">Mitgliedschaft ansehen →</button></section>
  ${failed.length?`<p role="alert">Einige Daten konnten nicht geladen werden: ${esc(failed.join(', '))}. Es werden keine Ersatzwerte angezeigt.</p>`:''}`;
+ void skDashboardMembership();
+}
+async function skDashboardMembership(){
+ const el=document.getElementById('sk-dashboard-membership');if(!el||currentScreen!=='dashboard')return;
+ try{const m=await window.SK_AUTH.myMembership();if(currentScreen!=='dashboard')return;
+ el.textContent=m.state==='aktiv'?'Aktives Abonnement':m.manual_active?'Manuelle Freigabe aktiv':'Die Mitgliedschaft kann unter «Mein Profil» eingesehen werden.';}
+ catch(err){el.textContent='Mitgliedschaft aktuell nicht verfügbar.';}
 }
 // Dashboard-Aufgaben verlinken gezielt die zur Vergabe gehörende Unterhaltung.
 // Serverseitige Chat-Liste bestimmt die Berechtigung; keine fremden IDs werden angezeigt.
@@ -211,7 +219,7 @@ function skDateOffsetCH(days){
 }
 async function loadPersonalAccount(){
  const email=document.getElementById('account-login-email'),info=document.getElementById('account-status');
- try{const user=await window.SK_AUTH.getAccountIdentity();email.textContent=user?.email||'Keine Anmeldeadresse gefunden';info.textContent='';}
+ try{const user=await window.SK_AUTH.getAccountIdentity();email.textContent=user?.email||'Keine Anmeldeadresse gefunden';info.textContent='';void skRenderMyMembership();}
  catch(e){email.textContent='Nicht verfügbar';info.textContent='Benutzerkonto konnte nicht geladen werden: '+e.message;}
 }
 async function loadSafeBusinessProfile(){
@@ -1412,3 +1420,47 @@ show('login',false);
 
 /* 0.27 – Dokumentation wird ausschliesslich aus der geschützten Admin-Datenbank gelesen. */
 function renderProjectDocs(){window.SK_DOCS?.load();}
+
+
+// Profilgebundene Mitgliedschaft: Darstellung und manuelle Freigaben, keine Browser-Zahlungsabwicklung.
+async function skRenderMyMembership(){
+ const root=document.getElementById('sk-my-membership');if(!root)return;
+ try{
+  const m=await window.SK_AUTH.myMembership();
+  const tariffs=(m?.tariffs||[]).filter(t=>t.code==='classic'||t.code==='flex');
+  const active=!!m.manual_active;
+  const paid=m.state==='aktiv' && (!m.valid_until||new Date(m.valid_until)>new Date());
+  const label=paid?'Aktives Abonnement':active?'Manuell freigeschaltet':'Kein bezahltes Abonnement';
+  const suffix=m.manual_valid_until?' bis '+new Date(m.manual_valid_until+'T12:00:00').toLocaleDateString('de-CH'):'';
+  root.innerHTML=`<p><strong>Status:</strong> ${esc(label)}${active?esc(suffix):''}</p>
+  <p class="muted">Die Mitgliedschaft gilt für dein Benutzerprofil, nicht für einzelne Betriebe. Jeder Betrieb benötigt zusätzlich seine eigene Freigabe.</p>
+  <div class="sk-plan-grid">${tariffs.map(t=>`<article class="sk-plan-card"><h3>${esc(t.name)}</h3><p><strong>CHF ${(Number(t.amount_cents)/100).toFixed(2)}</strong> / Monat</p><p>${esc(t.description||'')}</p></article>`).join('')}</div>
+  <p class="muted">Online-Zahlungen sind noch nicht freigeschaltet. Für eine Mitgliedschaft wende dich bitte an die StaffKeeping-Administration.</p>`;
+ }catch(e){root.textContent='Mitgliedschaft konnte nicht geladen werden: '+e.message;}
+}
+async function skRenderAdminProfileMemberships(){
+ const root=document.getElementById('sk-admin-profile-memberships');if(!root)return;
+ try{
+  const users=await window.SK_AUTH.adminProfileMemberships();
+  root.innerHTML=users.length?users.map(u=>`<form class="sk-profile-grant" data-user-id="${esc(u.user_id)}">
+   <strong>${esc(u.email||'Benutzerprofil ohne E-Mail')}</strong>
+   <span>${u.manual_active?'Manuell freigegeben':'Keine aktive manuelle Freigabe'} · ${esc(u.state||'unbezahlt')}</span>
+   <label>Grund<input name="reason" maxlength="500" minlength="4" value="${esc(u.manual_reason||'Testzugang für die Entwicklungsphase')}" required></label>
+   <label>Gültig bis (optional)<input name="until" type="date" value="${esc(u.manual_valid_until||'')}"></label>
+   <button class="subtle-btn" name="action" value="grant" type="submit">Freigabe speichern</button>
+   ${u.manual_active?'<button class="subtle-btn" name="action" value="revoke" type="submit">Widerrufen</button>':''}
+  </form>`).join(''):'<p>Noch keine Benutzerprofile vorhanden.</p>';
+ }catch(e){root.textContent='Profilmitgliedschaften konnten nicht geladen werden: '+e.message;}
+}
+document.getElementById('sk-admin-profile-memberships')?.addEventListener('click',event=>{
+ const btn=event.target.closest('button[name="action"]');if(btn)btn.closest('form').dataset.skAction=btn.value;
+});
+document.getElementById('sk-admin-profile-memberships')?.addEventListener('submit',async event=>{
+ const form=event.target.closest('[data-user-id]');if(!form)return;event.preventDefault();
+ const action=form.dataset.skAction||'grant';const status=document.getElementById('sk-admin-membership-status');
+ if(action==='revoke'&&!confirm('Manuelle Mitgliedschaftsfreigabe für dieses Profil widerrufen?'))return;
+ const buttons=form.querySelectorAll('button');buttons.forEach(b=>b.disabled=true);
+ try{await window.SK_AUTH.adminSetProfileManualAccess(form.dataset.userId,action!=='revoke',form.elements.reason.value.trim(),form.elements.until.value||null);
+ status.textContent='Profilfreigabe gespeichert.';await skRenderAdminProfileMemberships();}
+ catch(e){status.textContent='Speichern fehlgeschlagen: '+e.message;buttons.forEach(b=>b.disabled=false);}
+});
