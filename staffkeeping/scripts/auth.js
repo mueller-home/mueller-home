@@ -176,6 +176,7 @@
   async chatMessages(id){const {data,error}=await db.rpc('sk_chat_messages',{p_thread_id:id});if(error)throw error;return data||[];},
   async partnershipAction(threadId,businessId,action){const {data,error}=await db.rpc('sk_partnership_action',{p_thread_id:threadId,p_business_id:businessId,p_action:action});if(error)throw error;return data;},
   async partnershipListing(threadId){const {data,error}=await db.rpc('sk_partnership_listing',{p_thread_id:threadId});if(error)throw error;return data;},
+  async partnershipEndDates(){const {data,error}=await db.rpc('sk_partnership_end_dates');if(error)throw error;return data||[];},
   async partnershipOverview(){const {data,error}=await db.rpc('sk_partnership_overview');if(error)throw error;return data||[];},
   async partnershipReview(id,businessId,stars,comment){const {data,error}=await db.rpc('sk_partnership_review',{p_partnership_id:id,p_reviewer_business_id:businessId,p_stars:stars,p_comment:comment});if(error)throw error;return data;},
   async partnershipReviews(){const {data,error}=await db.rpc('sk_partnership_reviews');if(error)throw error;return data||[];},

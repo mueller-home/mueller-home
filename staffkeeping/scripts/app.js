@@ -8,6 +8,7 @@ let skAdmin=false;
 let skPending=false;let skCanProfile=false;let skCanTrade=false;
 window.SK_UI={setAccess(isApproved,isAdmin,reviewState,canTrade=false){demoSignedIn=!!isApproved;skAdmin=!!isAdmin;skCanTrade=!!canTrade;skPending=!isApproved;skCanProfile=!!reviewState;performShow(isAdmin?'admin-home':isApproved?'dashboard':(reviewState==='draft'||reviewState==='changes_requested')?'profile':'pending',false);void skRefreshActiveBusiness();},show,logoutView(){demoSignedIn=false;skAdmin=false;skPending=false;skCanProfile=false;skCanTrade=false;performShow('login',false);void skRefreshActiveBusiness();}};
 let currentScreen='login', navigationBusy=false;
+let skFocusReviewPartnershipId=null;
 let skActiveBusinessId=null,skActiveBusinesses=[],skActiveBusinessUser=null,skBusinessContextSeq=0;
 window.SK_SELECTED_BUSINESS=null;
 function skGetActiveBusinessId(){return skActiveBusinessId;}
@@ -121,7 +122,8 @@ async function loadMemberDashboard(){
   window.SK_AUTH.listListingDrafts(),
   window.SK_AUTH.listNewBusinessDrafts(),
   window.SK_AUTH.chatUnreadCounts(),
-  window.SK_AUTH.partnershipOverview()
+  window.SK_AUTH.partnershipOverview(),
+  window.SK_AUTH.partnershipEndDates()
  ]);
  if(version!==skDashboardLoadVersion||currentScreen!=='dashboard')return;
  const value=i=>results[i].status==='fulfilled'&&Array.isArray(results[i].value)?results[i].value:null;
@@ -135,6 +137,9 @@ async function loadMemberDashboard(){
  const partnerships=value(6);
  const offered=partnerships?.filter(p=>p.state==='angeboten')||[];
  const awarded=partnerships?.filter(p=>p.state==='angenommen')||[];
+ const deadlineRows=value(7);
+ const deadlines=new Map((deadlineRows||[]).map(row=>[row.partnership_id,row.date_to]));
+ const dueAwarded=awarded.filter(p=>deadlines.has(p.id)&&deadlines.get(p.id)<=skTodayCH());
  const toReview=partnerships?.filter(p=>p.state==='abgeschlossen'&&!p.has_reviewed)||[];
  const cards=[
   ['Ungelesene Nachrichten',count(unreadTotal),'messages','Nachrichten öffnen'],
@@ -150,14 +155,14 @@ async function loadMemberDashboard(){
  const notice=(title,subtitle,view,threadId=null)=>`<li><div><strong>${esc(title)}</strong><small>${esc(subtitle)}</small></div><button type="button" class="subtle-btn" data-view="${view}"${threadId?` data-dashboard-thread="${esc(threadId)}"`:''}>Öffnen →</button></li>`;
  let alerts=[];
  for(const p of offered.slice(0,5))alerts.push(notice(p.listing_title,'Vergabeangebot wartet auf Antwort','messages',p.thread_id));
- for(const p of awarded.slice(0,5))alerts.push(notice(p.listing_title,'Zusammenarbeit läuft · Abschluss bestätigen','messages',p.thread_id));
+ for(const p of dueAwarded.slice(0,5))alerts.push(notice(p.listing_title,'Zusammenarbeit läuft · Abschluss bestätigen','messages',p.thread_id));
  for(const p of toReview.slice(0,5))alerts.push(notice(p.listing_title,'Zusammenarbeit abgeschlossen · Bewertung ausstehend','reviews'));
  for(const l of expired.slice(0,5))alerts.push(notice(l.title,'Inserat abgelaufen · Enddatum prüfen','my-listings'));
  for(const l of ending.slice(0,5))alerts.push(notice(l.title,'Inserat läuft innerhalb von 7 Tagen ab','my-listings'));
  for(const b of pending.slice(0,5))alerts.push(notice(b.company_name||'Betrieb',skBusinessStatus(b.review_state||b.status),'my-businesses'));
  if(listingDrafts?.length)alerts.push(notice(`${listingDrafts.length} private Inserateentwürfe`,'Noch nicht veröffentlicht','my-listings'));
  if(businessDrafts?.length)alerts.push(notice(`${businessDrafts.length} private Betriebsentwürfe`,'Noch nicht eingereicht','my-businesses'));
- const failed=results.map((r,i)=>r.status==='rejected'?['Inserate','Betriebe','Unterhaltungen','Inserateentwürfe','Betriebsentwürfe','Lesestatus','Partnerschaften'][i]:null).filter(Boolean);
+ const failed=results.map((r,i)=>r.status==='rejected'?['Inserate','Betriebe','Unterhaltungen','Inserateentwürfe','Betriebsentwürfe','Lesestatus','Partnerschaften','Inserat-Enddaten'][i]:null).filter(Boolean);
  root.innerHTML=`<div class="sk-dash-cards">${cardsHtml}</div>
  <section class="panel sk-dash-panel"><h2>Aktuelles und Aufgaben</h2>${alerts.length?`<ul class="sk-dash-alerts">${alerts.join('')}</ul>`:'<p class="muted">Keine anstehenden Aufgaben aus den verfügbaren Daten.</p>'}</section>
  <section class="panel sk-dash-panel"><h2>Direkt starten</h2><div class="sk-dash-actions"><button type="button" class="btn" data-view="market">Marktplatz durchsuchen</button><button type="button" class="btn btn-outline" data-view="my-listings">Meine Inserate</button><button type="button" class="btn btn-outline" data-view="messages">Nachrichten</button><button type="button" class="btn btn-outline" data-view="my-businesses">Meine Betriebe</button></div></section>
@@ -1198,7 +1203,7 @@ document.getElementById('sk-partnership-controls').addEventListener('click',asyn
  const questions={offer:'Vergabe an diesen Betrieb verbindlich anbieten?',accept:'Vergabe für Ihren Betrieb annehmen?',reject:'Vergabe ablehnen?',finish:'Bestätigen, dass die tatsächliche Zusammenarbeit abgeschlossen ist?'};
  if(!confirm(questions[action]||'Aktion ausführen?'))return;
  button.disabled=true;
- try{const result=await window.SK_AUTH.partnershipAction(t.id,t.own_business_id,action);chatStatus().textContent=result==='abschluss_ausstehend'?'Abschluss bestätigt. Die andere Seite muss ebenfalls bestätigen.':'Aktion gespeichert: '+result;await renderChats(t.id);}
+ try{const result=await window.SK_AUTH.partnershipAction(t.id,t.own_business_id,action);if(action==='finish'&&result==='abgeschlossen'){const partnership=(await window.SK_AUTH.partnershipOverview()).find(p=>p.thread_id===t.id);skFocusReviewPartnershipId=partnership?.id||null;await show('reviews');return;}chatStatus().textContent=result==='abschluss_ausstehend'?'Abschluss für Ihren Betrieb bestätigt. Die andere Seite muss ebenfalls bestätigen, bevor eine Bewertung möglich ist.':'Aktion gespeichert: '+result;await renderChats(t.id);}
  catch(err){chatStatus().textContent='Aktion fehlgeschlagen: '+err.message;}
  finally{button.disabled=false;}
 });
@@ -1211,6 +1216,7 @@ async function skRenderReviews(){
   const names=new Map(businesses.map(b=>[b.id,b.company_name||'Betrieb']));
   const editable=partners.filter(p=>p.state==='abgeschlossen'&&!p.has_reviewed);
   pending.innerHTML=editable.length?editable.map(p=>{const mine=names.has(p.owner_business_id)?p.owner_business_id:p.partner_business_id;const other=mine===p.owner_business_id?p.partner_business_id:p.owner_business_id;return `<div class="sk-review-item"><strong>${esc(p.listing_title)}</strong><p>${esc(names.get(other)||'Partnerbetrieb')}</p><form data-partnership-review="${esc(p.id)}" data-business="${esc(mine)}"><label>Gesamtbewertung <select name="stars" required><option value="5">5 Sterne</option><option value="4">4 Sterne</option><option value="3">3 Sterne</option><option value="2">2 Sterne</option><option value="1">1 Stern</option></select></label><label>Kommentar (freiwillig)<textarea name="comment" maxlength="1000" rows="3"></textarea></label><button type="submit" class="btn">Bewertung abgeben</button></form></div>`;}).join(''):'<p class="muted">Keine ausstehenden Bewertungen.</p>';
+  if(skFocusReviewPartnershipId){const form=[...pending.querySelectorAll('[data-partnership-review]')].find(el=>el.dataset.partnershipReview===skFocusReviewPartnershipId);skFocusReviewPartnershipId=null;if(form){form.scrollIntoView({behavior:'smooth',block:'center'});form.querySelector('select[name=stars]')?.focus({preventScroll:true});}}
   list.innerHTML=reviews.length?reviews.map(r=>`<div class="sk-review-item"><strong>${esc(r.listing_title)}</strong><p>${esc(r.reviewer_name||'Betrieb')} · ${r.visible?`<span class="sk-review-stars">${'★'.repeat(Number(r.stars)||0)}${'☆'.repeat(5-(Number(r.stars)||0))}</span>`:'Bewertung bis zur gegenseitigen Abgabe verborgen'}</p>${r.visible&&r.comment?`<p>${esc(r.comment)}</p>`:''}<small>${esc(new Date(r.created_at).toLocaleDateString('de-CH'))}</small></div>`).join(''):'<p class="muted">Noch keine Bewertungen vorhanden.</p>';
  }catch(err){pending.textContent='Bewertungen konnten nicht geladen werden: '+err.message;}
 }
