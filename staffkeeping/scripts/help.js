@@ -53,7 +53,7 @@
  async function openContext(page){
   const view=page||location.hash.slice(1)||'login';
   if(!chapters.length)try{chapters=await window.SK_AUTH.listHelp(false);}catch(e){$('help-context-body').textContent=e.message;return;}
-  const chapter=chapters.find(c=>c.page_key===view)||chapters.find(c=>c.page_key==='start')||chapters[0];
+  const chapter=chapters.find(c=>c.page_key===view&&c.slug.startsWith('sk-guide-'))||chapters.find(c=>c.page_key===view)||chapters.find(c=>c.page_key==='start')||chapters[0];
   render($('help-context-body'),chapter);$('help-drawer').classList.remove('hidden');
  }
  $('context-help').addEventListener('click',()=>openContext(location.hash.slice(1)||'login'));
